@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chutney Smugglers - Color Reference</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      padding: 2rem;
+      background: oklch(0.96 0.015 65);
+      color: oklch(0.25 0.02 45);
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      color: oklch(0.35 0.03 50);
+    }
+
+    h2 {
+      font-size: 1.75rem;
+      margin: 2rem 0 1rem;
+      color: oklch(0.35 0.03 50);
+    }
+
+    .subtitle {
+      color: oklch(0.48 0.02 50);
+      margin-bottom: 2rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .color-card {
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      background: white;
+    }
+
+    .color-swatch {
+      height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 1.125rem;
+    }
+
+    .color-info {
+      padding: 1rem;
+      background: oklch(0.98 0.012 70);
+    }
+
+    .color-name {
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+      color: oklch(0.35 0.03 50);
+    }
+
+    .color-desc {
+      font-size: 0.875rem;
+      color: oklch(0.48 0.02 50);
+      margin-bottom: 0.5rem;
+    }
+
+    .color-value {
+      font-family: 'Courier New', monospace;
+      font-size: 0.75rem;
+      background: oklch(0.92 0.015 70);
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      color: oklch(0.35 0.03 50);
+    }
+
+    /* Example Components */
+    .example-section {
+      background: oklch(0.98 0.012 70);
+      padding: 2rem;
+      border-radius: 12px;
+      margin-bottom: 2rem;
+    }
+
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      margin: 0.5rem;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-curry {
+      background: oklch(0.62 0.20 40);
+      color: oklch(0.99 0.01 65);
+    }
+
+    .btn-saffron {
+      background: oklch(0.78 0.15 80);
+      color: oklch(0.30 0.025 50);
+    }
+
+    .btn-terracotta {
+      background: oklch(0.52 0.12 45);
+      color: oklch(0.99 0.01 65);
+    }
+
+    .card-example {
+      background: oklch(0.98 0.012 70);
+      padding: 1.5rem;
+      border-radius: 12px;
+      border: 1px solid oklch(0.82 0.02 60);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      position: relative;
+      background-image:
+        repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 2px,
+          oklch(0.95 0.01 65 / 0.03) 2px,
+          oklch(0.95 0.01 65 / 0.03) 4px
+        ),
+        repeating-linear-gradient(
+          90deg,
+          transparent,
+          transparent 2px,
+          oklch(0.94 0.012 68 / 0.03) 2px,
+          oklch(0.94 0.012 68 / 0.03) 4px
+        );
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin: 0.25rem;
+    }
+
+    .badge-spice {
+      background: oklch(0.35 0.03 50);
+      color: oklch(0.96 0.015 65);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .progress-example {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+
+    .progress-ring {
+      width: 80px;
+      height: 80px;
+    }
+
+    .progress-text {
+      flex: 1;
+    }
+
+    .gradient-curry {
+      background: linear-gradient(
+        135deg,
+        oklch(0.65 0.20 38) 0%,
+        oklch(0.62 0.20 40) 50%,
+        oklch(0.58 0.18 35) 100%
+      );
+    }
+
+    .gradient-saffron {
+      background: linear-gradient(
+        135deg,
+        oklch(0.82 0.16 95) 0%,
+        oklch(0.78 0.15 80) 50%,
+        oklch(0.72 0.14 75) 100%
+      );
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🌶️ Chutney Smugglers</h1>
+    <p class="subtitle">Indian-Themed Color Palette & Design System</p>
+
+    <h2>Primary Colors</h2>
+    <div class="grid">
+      <div class="color-card">
+        <div class="color-swatch" style="background: oklch(0.62 0.20 40); color: oklch(0.99 0.01 65);">
+          Curry Orange
+        </div>
+        <div class="color-info">
+          <div class="color-name">Curry Orange</div>
+          <div class="color-desc">Primary CTA, progress indicators</div>
+          <div class="color-value">oklch(0.62 0.20 40)</div>
+        </div>
+      </div>
+
+      <div class="color-card">
+        <div class="color-swatch" style="background: oklch(0.78 0.15 80); color: oklch(0.30 0.025 50);">
+          Saffron Gold
+        </div>
+        <div class="color-info">
+          <div class="color-name">Saffron Gold</div>
+          <div class="color-desc">Luxury accents, badges, highlights</div>
+          <div class="color-value">oklch(0.78 0.15 80)</div>
+        </div>
+      </div>
+
+      <div class="color-card">
+        <div class="color-swatch" style="background: oklch(0.82 0.16 95); color: oklch(0.28 0.025 50);">
+          Turmeric Yellow
+        </div>
+        <div class="color-info">
+          <div class="color-name">Turmeric Yellow</div>
+          <div class="color-desc">Bright highlights, warnings</div>
+          <div class="color-value">oklch(0.82 0.16 95)</div>
+        </div>
+      </div>
+
+      <div class="color-card">
+        <div class="color-swatch" style="background: oklch(0.52 0.12 45); color: oklch(0.99 0.01 65);">
+          Terracotta
+        </div>
+        <div class="color-info">
+          <div class="color-name">Terracotta</div>
+          <div class="color-desc">Earthy secondary actions</div>
+          <div class="color-value">oklch(0.52 0.12 45)</div>
+        </div>
+      </div>
+
+      <div class="color-card">
+        <div class="color-swatch" style="background: oklch(0.35 0.03 50); color: oklch(0.96 0.015 65);">
+          Spice Brown
+        </div>
+        <div class="color-info">
+          <div class="color-name">Spice Brown</div>
+          <div class="color-desc">Dark text, badges, grounding</div>
+          <div class="color-value">oklch(0.35 0.03 50)</div>
+        </div>
+      </div>
+    </div>
+
+    <h2>Background Colors</h2>
+    <div class="grid">
+      <div class="color-card">
+        <div class="color-swatch" style="background: oklch(0.96 0.015 65); color: oklch(0.25 0.02 45); border: 1px solid oklch(0.82 0.02 60);">
+          Background
+        </div>
+        <div class="color-info">
+          <div class="color-name">Background</div>
+          <div class="color-desc">Main app background (cream)</div>
+          <div class="color-value">oklch(0.96 0.015 65)</div>
+        </div>
+      </div>
+
+      <div class="color-card">
+        <div class="color-swatch" style="background: oklch(0.98 0.012 70); color: oklch(0.28 0.025 50); border: 1px solid oklch(0.82 0.02 60);">
+          Card
+        </div>
+        <div class="color-info">
+          <div class="color-name">Card</div>
+          <div class="color-desc">Card backgrounds (parchment)</div>
+          <div class="color-value">oklch(0.98 0.012 70)</div>
+        </div>
+      </div>
+
+      <div class="color-card">
+        <div class="color-swatch" style="background: oklch(0.92 0.015 70); color: oklch(0.48 0.02 50);">
+          Muted
+        </div>
+        <div class="color-info">
+          <div class="color-name">Muted</div>
+          <div class="color-desc">Subtle backgrounds, disabled states</div>
+          <div class="color-value">oklch(0.92 0.015 70)</div>
+        </div>
+      </div>
+    </div>
+
+    <h2>Example Components</h2>
+    <div class="example-section">
+      <h3 style="margin-bottom: 1rem; color: oklch(0.35 0.03 50);">Buttons</h3>
+      <button class="btn btn-curry">Rate Curry</button>
+      <button class="btn btn-saffron">Premium Feature</button>
+      <button class="btn btn-terracotta">Secondary Action</button>
+    </div>
+
+    <div class="example-section">
+      <h3 style="margin-bottom: 1rem; color: oklch(0.35 0.03 50);">Paper Texture Card</h3>
+      <div class="card-example">
+        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+          <div>
+            <h4 style="font-size: 1.25rem; margin-bottom: 0.25rem; color: oklch(0.35 0.03 50);">
+              Chicken Tikka Masala
+            </h4>
+            <p style="color: oklch(0.48 0.02 50); font-size: 0.875rem;">
+              Maharaja Palace Restaurant
+            </p>
+          </div>
+          <span class="badge-spice">5★</span>
+        </div>
+
+        <div class="progress-example">
+          <svg class="progress-ring" viewBox="0 0 80 80">
+            <circle
+              cx="40"
+              cy="40"
+              r="34"
+              fill="none"
+              stroke="oklch(0.92 0.015 70)"
+              stroke-width="6"
+            />
+            <circle
+              cx="40"
+              cy="40"
+              r="34"
+              fill="none"
+              stroke="oklch(0.62 0.20 40)"
+              stroke-width="6"
+              stroke-dasharray="213.6"
+              stroke-dashoffset="26.7"
+              stroke-linecap="round"
+              transform="rotate(-90 40 40)"
+            />
+            <text
+              x="40"
+              y="40"
+              text-anchor="middle"
+              dominant-baseline="middle"
+              font-size="20"
+              font-weight="bold"
+              fill="oklch(0.62 0.20 40)"
+            >
+              8.8
+            </text>
+          </svg>
+          <div class="progress-text">
+            <div style="font-size: 1.5rem; font-weight: bold; color: oklch(0.62 0.20 40);">Excellent</div>
+            <div style="font-size: 0.875rem; color: oklch(0.48 0.02 50);">Rated on Nov 25, 2025</div>
+          </div>
+        </div>
+
+        <p style="color: oklch(0.48 0.02 50); margin: 1rem 0;">
+          Creamy tomato-based curry with perfectly tandoori chicken. Rich spices,
+          medium heat level. Pairs excellently with garlic naan.
+        </p>
+
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+          <span class="badge" style="background: oklch(0.82 0.16 95); color: oklch(0.28 0.025 50);">
+            Mild
+          </span>
+          <span class="badge" style="background: oklch(0.78 0.15 80); color: oklch(0.30 0.025 50);">
+            Creamy
+          </span>
+          <span class="badge" style="background: oklch(0.52 0.12 45); color: oklch(0.99 0.01 65);">
+            Chicken
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="example-section">
+      <h3 style="margin-bottom: 1rem; color: oklch(0.35 0.03 50);">Gradients</h3>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+        <div class="gradient-curry" style="height: 100px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
+          Curry Gradient
+        </div>
+        <div class="gradient-saffron" style="height: 100px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: oklch(0.30 0.025 50); font-weight: bold;">
+          Saffron Gradient
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top: 3rem; padding: 2rem; background: oklch(0.98 0.012 70); border-radius: 12px; border-left: 4px solid oklch(0.62 0.20 40);">
+      <h3 style="margin-bottom: 0.5rem; color: oklch(0.35 0.03 50);">Implementation Notes</h3>
+      <ul style="color: oklch(0.48 0.02 50); line-height: 1.8;">
+        <li>All colors use OKLCH color space for perceptual uniformity</li>
+        <li>Meets WCAG 2.1 AA contrast requirements (4.5:1 for text)</li>
+        <li>Touch targets minimum 44x44px for mobile accessibility</li>
+        <li>Dark mode available with warm brown tones instead of pure black</li>
+        <li>Paper texture created with CSS gradients (no images needed)</li>
+      </ul>
+    </div>
+
+    <div style="margin-top: 2rem; text-align: center; color: oklch(0.48 0.02 50); font-size: 0.875rem;">
+      <p>Chutney Smugglers Design System • Indian-Themed Vintage Curry Menu Aesthetic</p>
+      <p style="margin-top: 0.5rem;">
+        <strong>Files:</strong>
+        <code style="background: oklch(0.92 0.015 70); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8125rem;">
+          /app/globals.css
+        </code>
+      </p>
+    </div>
+  </div>
+</body>
+</html>

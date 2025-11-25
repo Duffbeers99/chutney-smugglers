@@ -1,0 +1,93 @@
+import { defineSchema, defineTable } from "convex/server";
+import { authTables } from "@convex-dev/auth/server";
+import { v } from "convex/values";
+
+const schema = defineSchema({
+  // Auth tables from @convex-dev/auth
+  ...authTables,
+
+  // Users table with enhanced profile fields
+  users: defineTable({
+    // Core auth fields
+    name: v.optional(v.string()),
+    email: v.optional(v.string()),
+    emailVerificationTime: v.optional(v.number()),
+    phone: v.optional(v.string()),
+    phoneVerificationTime: v.optional(v.number()),
+    image: v.optional(v.string()),
+    isAnonymous: v.optional(v.boolean()),
+
+    // Profile fields
+    nickname: v.optional(v.string()),
+    profileImageId: v.optional(v.id("_storage")),
+
+    // User statistics
+    curriesRated: v.optional(v.number()),
+    curriesAdded: v.optional(v.number()),
+    averageRating: v.optional(v.number()),
+
+    // Onboarding completion
+    onboardingComplete: v.optional(v.boolean()),
+
+    createdAt: v.optional(v.number()),
+  })
+    .index("email", ["email"])
+    .index("phone", ["phone"])
+    .index("by_created_at", ["createdAt"]),
+
+  // Restaurants/curry houses
+  restaurants: defineTable({
+    name: v.string(),
+    address: v.string(),
+    cuisine: v.optional(v.string()),
+
+    // Location data for future maps integration
+    location: v.optional(
+      v.object({
+        lat: v.number(),
+        lng: v.number(),
+      })
+    ),
+
+    // Who added this restaurant
+    addedBy: v.id("users"),
+    addedAt: v.number(),
+
+    // Aggregate rating statistics
+    averageFood: v.optional(v.number()),
+    averageService: v.optional(v.number()),
+    averageExtras: v.optional(v.number()),
+    averageAtmosphere: v.optional(v.number()),
+    overallAverage: v.optional(v.number()),
+    totalRatings: v.number(),
+  })
+    .index("by_name", ["name"])
+    .index("by_added_by", ["addedBy"])
+    .index("by_overall_average", ["overallAverage"])
+    .index("by_added_at", ["addedAt"]),
+
+  // Individual curry visit ratings
+  ratings: defineTable({
+    userId: v.id("users"),
+    restaurantId: v.id("restaurants"),
+    visitDate: v.number(),
+
+    // Multi-category ratings (out of 5)
+    food: v.number(),
+    service: v.number(),
+    extras: v.number(),
+    atmosphere: v.number(),
+
+    // Optional notes about the visit
+    notes: v.optional(v.string()),
+
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_restaurant", ["restaurantId"])
+    .index("by_user_and_restaurant", ["userId", "restaurantId"])
+    .index("by_created_at", ["createdAt"])
+    .index("by_visit_date", ["visitDate"]),
+});
+
+export default schema;
