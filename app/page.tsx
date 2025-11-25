@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = 'force-dynamic'
+
 import { useState } from "react";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { Authenticated, Unauthenticated, useQuery } from "convex/react";
