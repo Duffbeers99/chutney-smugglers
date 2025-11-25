@@ -24,6 +24,15 @@
 .DS_Store
 *.pem
 
+# JWT keys and secrets (DO NOT COMMIT)
+jwt_private_key_multiline.txt
+jwks.txt
+jwt_key.txt
+private_key.pem
+generateKeys.mjs
+generate_env_vars.mjs
+set_jwt_key.sh
+
 # debug
 npm-debug.log*
 yarn-debug.log*
