@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { updateRestaurantAggregates } from "./restaurants";
 
 // Add a new rating
 export const add = mutation({
@@ -59,7 +60,6 @@ export const add = mutation({
     }
 
     // Trigger restaurant aggregate update
-    const { updateRestaurantAggregates } = await import("./restaurants");
     await updateRestaurantAggregates(ctx, args.restaurantId);
 
     return ratingId;
@@ -107,7 +107,6 @@ export const update = mutation({
     await ctx.db.patch(args.ratingId, updates);
 
     // Trigger restaurant aggregate update
-    const { updateRestaurantAggregates } = await import("./restaurants");
     await updateRestaurantAggregates(ctx, rating.restaurantId);
 
     return { success: true };
@@ -139,7 +138,6 @@ export const remove = mutation({
     }
 
     // Trigger restaurant aggregate update
-    const { updateRestaurantAggregates } = await import("./restaurants");
     await updateRestaurantAggregates(ctx, rating.restaurantId);
 
     return { success: true };

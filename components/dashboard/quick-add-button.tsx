@@ -49,7 +49,7 @@ export function QuickAddButton({
       onClick={onClick}
       aria-label="Add new curry rating"
     >
-      <Plus className="size-7 text-white" strokeWidth={2.5} aria-hidden="true" />
+      <Plus className="size-8 text-white" strokeWidth={2.5} aria-hidden="true" />
 
       {/* Subtle glow effect */}
       <div
