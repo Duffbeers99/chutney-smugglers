@@ -6,9 +6,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-display: var(--font-display);
+  --font-sans: var(--font-inter);
+  --font-serif: var(--font-lora);
+  --font-display: var(--font-lora);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -58,157 +58,157 @@
   /* Border radius */
   --radius: 0.75rem;
 
-  /* === LIGHT MODE: Old Paper & Warm Spices === */
+  /* === LIGHT MODE: Passion Theme === */
 
-  /* Backgrounds - Aged Paper Tones */
-  --background: oklch(0.96 0.015 65);  /* Cream/old paper */
-  --foreground: oklch(0.25 0.02 45);   /* Rich dark brown */
+  /* Backgrounds - Warm Cream */
+  --background: oklch(0.975 0.008 50);  /* #F8F4F1 warm cream */
+  --foreground: oklch(0.15 0.005 0);    /* #111111 near black */
 
-  /* Cards - Parchment */
-  --card: oklch(0.98 0.012 70);        /* Light parchment */
-  --card-foreground: oklch(0.28 0.025 50);
+  /* Cards - Slightly lighter cream */
+  --card: oklch(0.985 0.006 50);
+  --card-foreground: oklch(0.15 0.005 0);
 
   /* Popovers */
-  --popover: oklch(0.99 0.01 65);
-  --popover-foreground: oklch(0.25 0.02 45);
+  --popover: oklch(0.99 0.005 50);
+  --popover-foreground: oklch(0.15 0.005 0);
 
-  /* Primary - Curry Orange/Red */
-  --primary: oklch(0.58 0.18 35);      /* Warm curry orange */
-  --primary-foreground: oklch(0.99 0.01 65);
+  /* Primary - Vibrant Orange */
+  --primary: oklch(0.72 0.18 35);      /* #FF8550 vibrant orange */
+  --primary-foreground: oklch(1 0 0);  /* White */
 
-  /* Secondary - Saffron Gold */
-  --secondary: oklch(0.88 0.08 85);    /* Soft saffron */
-  --secondary-foreground: oklch(0.30 0.025 50);
+  /* Secondary - Warm tan */
+  --secondary: oklch(0.90 0.012 50);
+  --secondary-foreground: oklch(0.15 0.005 0);
 
-  /* Muted - Light Beige */
-  --muted: oklch(0.92 0.015 70);
-  --muted-foreground: oklch(0.48 0.02 50);
+  /* Muted - Light neutral */
+  --muted: oklch(0.94 0.008 50);
+  --muted-foreground: oklch(0.48 0.005 0);
 
-  /* Accent - Turmeric Yellow */
-  --accent: oklch(0.85 0.12 95);       /* Bright turmeric */
-  --accent-foreground: oklch(0.28 0.025 50);
+  /* Accent - Orange accent */
+  --accent: oklch(0.75 0.16 40);
+  --accent-foreground: oklch(1 0 0);
 
-  /* Destructive - Deep Red Chili */
+  /* Destructive - Red */
   --destructive: oklch(0.55 0.22 25);
-  --destructive-foreground: oklch(0.99 0.01 65);
+  --destructive-foreground: oklch(1 0 0);
 
-  /* Borders - Subtle Brown */
-  --border: oklch(0.82 0.02 60);
-  --input: oklch(0.82 0.02 60);
-  --ring: oklch(0.58 0.18 35);
+  /* Borders - Subtle */
+  --border: oklch(0.88 0.01 50);
+  --input: oklch(0.88 0.01 50);
+  --ring: oklch(0.72 0.18 35);
 
-  /* === CUSTOM INDIAN PALETTE === */
+  /* === CUSTOM PASSION PALETTE === */
 
-  /* Curry - Primary Action Color */
-  --curry: oklch(0.62 0.20 40);        /* Vibrant curry orange */
-  --curry-foreground: oklch(0.99 0.01 65);
+  /* Primary - Vibrant Orange (same as --primary) */
+  --curry: oklch(0.72 0.18 35);        /* #FF8550 */
+  --curry-foreground: oklch(1 0 0);
 
-  /* Saffron - Luxury Accent */
-  --saffron: oklch(0.78 0.15 80);      /* Golden saffron */
-  --saffron-foreground: oklch(0.30 0.025 50);
+  /* Saffron - Golden Accent */
+  --saffron: oklch(0.80 0.12 65);      /* Warm gold */
+  --saffron-foreground: oklch(0.15 0.005 0);
 
-  /* Turmeric - Bright Highlight */
-  --turmeric: oklch(0.82 0.16 95);     /* Bright yellow */
-  --turmeric-foreground: oklch(0.28 0.025 50);
+  /* Turmeric - Bright Accent */
+  --turmeric: oklch(0.85 0.14 75);     /* Bright warm yellow */
+  --turmeric-foreground: oklch(0.15 0.005 0);
 
-  /* Terracotta - Earthy Secondary */
-  --terracotta: oklch(0.52 0.12 45);   /* Clay red-brown */
-  --terracotta-foreground: oklch(0.99 0.01 65);
+  /* Terracotta - Warm Secondary */
+  --terracotta: oklch(0.65 0.14 40);   /* Warm terracotta */
+  --terracotta-foreground: oklch(1 0 0);
 
-  /* Spice - Deep Brown */
-  --spice: oklch(0.35 0.03 50);        /* Dark spice brown */
-  --spice-foreground: oklch(0.96 0.015 65);
+  /* Spice - Deep Accent */
+  --spice: oklch(0.15 0.005 0);        /* Near black (same as foreground) */
+  --spice-foreground: oklch(0.975 0.008 50);
 
-  /* Chart Colors - Warm Indian Palette */
-  --chart-1: oklch(0.62 0.20 40);      /* Curry orange */
-  --chart-2: oklch(0.78 0.15 80);      /* Saffron gold */
-  --chart-3: oklch(0.52 0.12 45);      /* Terracotta */
-  --chart-4: oklch(0.82 0.16 95);      /* Turmeric yellow */
-  --chart-5: oklch(0.45 0.08 30);      /* Deep red */
+  /* Chart Colors - Passion Palette */
+  --chart-1: oklch(0.72 0.18 35);      /* Primary orange */
+  --chart-2: oklch(0.80 0.12 65);      /* Saffron gold */
+  --chart-3: oklch(0.65 0.14 40);      /* Terracotta */
+  --chart-4: oklch(0.85 0.14 75);      /* Turmeric yellow */
+  --chart-5: oklch(0.60 0.16 30);      /* Deep warm red */
 
-  /* Sidebar - Aged Paper Theme */
-  --sidebar: oklch(0.97 0.012 68);
-  --sidebar-foreground: oklch(0.35 0.03 50);
-  --sidebar-primary: oklch(0.58 0.18 35);
-  --sidebar-primary-foreground: oklch(0.99 0.01 65);
-  --sidebar-accent: oklch(0.92 0.015 70);
-  --sidebar-accent-foreground: oklch(0.28 0.025 50);
-  --sidebar-border: oklch(0.82 0.02 60);
-  --sidebar-ring: oklch(0.58 0.18 35);
+  /* Sidebar - Passion Theme */
+  --sidebar: oklch(0.975 0.008 50);
+  --sidebar-foreground: oklch(0.15 0.005 0);
+  --sidebar-primary: oklch(0.72 0.18 35);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.94 0.008 50);
+  --sidebar-accent-foreground: oklch(0.15 0.005 0);
+  --sidebar-border: oklch(0.88 0.01 50);
+  --sidebar-ring: oklch(0.72 0.18 35);
 }
 
 .dark {
-  /* === DARK MODE: Warm Spice Night === */
+  /* === DARK MODE: Passion Night === */
 
-  /* Backgrounds - Deep Warm Brown */
-  --background: oklch(0.20 0.025 45);  /* Rich dark brown */
-  --foreground: oklch(0.95 0.015 70);  /* Warm cream */
+  /* Backgrounds - Deep neutral */
+  --background: oklch(0.20 0.01 0);    /* Deep charcoal */
+  --foreground: oklch(0.975 0.008 50); /* Warm cream */
 
-  /* Cards - Slightly Lighter Brown */
-  --card: oklch(0.25 0.028 48);
-  --card-foreground: oklch(0.95 0.015 70);
+  /* Cards - Slightly lighter */
+  --card: oklch(0.25 0.01 0);
+  --card-foreground: oklch(0.975 0.008 50);
 
   /* Popovers */
-  --popover: oklch(0.23 0.026 46);
-  --popover-foreground: oklch(0.95 0.015 70);
+  --popover: oklch(0.23 0.01 0);
+  --popover-foreground: oklch(0.975 0.008 50);
 
-  /* Primary - Bright Curry */
-  --primary: oklch(0.70 0.20 38);      /* Brighter curry for contrast */
-  --primary-foreground: oklch(0.20 0.025 45);
+  /* Primary - Bright Orange */
+  --primary: oklch(0.75 0.19 35);      /* Brighter for contrast */
+  --primary-foreground: oklch(0.15 0.005 0);
 
-  /* Secondary - Muted Gold */
-  --secondary: oklch(0.38 0.05 65);    /* Darker gold */
-  --secondary-foreground: oklch(0.95 0.015 70);
+  /* Secondary - Neutral */
+  --secondary: oklch(0.35 0.01 0);
+  --secondary-foreground: oklch(0.975 0.008 50);
 
   /* Muted */
-  --muted: oklch(0.32 0.03 50);
-  --muted-foreground: oklch(0.68 0.02 60);
+  --muted: oklch(0.30 0.01 0);
+  --muted-foreground: oklch(0.68 0.01 0);
 
-  /* Accent - Warm Gold */
-  --accent: oklch(0.42 0.08 75);
-  --accent-foreground: oklch(0.95 0.015 70);
+  /* Accent - Orange */
+  --accent: oklch(0.70 0.17 40);
+  --accent-foreground: oklch(0.975 0.008 50);
 
   /* Destructive */
   --destructive: oklch(0.62 0.24 28);
-  --destructive-foreground: oklch(0.95 0.015 70);
+  --destructive-foreground: oklch(0.975 0.008 50);
 
   /* Borders */
-  --border: oklch(0.35 0.03 50);
-  --input: oklch(0.38 0.04 52);
-  --ring: oklch(0.70 0.20 38);
+  --border: oklch(0.35 0.01 0);
+  --input: oklch(0.38 0.01 0);
+  --ring: oklch(0.75 0.19 35);
 
-  /* Custom Indian Palette - Dark Mode */
-  --curry: oklch(0.72 0.22 40);
-  --curry-foreground: oklch(0.20 0.025 45);
+  /* Custom Passion Palette - Dark Mode */
+  --curry: oklch(0.75 0.19 35);
+  --curry-foreground: oklch(0.15 0.005 0);
 
-  --saffron: oklch(0.68 0.16 78);
-  --saffron-foreground: oklch(0.20 0.025 45);
+  --saffron: oklch(0.78 0.13 65);
+  --saffron-foreground: oklch(0.15 0.005 0);
 
-  --turmeric: oklch(0.75 0.18 92);
-  --turmeric-foreground: oklch(0.20 0.025 45);
+  --turmeric: oklch(0.82 0.15 75);
+  --turmeric-foreground: oklch(0.15 0.005 0);
 
-  --terracotta: oklch(0.58 0.14 42);
-  --terracotta-foreground: oklch(0.95 0.015 70);
+  --terracotta: oklch(0.68 0.15 40);
+  --terracotta-foreground: oklch(0.975 0.008 50);
 
-  --spice: oklch(0.28 0.025 48);
-  --spice-foreground: oklch(0.95 0.015 70);
+  --spice: oklch(0.975 0.008 50);
+  --spice-foreground: oklch(0.15 0.005 0);
 
   /* Chart Colors - Dark Mode */
-  --chart-1: oklch(0.72 0.22 40);
-  --chart-2: oklch(0.68 0.16 78);
-  --chart-3: oklch(0.58 0.14 42);
-  --chart-4: oklch(0.75 0.18 92);
-  --chart-5: oklch(0.62 0.20 32);
+  --chart-1: oklch(0.75 0.19 35);
+  --chart-2: oklch(0.78 0.13 65);
+  --chart-3: oklch(0.68 0.15 40);
+  --chart-4: oklch(0.82 0.15 75);
+  --chart-5: oklch(0.65 0.20 30);
 
   /* Sidebar - Dark Mode */
-  --sidebar: oklch(0.22 0.025 46);
-  --sidebar-foreground: oklch(0.85 0.015 68);
-  --sidebar-primary: oklch(0.70 0.20 38);
-  --sidebar-primary-foreground: oklch(0.20 0.025 45);
-  --sidebar-accent: oklch(0.28 0.028 48);
-  --sidebar-accent-foreground: oklch(0.95 0.015 70);
-  --sidebar-border: oklch(0.30 0.03 50);
-  --sidebar-ring: oklch(0.70 0.20 38);
+  --sidebar: oklch(0.22 0.01 0);
+  --sidebar-foreground: oklch(0.88 0.008 50);
+  --sidebar-primary: oklch(0.75 0.19 35);
+  --sidebar-primary-foreground: oklch(0.15 0.005 0);
+  --sidebar-accent: oklch(0.28 0.01 0);
+  --sidebar-accent-foreground: oklch(0.975 0.008 50);
+  --sidebar-border: oklch(0.30 0.01 0);
+  --sidebar-ring: oklch(0.75 0.19 35);
 }
 
 @layer base {
@@ -223,8 +223,9 @@
     font-feature-settings: "kern" 1, "liga" 1;
   }
 
-  /* Headings with enhanced styling */
+  /* Headings with enhanced styling - Use Lora serif */
   h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-lora), serif;
     font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
     letter-spacing: -0.01em;
   }
@@ -562,32 +563,36 @@
    =========================== */
 
 @layer utilities {
-  /* Curry Button Hover Effect */
+  /* Primary Button Hover Effect */
+  .btn-primary,
   .btn-curry {
-    background-color: var(--color-curry);
-    color: var(--color-curry-foreground);
+    background-color: var(--color-primary);
+    color: var(--color-primary-foreground);
     transition: all 0.2s ease;
     position: relative;
     overflow: hidden;
   }
 
+  .btn-primary::before,
   .btn-curry::before {
     content: '';
     position: absolute;
     inset: 0;
     background: linear-gradient(
       135deg,
-      oklch(0.70 0.22 38) 0%,
-      oklch(0.65 0.20 38) 100%
+      oklch(0.75 0.20 35) 0%,
+      oklch(0.70 0.16 38) 100%
     );
     opacity: 0;
     transition: opacity 0.2s ease;
   }
 
+  .btn-primary:hover::before,
   .btn-curry:hover::before {
     opacity: 1;
   }
 
+  .btn-primary > *,
   .btn-curry > * {
     position: relative;
     z-index: 1;
@@ -812,10 +817,34 @@
   @media (prefers-reduced-motion: reduce) {
     .card-hover,
     .btn-curry,
+    .btn-primary,
     .shimmer,
     .pulse-curry {
       animation: none;
       transition: none;
     }
+  }
+}
+
+/* ===========================
+   SAFE AREA SUPPORT (iOS)
+   =========================== */
+
+@layer utilities {
+  /* Safe area bottom padding for navigation */
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-area-left {
+    padding-left: env(safe-area-inset-left);
+  }
+
+  .safe-area-right {
+    padding-right: env(safe-area-inset-right);
   }
 }

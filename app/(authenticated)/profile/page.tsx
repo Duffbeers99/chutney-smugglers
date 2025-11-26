@@ -95,29 +95,29 @@ export default function ProfilePage() {
 
   if (!user) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-old-paper">
-        <Loader2 className="h-8 w-8 animate-spin text-curry" />
+      <div className="flex h-screen items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-old-paper paper-texture pb-24">
+    <div className="h-screen overflow-y-auto bg-background paper-texture">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-old-paper/95 backdrop-blur-sm border-b-2 border-terracotta/20 px-4 py-4">
+      <header className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border px-4 py-4">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-full bg-curry/10">
-            <User className="h-6 w-6 text-curry" />
+          <div className="p-2 rounded-full bg-primary/10">
+            <User className="h-6 w-6 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-curry">Profile</h1>
-            <p className="text-sm text-spice/70">Your curry journey</p>
+            <h1 className="text-2xl font-bold text-foreground">Profile</h1>
+            <p className="text-sm text-muted-foreground">Your curry journey</p>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="p-4 space-y-6">
+      <main className="p-4 space-y-6 pb-28">
         {/* Profile Image Section */}
         <section className="card-parchment p-6">
           <ImageUpload
@@ -131,27 +131,27 @@ export default function ProfilePage() {
 
         {/* Profile Info Section */}
         <section className="card-parchment p-6 space-y-4">
-          <h2 className="text-lg font-semibold text-spice border-b-2 border-terracotta/20 pb-2">
+          <h2 className="text-lg font-semibold text-foreground border-b border-border pb-2">
             Profile Information
           </h2>
 
           {/* Nickname */}
           <div>
-            <Label className="text-spice text-sm">Nickname</Label>
+            <Label className="text-foreground text-sm">Nickname</Label>
             {editingNickname ? (
               <div className="flex gap-2 mt-2">
                 <Input
                   value={nickname}
                   onChange={(e) => setNickname(e.target.value)}
                   placeholder="Enter nickname"
-                  className="bg-white/80 border-terracotta focus:border-curry"
+                  className="bg-card border-border focus:border-primary"
                   autoFocus
                 />
                 <Button
                   onClick={handleSaveNickname}
                   disabled={savingNickname}
                   size="icon"
-                  className="bg-curry hover:bg-curry/90"
+                  className="bg-primary hover:bg-primary/90"
                 >
                   {savingNickname ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -164,21 +164,21 @@ export default function ProfilePage() {
                   disabled={savingNickname}
                   size="icon"
                   variant="outline"
-                  className="border-terracotta"
+                  className="border-border"
                 >
                   <X className="h-4 w-4" />
                 </Button>
               </div>
             ) : (
-              <div className="flex items-center justify-between mt-2 p-3 rounded-lg bg-white/50 border border-terracotta/30">
-                <span className="font-medium text-spice">
+              <div className="flex items-center justify-between mt-2 p-3 rounded-lg bg-card/50 border border-border">
+                <span className="font-medium text-foreground">
                   {user.nickname || "Not set"}
                 </span>
                 <Button
                   onClick={handleEditNickname}
                   size="sm"
                   variant="ghost"
-                  className="text-curry hover:text-curry/80"
+                  className="text-primary hover:text-primary/80"
                 >
                   <Edit2 className="h-4 w-4" />
                 </Button>
@@ -188,25 +188,25 @@ export default function ProfilePage() {
 
           {/* Email (Read-only) */}
           <div>
-            <Label className="text-spice text-sm flex items-center gap-2">
+            <Label className="text-foreground text-sm flex items-center gap-2">
               <Mail className="h-4 w-4" />
               Email
             </Label>
-            <div className="mt-2 p-3 rounded-lg bg-white/30 border border-terracotta/20">
-              <span className="text-spice/70">{user.email || "Not set"}</span>
+            <div className="mt-2 p-3 rounded-lg bg-card/30 border border-border">
+              <span className="text-muted-foreground">{user.email || "Not set"}</span>
             </div>
           </div>
         </section>
 
         {/* Stats Section */}
         <section className="card-parchment p-6">
-          <h2 className="text-lg font-semibold text-spice border-b-2 border-terracotta/20 pb-2 mb-4">
+          <h2 className="text-lg font-semibold text-foreground border-b border-border pb-2 mb-4">
             Your Statistics
           </h2>
 
           {userStats === undefined || userStats === null ? (
             <div className="flex justify-center py-4">
-              <Loader2 className="h-6 w-6 animate-spin text-curry" />
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-4">
@@ -240,16 +240,16 @@ export default function ProfilePage() {
 
         {/* Recent Ratings */}
         <section className="card-parchment p-6">
-          <h2 className="text-lg font-semibold text-spice border-b-2 border-terracotta/20 pb-2 mb-4">
+          <h2 className="text-lg font-semibold text-foreground border-b border-border pb-2 mb-4">
             Your Recent Ratings
           </h2>
 
           {userRatings === undefined ? (
             <div className="flex justify-center py-4">
-              <Loader2 className="h-6 w-6 animate-spin text-curry" />
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
           ) : userRatings.length === 0 ? (
-            <div className="text-center py-8 text-spice/60">
+            <div className="text-center py-8 text-muted-foreground">
               <p>No ratings yet</p>
               <p className="text-sm mt-1">Start rating curries!</p>
             </div>
@@ -258,19 +258,19 @@ export default function ProfilePage() {
               {userRatings.slice(0, 5).map((rating) => (
                 <div
                   key={rating._id}
-                  className="p-3 rounded-lg bg-white/50 border border-terracotta/20"
+                  className="p-3 rounded-lg bg-card/50 border border-border"
                 >
-                  <h3 className="font-semibold text-spice">
+                  <h3 className="font-semibold text-foreground">
                     {rating.restaurant?.name || "Unknown"}
                   </h3>
-                  <div className="flex gap-4 mt-2 text-xs text-spice/70">
+                  <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
                     <span>Food: {rating.food}/5</span>
                     <span>Service: {rating.service}/5</span>
                     <span>Extras: {rating.extras}/5</span>
                     <span>Atmosphere: {rating.atmosphere}/5</span>
                   </div>
                   {rating.notes && (
-                    <p className="text-sm text-spice/80 mt-2 italic">
+                    <p className="text-sm text-foreground/80 mt-2 italic">
                       "{rating.notes}"
                     </p>
                   )}
@@ -308,19 +308,19 @@ function StatCard({
   color: string;
 }) {
   const colorClasses: Record<string, string> = {
-    curry: "bg-curry/10 text-curry",
+    curry: "bg-primary/10 text-primary",
     saffron: "bg-saffron/10 text-saffron",
     terracotta: "bg-terracotta/10 text-terracotta",
     turmeric: "bg-turmeric/10 text-turmeric",
   };
 
   return (
-    <div className="p-4 rounded-lg bg-white/50 border border-terracotta/20">
+    <div className="p-4 rounded-lg bg-card/50 border border-border">
       <div className={`inline-flex p-2 rounded-lg ${colorClasses[color]} mb-2`}>
         {icon}
       </div>
-      <div className="text-2xl font-bold text-spice">{value}</div>
-      <div className="text-xs text-spice/60">{label}</div>
+      <div className="text-2xl font-bold text-foreground">{value}</div>
+      <div className="text-xs text-muted-foreground">{label}</div>
     </div>
   );
 }

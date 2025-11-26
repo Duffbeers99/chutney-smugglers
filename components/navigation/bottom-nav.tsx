@@ -3,8 +3,9 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, PlusCircle, Trophy, User } from "lucide-react"
+import { Home, Trophy, User, UtensilsCrossed } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { QuickAddButton } from "@/components/dashboard/quick-add-button"
 
 interface NavItem {
   href: string
@@ -19,14 +20,15 @@ const navItems: NavItem[] = [
     label: "Home",
   },
   {
-    href: "/add-rating",
-    icon: PlusCircle,
-    label: "Add",
-  },
-  {
     href: "/leaderboards",
     icon: Trophy,
-    label: "Leaders",
+    label: "Leaderboards",
+  },
+  // Center space for floating + button
+  {
+    href: "/restaurants",
+    icon: UtensilsCrossed,
+    label: "Restaurants",
   },
   {
     href: "/profile",
@@ -40,44 +42,85 @@ export function BottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 border-t card-parchment shadow-lg safe-area-bottom"
+      className="fixed bottom-0 left-0 right-0 z-50 safe-area-bottom"
       aria-label="Bottom navigation"
     >
-      <div className="mx-auto max-w-lg">
-        <div className="flex items-center justify-around px-2 py-2">
-          {navItems.map((item) => {
-            const Icon = item.icon
-            const isActive = pathname === item.href
+      <div className="relative mx-auto max-w-lg">
+        {/* Navigation bar with Bevel-style design */}
+        <div className="relative bg-card/95 backdrop-blur-lg border-t border-border shadow-lg rounded-t-3xl">
+          {/* 2-1-2 Grid Layout */}
+          <div className="grid grid-cols-4 items-center px-4 h-16">
+            {navItems.map((item, index) => {
+              const Icon = item.icon
+              const isActive = pathname === item.href
 
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "touch-target flex flex-col items-center justify-center gap-1 rounded-lg px-4 py-2 transition-all duration-200",
-                  "focus-curry hover:bg-curry/10 active:scale-95",
-                  isActive && "text-curry"
-                )}
-                aria-current={isActive ? "page" : undefined}
-              >
-                <Icon
+              // Insert spacer in the middle (after second item, before third)
+              if (index === 2) {
+                return (
+                  <React.Fragment key={`${item.href}-fragment`}>
+                    {/* Center spacer for floating button */}
+                    <div className="col-span-1" aria-hidden="true" />
+
+                    {/* Third item */}
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={cn(
+                        "flex flex-col items-center justify-center gap-0.5 py-2 transition-all duration-200",
+                        "touch-target rounded-xl",
+                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+                        "active:scale-95",
+                        isActive
+                          ? "text-primary"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                      aria-current={isActive ? "page" : undefined}
+                      aria-label={item.label}
+                    >
+                      <Icon
+                        className={cn(
+                          "size-6 transition-colors",
+                          isActive && "drop-shadow-sm"
+                        )}
+                        aria-hidden="true"
+                      />
+                    </Link>
+                  </React.Fragment>
+                )
+              }
+
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
                   className={cn(
-                    "size-6 transition-colors",
-                    isActive ? "text-curry" : "text-muted-foreground"
+                    "flex flex-col items-center justify-center gap-0.5 py-2 transition-all duration-200",
+                    "touch-target rounded-xl",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+                    "active:scale-95",
+                    isActive
+                      ? "text-primary"
+                      : "text-muted-foreground hover:text-foreground"
                   )}
-                  aria-hidden="true"
-                />
-                <span
-                  className={cn(
-                    "text-xs font-medium transition-colors",
-                    isActive ? "text-curry" : "text-muted-foreground"
-                  )}
+                  aria-current={isActive ? "page" : undefined}
+                  aria-label={item.label}
                 >
-                  {item.label}
-                </span>
-              </Link>
-            )
-          })}
+                  <Icon
+                    className={cn(
+                      "size-6 transition-colors",
+                      isActive && "drop-shadow-sm"
+                    )}
+                    aria-hidden="true"
+                  />
+                </Link>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Floating center + button - positioned absolutely above the nav */}
+        <div className="absolute left-1/2 -translate-x-1/2 -top-8">
+          <QuickAddButton variant="floating" />
         </div>
       </div>
     </nav>

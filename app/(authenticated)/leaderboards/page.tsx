@@ -29,34 +29,34 @@ export default function LeaderboardsPage() {
   const mostActive = useQuery(api.ratings.getMostActiveRaters, { limit: 10 });
 
   return (
-    <div className="min-h-screen bg-old-paper paper-texture pb-24">
+    <div className="h-screen overflow-y-auto bg-background paper-texture">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-old-paper/95 backdrop-blur-sm border-b-2 border-terracotta/20 px-4 py-4">
+      <header className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border px-4 py-4">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-full bg-curry/10">
-            <Trophy className="h-6 w-6 text-curry" />
+          <div className="p-2 rounded-full bg-primary/10">
+            <Trophy className="h-6 w-6 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-curry">Leaderboards</h1>
-            <p className="text-sm text-spice/70">Hall of Fame</p>
+            <h1 className="text-2xl font-bold text-foreground">Leaderboards</h1>
+            <p className="text-sm text-muted-foreground">Hall of Fame</p>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="p-4">
+      <main className="p-4 pb-28">
         <Tabs defaultValue="restaurants" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6 bg-old-paper-dark/50">
+          <TabsList className="grid w-full grid-cols-2 mb-6 bg-muted">
             <TabsTrigger
               value="restaurants"
-              className="data-[state=active]:bg-curry data-[state=active]:text-white"
+              className="data-[state=active]:bg-primary data-[state=active]:text-white"
             >
               <Star className="h-4 w-4 mr-2" />
               Restaurants
             </TabsTrigger>
             <TabsTrigger
               value="raters"
-              className="data-[state=active]:bg-curry data-[state=active]:text-white"
+              className="data-[state=active]:bg-primary data-[state=active]:text-white"
             >
               <TrendingUp className="h-4 w-4 mr-2" />
               Raters
@@ -66,8 +66,8 @@ export default function LeaderboardsPage() {
           <TabsContent value="restaurants" className="space-y-6">
             {/* Top Overall */}
             <section>
-              <h2 className="text-lg font-semibold text-spice mb-3 flex items-center gap-2">
-                <Trophy className="h-5 w-5 text-curry" />
+              <h2 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
+                <Trophy className="h-5 w-5 text-primary" />
                 Top Rated Overall
               </h2>
               {topRated === undefined ? (
@@ -113,8 +113,8 @@ export default function LeaderboardsPage() {
           </TabsContent>
 
           <TabsContent value="raters" className="space-y-4">
-            <h2 className="text-lg font-semibold text-spice mb-3 flex items-center gap-2">
-              <Flame className="h-5 w-5 text-curry" />
+            <h2 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
+              <Flame className="h-5 w-5 text-primary" />
               Most Active Raters
             </h2>
             {mostActive === undefined ? (
@@ -159,20 +159,20 @@ function RestaurantCard({
           {rank <= 3 ? (
             <Award className={`h-8 w-8 ${getMedalColor(rank)}`} />
           ) : (
-            <div className="h-8 w-8 rounded-full bg-terracotta/20 flex items-center justify-center">
-              <span className="text-sm font-bold text-spice">{rank}</span>
+            <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
+              <span className="text-sm font-bold text-foreground">{rank}</span>
             </div>
           )}
         </div>
 
         {/* Restaurant Info */}
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-spice truncate">
+          <h3 className="font-semibold text-foreground truncate">
             {restaurant.name}
           </h3>
-          <p className="text-xs text-spice/60 truncate">{restaurant.address}</p>
+          <p className="text-xs text-muted-foreground truncate">{restaurant.address}</p>
           {restaurant.cuisine && (
-            <span className="inline-block mt-1 px-2 py-0.5 text-xs rounded-full bg-saffron/20 text-spice">
+            <span className="inline-block mt-1 px-2 py-0.5 text-xs rounded-full bg-saffron/20 text-foreground">
               {restaurant.cuisine}
             </span>
           )}
@@ -181,12 +181,12 @@ function RestaurantCard({
         {/* Rating */}
         <div className="flex-shrink-0 text-right">
           <div className="flex items-center gap-1">
-            <Star className="h-5 w-5 fill-curry text-curry" />
-            <span className="text-xl font-bold text-curry">
+            <Star className="h-5 w-5 fill-primary text-primary" />
+            <span className="text-xl font-bold text-primary">
               {restaurant.overallAverage?.toFixed(1) || "0.0"}
             </span>
           </div>
-          <p className="text-xs text-spice/60">{restaurant.totalRatings} ratings</p>
+          <p className="text-xs text-muted-foreground">{restaurant.totalRatings} ratings</p>
         </div>
       </div>
     </div>
@@ -209,25 +209,25 @@ function CategoryLeaderCard({
       <div className="flex flex-col h-full">
         <div className="flex items-center gap-2 mb-2">
           <span className="text-xl">{icon}</span>
-          <h3 className="text-sm font-semibold text-spice">{title}</h3>
+          <h3 className="text-sm font-semibold text-foreground">{title}</h3>
         </div>
 
         {restaurants === undefined ? (
           <div className="flex-1 flex items-center justify-center">
-            <Loader2 className="h-4 w-4 animate-spin text-curry" />
+            <Loader2 className="h-4 w-4 animate-spin text-primary" />
           </div>
         ) : !topRestaurant ? (
-          <p className="text-xs text-spice/50 text-center flex-1 flex items-center">
+          <p className="text-xs text-muted-foreground text-center flex-1 flex items-center">
             No ratings yet
           </p>
         ) : (
           <div className="flex-1 flex flex-col justify-center">
-            <p className="font-semibold text-spice text-sm truncate">
+            <p className="font-semibold text-foreground text-sm truncate">
               {topRestaurant.name}
             </p>
             <div className="flex items-center gap-1 mt-1">
-              <Star className="h-3 w-3 fill-curry text-curry" />
-              <span className="text-sm font-bold text-curry">
+              <Star className="h-3 w-3 fill-primary text-primary" />
+              <span className="text-sm font-bold text-primary">
                 {(topRestaurant as any)[
                   title.includes("Food")
                     ? "averageFood"
@@ -262,27 +262,27 @@ function RaterCard({ user, rank }: { user: any; rank: number }) {
           {rank <= 3 ? (
             <Award className={`h-8 w-8 ${getMedalColor(rank)}`} />
           ) : (
-            <div className="h-8 w-8 rounded-full bg-terracotta/20 flex items-center justify-center">
-              <span className="text-sm font-bold text-spice">{rank}</span>
+            <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
+              <span className="text-sm font-bold text-foreground">{rank}</span>
             </div>
           )}
         </div>
 
         {/* User Avatar & Info */}
-        <Avatar className="h-12 w-12 border-2 border-terracotta">
+        <Avatar className="h-12 w-12 border-2 border-border">
           {user.profileImageUrl && (
             <AvatarImage src={user.profileImageUrl} alt={user.nickname} />
           )}
-          <AvatarFallback className="bg-saffron text-spice">
+          <AvatarFallback className="bg-saffron text-foreground">
             {user.nickname?.slice(0, 2).toUpperCase() || "CS"}
           </AvatarFallback>
         </Avatar>
 
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-spice truncate">
+          <h3 className="font-semibold text-foreground truncate">
             {user.nickname || "Anonymous"}
           </h3>
-          <div className="flex gap-3 mt-1 text-xs text-spice/60">
+          <div className="flex gap-3 mt-1 text-xs text-muted-foreground">
             <span>🍛 {user.curriesRated} rated</span>
             <span>➕ {user.curriesAdded} added</span>
           </div>
@@ -290,10 +290,10 @@ function RaterCard({ user, rank }: { user: any; rank: number }) {
 
         {/* Stats */}
         <div className="flex-shrink-0 text-right">
-          <div className="text-2xl font-bold text-curry">
+          <div className="text-2xl font-bold text-primary">
             {user.curriesRated}
           </div>
-          <p className="text-xs text-spice/60">ratings</p>
+          <p className="text-xs text-muted-foreground">ratings</p>
         </div>
       </div>
     </div>
@@ -303,7 +303,7 @@ function RaterCard({ user, rank }: { user: any; rank: number }) {
 function LoadingCard() {
   return (
     <div className="card-parchment p-8 flex items-center justify-center">
-      <Loader2 className="h-6 w-6 animate-spin text-curry" />
+      <Loader2 className="h-6 w-6 animate-spin text-primary" />
     </div>
   );
 }
@@ -311,7 +311,7 @@ function LoadingCard() {
 function EmptyCard({ message }: { message: string }) {
   return (
     <div className="card-parchment p-8 text-center">
-      <p className="text-spice/60">{message}</p>
+      <p className="text-muted-foreground">{message}</p>
     </div>
   );
 }

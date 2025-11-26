@@ -11,7 +11,6 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { StatsCards } from "@/components/dashboard/stats-cards"
 import { RecentActivity } from "@/components/dashboard/recent-activity"
-import { QuickAddButton } from "@/components/dashboard/quick-add-button"
 import { BottomNav } from "@/components/navigation/bottom-nav"
 import { Calendar, MapPin, Sparkles, Trophy, ChefHat } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -294,14 +293,14 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen mesh-gradient pb-24">
+    <div className="h-screen overflow-y-auto mesh-gradient">
       {/* Header */}
       <header className="sticky top-0 z-30 border-b card-parchment shadow-sm">
         <DashboardHeader user={user} isLoading={isLoadingUser} />
       </header>
 
       {/* Main Content */}
-      <main className="space-y-6 py-6">
+      <main className="space-y-6 py-6 pb-28">
         {/* Status Card */}
         <StatusCard
           lastVisitDate={lastVisitDate}
@@ -354,10 +353,7 @@ export default function DashboardPage() {
         </section>
       </main>
 
-      {/* Floating Action Button */}
-      <QuickAddButton />
-
-      {/* Bottom Navigation */}
+      {/* Bottom Navigation (includes floating + button) */}
       <BottomNav />
     </div>
   )
