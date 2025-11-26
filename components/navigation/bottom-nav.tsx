@@ -44,12 +44,12 @@ export function BottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 safe-area-bottom"
+      className="fixed bottom-3 left-0 right-0 z-50 safe-area-bottom"
       aria-label="Bottom navigation"
     >
       <div className="relative w-full">
         {/* Navigation bar with Bevel-style design */}
-        <div className="relative bg-card/95 backdrop-blur-lg border-t border-border shadow-lg rounded-t-3xl mx-auto max-w-lg">
+        <div className="relative bg-card/95 backdrop-blur-lg border border-border shadow-lg rounded-3xl mx-auto max-w-lg">
           {/* 2-1-2 Flex Layout for perfect symmetry */}
           <div className="flex items-center justify-between h-16 px-6">
             {/* Left section - 2 icons */}
@@ -126,7 +126,7 @@ export function BottomNav() {
         </div>
 
         {/* Floating center + button - positioned absolutely above the nav */}
-        <div className="absolute left-1/2 -translate-x-1/2 bottom-10 max-w-lg w-full flex justify-center">
+        <div className="absolute left-1/2 -translate-x-1/2 bottom-3 max-w-lg w-full flex justify-center">
           <QuickAddButton variant="floating" />
         </div>
       </div>
