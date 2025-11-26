@@ -63,7 +63,8 @@ function AuthPage() {
     try {
       await signIn("password", { email, password, flow: mode });
       toast.success(mode === "signIn" ? "Welcome back!" : "Account created!");
-      router.push("/onboarding/nickname");
+      // Let the AuthenticatedRedirect component handle routing
+      // It will check onboarding status and redirect appropriately
     } catch (error: any) {
       console.error("Auth error:", error);
       toast.error(error.message || "Authentication failed. Please try again.");
