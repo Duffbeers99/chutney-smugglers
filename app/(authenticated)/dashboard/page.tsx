@@ -293,7 +293,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="h-screen overflow-y-auto mesh-gradient">
+    <div className="h-screen overflow-y-auto overflow-x-hidden mesh-gradient">
       {/* Header */}
       <header className="sticky top-0 z-30 border-b card-parchment shadow-sm">
         <DashboardHeader user={user} isLoading={isLoadingUser} />

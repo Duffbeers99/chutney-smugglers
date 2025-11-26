@@ -22,7 +22,7 @@ export default function RestaurantsPage() {
   )
 
   return (
-    <div className="h-screen overflow-y-auto bg-background">
+    <div className="h-screen overflow-y-auto overflow-x-hidden bg-background">
       {/* Header */}
       <header className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border px-4 py-4">
         <div className="flex items-center gap-3">

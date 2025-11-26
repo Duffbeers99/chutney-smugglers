@@ -102,7 +102,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="h-screen overflow-y-auto bg-background paper-texture">
+    <div className="h-screen overflow-y-auto overflow-x-hidden bg-background paper-texture">
       {/* Header */}
       <header className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border px-4 py-4">
         <div className="flex items-center gap-3">
