@@ -136,78 +136,101 @@ export function RestaurantAutocomplete({
   return (
     <>
       <style jsx global>{`
+        /* Target the web component container */
         gmp-place-autocomplete {
-          width: 100%;
+          width: 100% !important;
+          display: block !important;
         }
 
-        gmp-place-autocomplete input {
-          width: 100%;
-          height: 2.25rem;
-          padding-left: 2.5rem !important;
-          padding-right: 0.75rem;
-          padding-top: 0.25rem;
-          padding-bottom: 0.25rem;
-          font-size: 16px !important; /* Prevent mobile zoom */
-          line-height: 1.5;
-          border-radius: calc(var(--radius) - 2px);
-          border: 1px solid hsl(var(--input));
-          background-color: transparent;
-          color: hsl(var(--foreground));
-          transition: all 0.2s;
-          outline: none;
-          box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+        /* Target the internal input field - need !important to override Shadow DOM styles */
+        gmp-place-autocomplete input,
+        gmp-place-autocomplete input[type="text"] {
+          width: 100% !important;
+          height: 2.25rem !important;
+          padding: 0.25rem 0.75rem 0.25rem 2.5rem !important;
+          font-size: 16px !important; /* Prevent mobile zoom - 16px or larger */
+          line-height: 1.5 !important;
+          border-radius: calc(var(--radius) - 2px) !important;
+          border: 1px solid hsl(var(--input)) !important;
+          background-color: transparent !important;
+          background: transparent !important;
+          color: hsl(var(--foreground)) !important;
+          transition: all 0.2s !important;
+          outline: none !important;
+          box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05) !important;
+          -webkit-appearance: none !important;
+          appearance: none !important;
         }
 
-        gmp-place-autocomplete input::placeholder {
-          color: hsl(var(--muted-foreground));
+        /* Placeholder styling */
+        gmp-place-autocomplete input::placeholder,
+        gmp-place-autocomplete input::-webkit-input-placeholder {
+          color: hsl(var(--muted-foreground)) !important;
+          opacity: 1 !important;
         }
 
-        gmp-place-autocomplete input:focus {
-          border-color: hsl(var(--ring));
-          box-shadow: 0 0 0 3px hsl(var(--ring) / 0.5);
+        /* Focus state */
+        gmp-place-autocomplete input:focus,
+        gmp-place-autocomplete input:focus-visible {
+          border-color: hsl(var(--ring)) !important;
+          box-shadow: 0 0 0 3px hsl(var(--ring) / 0.5) !important;
+          outline: none !important;
         }
 
+        /* Disabled state */
         gmp-place-autocomplete input:disabled {
-          cursor: not-allowed;
-          opacity: 0.5;
+          cursor: not-allowed !important;
+          opacity: 0.5 !important;
+        }
+
+        /* Override any dark background from Google */
+        gmp-place-autocomplete > div,
+        gmp-place-autocomplete .gm-control-active {
+          background-color: transparent !important;
+          background: transparent !important;
         }
 
         /* Style the dropdown suggestions */
         .pac-container {
-          border-radius: calc(var(--radius) - 2px);
-          border: 1px solid hsl(var(--border));
-          background-color: hsl(var(--background));
-          box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-          margin-top: 4px;
+          border-radius: calc(var(--radius) - 2px) !important;
+          border: 1px solid hsl(var(--border)) !important;
+          background-color: hsl(var(--background)) !important;
+          background: hsl(var(--background)) !important;
+          box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
+          margin-top: 4px !important;
+          font-family: inherit !important;
         }
 
         .pac-item {
-          color: hsl(var(--foreground));
-          border-color: hsl(var(--border));
-          padding: 0.5rem 0.75rem;
-          font-size: 0.875rem;
-          cursor: pointer;
+          color: hsl(var(--foreground)) !important;
+          background-color: hsl(var(--background)) !important;
+          border-color: hsl(var(--border)) !important;
+          padding: 0.5rem 0.75rem !important;
+          font-size: 0.875rem !important;
+          cursor: pointer !important;
+          line-height: 1.5 !important;
         }
 
         .pac-item:hover {
-          background-color: hsl(var(--accent));
+          background-color: hsl(var(--accent)) !important;
         }
 
         .pac-item-selected {
-          background-color: hsl(var(--accent));
+          background-color: hsl(var(--accent)) !important;
         }
 
         .pac-item-query {
-          color: hsl(var(--foreground));
-          font-size: 0.875rem;
+          color: hsl(var(--foreground)) !important;
+          font-size: 0.875rem !important;
         }
 
         .pac-matched {
-          font-weight: 600;
+          font-weight: 600 !important;
+          color: hsl(var(--foreground)) !important;
         }
 
         .pac-icon {
-          display: none; /* Hide Google's default icon since we have our own MapPin */
+          display: none !important; /* Hide Google's default icon since we have our own MapPin */
         }
       `}</style>
       <div className="space-y-2">
