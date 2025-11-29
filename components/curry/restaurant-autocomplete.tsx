@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { Label } from "@/components/ui/label"
-import { MapPin, Loader2 } from "lucide-react"
+import { Loader2 } from "lucide-react"
 import { useGoogleMaps } from "@/hooks/use-google-maps"
 
 export interface PlaceResult {
@@ -43,15 +43,6 @@ export function RestaurantAutocomplete({
 
         // Configure it for establishments (restaurants)
         autocompleteElement.setAttribute('placeholder', 'Start typing restaurant name...')
-
-        // Remove Google's default icon to prevent duplicate with our MapPin
-        const style = document.createElement('style')
-        style.textContent = `
-          gmp-place-autocomplete::part(icon) {
-            display: none !important;
-          }
-        `
-        document.head.appendChild(style)
 
         // Listen for place selection
         autocompleteElement.addEventListener('gmp-placeselect', async (event: any) => {
@@ -120,8 +111,7 @@ export function RestaurantAutocomplete({
       <div className="space-y-2">
         <Label>Restaurant Name</Label>
         <div className="relative">
-          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
-          <div className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 pl-10 text-sm text-muted-foreground">
+          <div className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-muted-foreground">
             Loading Google Maps...
           </div>
           <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
@@ -155,24 +145,12 @@ export function RestaurantAutocomplete({
           display: block !important;
         }
 
-        /* Hide Google's default icon */
-        gmp-place-autocomplete::part(icon),
-        gmp-place-autocomplete [class*="icon"],
-        gmp-place-autocomplete svg,
-        gmp-place-autocomplete img {
-          display: none !important;
-          visibility: hidden !important;
-          opacity: 0 !important;
-          width: 0 !important;
-          height: 0 !important;
-        }
-
         /* Target the internal input field - need !important to override Shadow DOM styles */
         gmp-place-autocomplete input,
         gmp-place-autocomplete input[type="text"] {
           width: 100% !important;
           height: 2.25rem !important;
-          padding: 0.25rem 0.75rem 0.25rem 2.5rem !important;
+          padding: 0.25rem 0.75rem !important;
           font-size: 16px !important; /* Prevent mobile zoom - 16px or larger */
           min-font-size: 16px !important;
           line-height: 1.5 !important;
@@ -257,16 +235,10 @@ export function RestaurantAutocomplete({
           color: hsl(var(--foreground)) !important;
         }
 
-        .pac-icon {
-          display: none !important; /* Hide Google's default icon since we have our own MapPin */
-        }
       `}</style>
       <div className="space-y-2">
         <Label>Restaurant Name</Label>
-        <div className="relative">
-          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 pointer-events-none" />
-          <div ref={containerRef} className="w-full" />
-        </div>
+        <div ref={containerRef} className="w-full" />
         <p className="text-xs text-muted-foreground">
           Select from suggestions
         </p>
