@@ -44,34 +44,56 @@ export function RestaurantAutocomplete({
         // Set placeholder
         autocompleteElement.setAttribute('placeholder', 'Start typing restaurant name...')
 
-        // Listen for place selection using correct event name
-        autocompleteElement.addEventListener('gmp-placeselect', async (event: any) => {
+        // Listen for place selection - try both event names for compatibility
+        const handlePlaceSelection = async (event: any) => {
+          console.log('Place selection event fired:', event)
+
           const place = event.place
+          console.log('Place object:', place)
 
-          if (!place) return
-
-          // Fetch place details with correct field names
-          await place.fetchFields({
-            fields: ['displayName', 'formattedAddress', 'id', 'location']
-          })
-
-          const result: PlaceResult = {
-            name: place.displayName || '',
-            address: place.formattedAddress || '',
-            placeId: place.id || '',
+          if (!place) {
+            console.error('No place object in event')
+            return
           }
 
-          // Add location if available
-          if (place.location) {
-            result.location = {
-              lat: place.location.lat(),
-              lng: place.location.lng(),
+          try {
+            // Fetch place details with correct field names
+            await place.fetchFields({
+              fields: ['displayName', 'formattedAddress', 'id', 'location']
+            })
+
+            console.log('Place details after fetch:', {
+              displayName: place.displayName,
+              formattedAddress: place.formattedAddress,
+              id: place.id,
+              location: place.location
+            })
+
+            const result: PlaceResult = {
+              name: place.displayName || '',
+              address: place.formattedAddress || '',
+              placeId: place.id || '',
             }
-          }
 
-          // Call parent callback
-          onPlaceSelect(result)
-        })
+            // Add location if available
+            if (place.location) {
+              result.location = {
+                lat: place.location.lat(),
+                lng: place.location.lng(),
+              }
+            }
+
+            console.log('Calling onPlaceSelect with:', result)
+            // Call parent callback
+            onPlaceSelect(result)
+          } catch (error) {
+            console.error('Error fetching place details:', error)
+          }
+        }
+
+        // Listen for both possible event names
+        autocompleteElement.addEventListener('gmp-placeselect', handlePlaceSelection)
+        autocompleteElement.addEventListener('place_changed', handlePlaceSelection)
 
         // Clear container and add element
         if (containerRef.current) {
