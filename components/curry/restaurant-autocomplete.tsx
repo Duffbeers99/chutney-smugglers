@@ -54,22 +54,39 @@ export function RestaurantAutocomplete({
 
         // Handle gmp-select event - this uses a different pattern
         const handlePlaceSelection = async (event: any) => {
-          console.log('Event fired! Type:', event.type, 'Event:', event)
+          console.log('Event fired! Type:', event.type, 'Full Event Object:', event)
+          console.log('Event.target:', event.target)
+          console.log('Event.currentTarget:', event.currentTarget)
 
           try {
-            // For gmp-select event, we need to get the place from the autocomplete element's value
-            // The element should have a 'value' property with the place prediction
-            const placePrediction = (autocompleteElement as any).value
-            console.log('Place prediction from element.value:', placePrediction)
+            // Try multiple ways to get the place prediction
+            let placePrediction = (event.target as any)?.value ||
+                                  (autocompleteElement as any).value ||
+                                  (event.currentTarget as any)?.value
+
+            console.log('Place prediction (trying multiple sources):', placePrediction)
+            console.log('Autocomplete element properties:', Object.keys(autocompleteElement))
+
+            // Try getting it as a property directly
+            if (!placePrediction) {
+              placePrediction = (autocompleteElement as any).place ||
+                               (autocompleteElement as any).selectedPlace ||
+                               (event.target as any).place
+              console.log('Trying place property:', placePrediction)
+            }
 
             if (!placePrediction) {
-              console.error('No place prediction found on autocomplete element')
+              console.error('No place prediction found. Autocomplete element:', autocompleteElement)
+              console.error('All autocomplete properties:', Object.getOwnPropertyNames(autocompleteElement))
               return
             }
 
+            console.log('Got place prediction, type:', typeof placePrediction)
+            console.log('Place prediction properties:', Object.keys(placePrediction || {}))
+
             // Convert prediction to Place object
             const place = placePrediction.toPlace ? placePrediction.toPlace() : placePrediction
-            console.log('Place object:', place)
+            console.log('Place object after conversion:', place)
 
             // Fetch the full place details
             await place.fetchFields({
@@ -100,6 +117,7 @@ export function RestaurantAutocomplete({
             onPlaceSelect(result)
           } catch (error) {
             console.error('Error in handlePlaceSelection:', error)
+            console.error('Error stack:', (error as Error).stack)
           }
         }
 
