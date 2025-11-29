@@ -69,7 +69,7 @@ export function UpcomingCurryCard({ className }: UpcomingCurryCardProps) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false)
   const [isDeleting, setIsDeleting] = React.useState(false)
 
-  // Update countdown with adaptive frequency
+  // Update countdown with live ticking
   React.useEffect(() => {
     if (!nextEvent) {
       setTimeRemaining(null)
@@ -79,21 +79,16 @@ export function UpcomingCurryCard({ className }: UpcomingCurryCardProps) {
     const updateCountdown = () => {
       const remaining = calculateTimeRemaining(nextEvent.scheduledDate, nextEvent.scheduledTime)
       setTimeRemaining(remaining)
-      return remaining
     }
 
     // Update immediately
-    const remaining = updateCountdown()
+    updateCountdown()
 
-    // Determine update frequency based on time remaining
-    // If more than 24 hours away, update every minute
-    // If within 24 hours, update every second
-    const updateInterval = remaining && remaining.days > 0 ? 60000 : 1000
-
-    const interval = setInterval(updateCountdown, updateInterval)
+    // Always update every second for live countdown
+    const interval = setInterval(updateCountdown, 1000)
 
     return () => clearInterval(interval)
-  }, [nextEvent?.scheduledDate, nextEvent?.scheduledTime])
+  }, [nextEvent])
 
   // Handle delete confirmation
   const confirmDelete = async () => {
