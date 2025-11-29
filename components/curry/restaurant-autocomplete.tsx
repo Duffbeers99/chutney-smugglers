@@ -1,7 +1,6 @@
 "use client"
 
 import * as React from "react"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { MapPin, Loader2 } from "lucide-react"
 import { useGoogleMaps } from "@/hooks/use-google-maps"
@@ -27,60 +26,75 @@ export function RestaurantAutocomplete({
   disabled,
   initialValue = "",
 }: RestaurantAutocompleteProps) {
-  const inputRef = React.useRef<HTMLInputElement>(null)
-  const autocompleteRef = React.useRef<google.maps.places.Autocomplete | null>(null)
+  const containerRef = React.useRef<HTMLDivElement>(null)
   const { isLoaded, loadError } = useGoogleMaps()
-  const [inputValue, setInputValue] = React.useState(initialValue)
 
-  // Initialize autocomplete when Google Maps is loaded
+  // Initialize PlaceAutocompleteElement when Google Maps is loaded
   React.useEffect(() => {
-    if (!isLoaded || !inputRef.current || disabled) return
+    if (!isLoaded || !containerRef.current || disabled) return
 
-    try {
-      // Initialize Google Places Autocomplete
-      const autocomplete = new google.maps.places.Autocomplete(inputRef.current, {
-        types: ["restaurant"], // Only show restaurants
-        fields: ["name", "formatted_address", "place_id", "geometry"], // Minimize API cost
-      })
+    const initAutocomplete = async () => {
+      try {
+        // Import the PlaceAutocompleteElement from the places library
+        const { PlaceAutocompleteElement } = await google.maps.importLibrary("places") as any
 
-      // Listen for place selection
-      autocomplete.addListener("place_changed", () => {
-        const place = autocomplete.getPlace()
+        // Create the autocomplete element
+        const autocompleteElement = new PlaceAutocompleteElement()
 
-        if (!place.name || !place.formatted_address) {
-          return
-        }
+        // Configure it for establishments (restaurants)
+        autocompleteElement.setAttribute('placeholder', 'Start typing restaurant name...')
 
-        const result: PlaceResult = {
-          name: place.name,
-          address: place.formatted_address,
-          placeId: place.place_id || "",
-        }
+        // Style it to match our design
+        Object.assign(autocompleteElement.style, {
+          width: '100%',
+          paddingLeft: '2.5rem'
+        })
 
-        // Add location if available
-        if (place.geometry?.location) {
-          result.location = {
-            lat: place.geometry.location.lat(),
-            lng: place.geometry.location.lng(),
+        // Listen for place selection
+        autocompleteElement.addEventListener('gmp-placeselect', async (event: any) => {
+          const place = event.place
+
+          if (!place) return
+
+          // Fetch place details
+          await place.fetchFields({
+            fields: ['displayName', 'formattedAddress', 'id', 'location']
+          })
+
+          const result: PlaceResult = {
+            name: place.displayName || '',
+            address: place.formattedAddress || '',
+            placeId: place.id || '',
           }
+
+          // Add location if available
+          if (place.location) {
+            result.location = {
+              lat: place.location.lat(),
+              lng: place.location.lng(),
+            }
+          }
+
+          // Call parent callback
+          onPlaceSelect(result)
+        })
+
+        // Clear container and add element
+        if (containerRef.current) {
+          containerRef.current.innerHTML = ''
+          containerRef.current.appendChild(autocompleteElement)
         }
-
-        // Update input value
-        setInputValue(place.name)
-
-        // Call parent callback
-        onPlaceSelect(result)
-      })
-
-      autocompleteRef.current = autocomplete
-    } catch (error) {
-      console.error("Error initializing autocomplete:", error)
+      } catch (error) {
+        console.error("Error initializing place autocomplete:", error)
+      }
     }
+
+    initAutocomplete()
 
     return () => {
       // Cleanup
-      if (autocompleteRef.current) {
-        google.maps.event.clearInstanceListeners(autocompleteRef.current)
+      if (containerRef.current) {
+        containerRef.current.innerHTML = ''
       }
     }
   }, [isLoaded, disabled, onPlaceSelect])
@@ -89,14 +103,12 @@ export function RestaurantAutocomplete({
   if (!isLoaded && !loadError) {
     return (
       <div className="space-y-2">
-        <Label htmlFor="restaurant-search">Restaurant Name</Label>
+        <Label>Restaurant Name</Label>
         <div className="relative">
-          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            disabled
-            placeholder="Loading Google Maps..."
-            className="pl-10"
-          />
+          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
+          <div className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 pl-10 text-sm text-muted-foreground">
+            Loading Google Maps...
+          </div>
           <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
         </div>
         <p className="text-xs text-muted-foreground">
@@ -110,51 +122,24 @@ export function RestaurantAutocomplete({
   if (loadError) {
     return (
       <div className="space-y-2">
-        <Label htmlFor="restaurant-name">Restaurant Name</Label>
-        <div className="relative">
-          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            id="restaurant-name"
-            value={inputValue}
-            onChange={(e) => {
-              setInputValue(e.target.value)
-              // For manual entry when autocomplete fails
-              onPlaceSelect({
-                name: e.target.value,
-                address: "",
-                placeId: "",
-              })
-            }}
-            placeholder="Enter restaurant name manually"
-            disabled={disabled}
-            className="pl-10"
-          />
-        </div>
+        <Label>Restaurant Name</Label>
         <p className="text-xs text-destructive">
-          Autocomplete unavailable. Enter manually.
+          Failed to load Google Maps. Please check your API key and enabled APIs.
         </p>
       </div>
     )
   }
 
-  // Normal autocomplete input
+  // Normal autocomplete
   return (
     <div className="space-y-2">
-      <Label htmlFor="restaurant-search">Restaurant Name</Label>
+      <Label>Restaurant Name</Label>
       <div className="relative">
-        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          ref={inputRef}
-          id="restaurant-search"
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          placeholder="Start typing restaurant name..."
-          disabled={disabled}
-          className="pl-10"
-        />
+        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 pointer-events-none" />
+        <div ref={containerRef} className="w-full" />
       </div>
       <p className="text-xs text-muted-foreground">
-        Select from suggestions or enter manually
+        Select from suggestions
       </p>
     </div>
   )
