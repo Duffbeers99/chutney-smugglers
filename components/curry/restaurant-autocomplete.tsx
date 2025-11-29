@@ -44,30 +44,35 @@ export function RestaurantAutocomplete({
         // Set placeholder
         autocompleteElement.setAttribute('placeholder', 'Start typing restaurant name...')
 
-        // Listen for place selection - try both event names for compatibility
-        const handlePlaceSelection = async (event: any) => {
-          console.log('Place selection event fired:', event)
+        // Add listener to the element itself using the 'place' property
+        Object.defineProperty(autocompleteElement, 'addEventListener', {
+          value: function(type: string, listener: any) {
+            console.log('Adding event listener for:', type)
+            HTMLElement.prototype.addEventListener.call(this, type, listener)
+          }
+        })
 
-          const place = event.place
-          console.log('Place object:', place)
+        // Try multiple event approaches
+        const handlePlaceSelection = async (event: any) => {
+          console.log('Event fired! Type:', event.type, 'Event:', event)
+
+          // Try to get place from different sources
+          let place = event.place || event.detail?.place || (autocompleteElement as any).place
+
+          console.log('Place from event:', place)
 
           if (!place) {
-            console.error('No place object in event')
+            console.error('No place found in event or element')
             return
           }
 
           try {
-            // Fetch place details with correct field names
+            // Fetch place details
             await place.fetchFields({
               fields: ['displayName', 'formattedAddress', 'id', 'location']
             })
 
-            console.log('Place details after fetch:', {
-              displayName: place.displayName,
-              formattedAddress: place.formattedAddress,
-              id: place.id,
-              location: place.location
-            })
+            console.log('Place after fetchFields:', place)
 
             const result: PlaceResult = {
               name: place.displayName || '',
@@ -75,7 +80,6 @@ export function RestaurantAutocomplete({
               placeId: place.id || '',
             }
 
-            // Add location if available
             if (place.location) {
               result.location = {
                 lat: place.location.lat(),
@@ -83,17 +87,30 @@ export function RestaurantAutocomplete({
               }
             }
 
-            console.log('Calling onPlaceSelect with:', result)
-            // Call parent callback
+            console.log('Calling onPlaceSelect with result:', result)
             onPlaceSelect(result)
           } catch (error) {
-            console.error('Error fetching place details:', error)
+            console.error('Error in handlePlaceSelection:', error)
           }
         }
 
-        // Listen for both possible event names
+        // Try all possible event names
+        console.log('Setting up autocomplete element listeners')
         autocompleteElement.addEventListener('gmp-placeselect', handlePlaceSelection)
         autocompleteElement.addEventListener('place_changed', handlePlaceSelection)
+        autocompleteElement.addEventListener('gmp-select', handlePlaceSelection)
+
+        // Also try listening on the input element
+        setTimeout(() => {
+          const input = autocompleteElement.querySelector('input')
+          console.log('Input element found:', input)
+          if (input) {
+            input.addEventListener('change', (e: any) => {
+              console.log('Input change event:', e)
+              handlePlaceSelection(e)
+            })
+          }
+        }, 500)
 
         // Clear container and add element
         if (containerRef.current) {
