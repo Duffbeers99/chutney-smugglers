@@ -12,6 +12,7 @@ import type * as ResendPasswordReset from "../ResendPasswordReset.js";
 import type * as auth from "../auth.js";
 import type * as curryEvents from "../curryEvents.js";
 import type * as http from "../http.js";
+import type * as migrations from "../migrations.js";
 import type * as ratings from "../ratings.js";
 import type * as restaurants from "../restaurants.js";
 import type * as storage from "../storage.js";
@@ -28,6 +29,7 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   curryEvents: typeof curryEvents;
   http: typeof http;
+  migrations: typeof migrations;
   ratings: typeof ratings;
   restaurants: typeof restaurants;
   storage: typeof storage;
