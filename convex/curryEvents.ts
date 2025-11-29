@@ -428,3 +428,48 @@ export const advanceRotation = mutation({
     return { success: true, nextBooker: nextBooker.userId };
   },
 });
+
+/**
+ * Initialize the current user in the booking rotation
+ * This sets them as the current booker with override permissions
+ */
+export const initializeCurrentUserAsBooker = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("Must be authenticated");
+    }
+
+    // Check if user already exists in rotation
+    const existing = await ctx.db
+      .query("bookingRotation")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .first();
+
+    if (existing) {
+      // Update existing entry to be current booker
+      await ctx.db.patch(existing._id, {
+        isCurrentBooker: true,
+        canOverride: true,
+      });
+      return { success: true, message: "Updated as current booker" };
+    }
+
+    // Get count of existing rotations to determine order
+    const allRotations = await ctx.db
+      .query("bookingRotation")
+      .collect();
+
+    // Add user to rotation
+    await ctx.db.insert("bookingRotation", {
+      userId,
+      rotationOrder: allRotations.length,
+      isCurrentBooker: true,
+      canOverride: true,
+      addedAt: Date.now(),
+    });
+
+    return { success: true, message: "Added to booking rotation as current booker" };
+  },
+});

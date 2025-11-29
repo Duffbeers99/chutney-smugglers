@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useQuery } from "convex/react"
+import { useQuery, useMutation } from "convex/react"
 import { api } from "@/convex/_generated/api"
 import { format } from "date-fns"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
@@ -250,6 +250,23 @@ export default function DashboardPage() {
   const user = useQuery(api.users.currentUser)
   const userStats = useQuery(api.users.getUserStats)
   const recentRatings = useQuery(api.ratings.getRecentRatings, { limit: 10 })
+  const canManageEvents = useQuery(api.curryEvents.canManageEvents)
+
+  // Auto-initialize booking rotation
+  const initializeBooker = useMutation(api.curryEvents.initializeCurrentUserAsBooker)
+
+  React.useEffect(() => {
+    // If user is loaded and can't manage events, initialize them
+    if (user && canManageEvents === false) {
+      initializeBooker({})
+        .then(() => {
+          console.log("Initialized booking rotation for user")
+        })
+        .catch((error) => {
+          console.error("Failed to initialize booking rotation:", error)
+        })
+    }
+  }, [user, canManageEvents, initializeBooker])
 
   // Loading states
   const isLoadingUser = user === undefined
