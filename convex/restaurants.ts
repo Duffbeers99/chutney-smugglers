@@ -99,6 +99,7 @@ export const add = mutation({
     name: v.string(),
     address: v.string(),
     cuisine: v.optional(v.string()),
+    googlePlaceId: v.optional(v.string()),
     location: v.optional(
       v.object({
         lat: v.number(),
@@ -124,6 +125,7 @@ export const add = mutation({
       name: args.name,
       address: args.address,
       cuisine: args.cuisine,
+      googlePlaceId: args.googlePlaceId,
       location: args.location,
       addedBy: userId,
       addedAt: Date.now(),

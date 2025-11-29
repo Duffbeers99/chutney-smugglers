@@ -159,6 +159,13 @@ export const createEvent = mutation({
     scheduledDate: v.number(),
     scheduledTime: v.string(),
     notes: v.optional(v.string()),
+    googlePlaceId: v.optional(v.string()),
+    location: v.optional(
+      v.object({
+        lat: v.number(),
+        lng: v.number(),
+      })
+    ),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -200,6 +207,8 @@ export const createEvent = mutation({
       restaurantId: args.restaurantId,
       restaurantName: args.restaurantName,
       address: args.address,
+      googlePlaceId: args.googlePlaceId,
+      location: args.location,
       scheduledDate: args.scheduledDate,
       scheduledTime: args.scheduledTime,
       createdBy: userId,
@@ -225,6 +234,13 @@ export const updateEvent = mutation({
     scheduledTime: v.optional(v.string()),
     notes: v.optional(v.string()),
     status: v.optional(v.string()),
+    googlePlaceId: v.optional(v.string()),
+    location: v.optional(
+      v.object({
+        lat: v.number(),
+        lng: v.number(),
+      })
+    ),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -274,6 +290,8 @@ export const updateEvent = mutation({
     if (args.scheduledTime !== undefined) updates.scheduledTime = args.scheduledTime;
     if (args.notes !== undefined) updates.notes = args.notes;
     if (args.status !== undefined) updates.status = args.status;
+    if (args.googlePlaceId !== undefined) updates.googlePlaceId = args.googlePlaceId;
+    if (args.location !== undefined) updates.location = args.location;
 
     await ctx.db.patch(args.eventId, updates);
 

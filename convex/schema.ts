@@ -41,6 +41,9 @@ const schema = defineSchema({
     address: v.string(),
     cuisine: v.optional(v.string()),
 
+    // Google Places integration
+    googlePlaceId: v.optional(v.string()),
+
     // Location data for future maps integration
     location: v.optional(
       v.object({
@@ -94,6 +97,16 @@ const schema = defineSchema({
     restaurantId: v.id("restaurants"),
     restaurantName: v.string(), // Denormalized for quick access
     address: v.string(), // Denormalized
+
+    // Google Places integration (denormalized)
+    googlePlaceId: v.optional(v.string()),
+    location: v.optional(
+      v.object({
+        lat: v.number(),
+        lng: v.number(),
+      })
+    ),
+
     scheduledDate: v.number(), // Timestamp for the date
     scheduledTime: v.string(), // Time in HH:mm format (e.g., "19:30")
     createdBy: v.id("users"),

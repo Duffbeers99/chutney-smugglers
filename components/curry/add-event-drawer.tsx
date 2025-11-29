@@ -18,9 +18,10 @@ import { Textarea } from "@/components/ui/textarea"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { toast } from "sonner"
-import { Calendar as CalendarIcon, Clock, Loader2, MapPin } from "lucide-react"
+import { Calendar as CalendarIcon, Loader2 } from "lucide-react"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
+import { RestaurantAutocomplete, type PlaceResult } from "./restaurant-autocomplete"
 
 interface AddEventDrawerProps {
   open: boolean
@@ -42,6 +43,8 @@ export function AddEventDrawer({ open, onOpenChange, existingEvent }: AddEventDr
   // Form state
   const [restaurantName, setRestaurantName] = React.useState(existingEvent?.restaurantName ?? "")
   const [address, setAddress] = React.useState(existingEvent?.address ?? "")
+  const [googlePlaceId, setGooglePlaceId] = React.useState<string>("")
+  const [location, setLocation] = React.useState<{ lat: number; lng: number } | undefined>()
   const [date, setDate] = React.useState<Date | undefined>(
     existingEvent ? new Date(existingEvent.scheduledDate) : undefined
   )
@@ -53,12 +56,22 @@ export function AddEventDrawer({ open, onOpenChange, existingEvent }: AddEventDr
   const updateEventMutation = useMutation(api.curryEvents.updateEvent)
   const addRestaurant = useMutation(api.restaurants.add)
 
+  // Handle place selection from autocomplete
+  const handlePlaceSelect = React.useCallback((place: PlaceResult) => {
+    setRestaurantName(place.name)
+    setAddress(place.address)
+    setGooglePlaceId(place.placeId)
+    setLocation(place.location)
+  }, [])
+
   // Reset form when drawer closes (only for create mode)
   React.useEffect(() => {
     if (!open && !existingEvent) {
       setTimeout(() => {
         setRestaurantName("")
         setAddress("")
+        setGooglePlaceId("")
+        setLocation(undefined)
         setDate(undefined)
         setTime("19:00")
         setNotes("")
@@ -80,6 +93,8 @@ export function AddEventDrawer({ open, onOpenChange, existingEvent }: AddEventDr
         // Create mode - ensure clean form
         setRestaurantName("")
         setAddress("")
+        setGooglePlaceId("")
+        setLocation(undefined)
         setDate(undefined)
         setTime("19:00")
         setNotes("")
@@ -119,9 +134,9 @@ export function AddEventDrawer({ open, onOpenChange, existingEvent }: AddEventDr
 
       if (isEditing && existingEvent) {
         // For editing, we don't create a new restaurant, just update the event
+        // Note: We can update address but not restaurant name in edit mode
         await updateEventMutation({
           eventId: existingEvent._id,
-          restaurantName: restaurantName.trim(),
           address: address.trim(),
           scheduledDate: scheduledDate.getTime(),
           scheduledTime: time,
@@ -134,6 +149,8 @@ export function AddEventDrawer({ open, onOpenChange, existingEvent }: AddEventDr
         const restaurantId = await addRestaurant({
           name: restaurantName.trim(),
           address: address.trim(),
+          googlePlaceId: googlePlaceId || undefined,
+          location,
         })
 
         await createEventMutation({
@@ -143,6 +160,8 @@ export function AddEventDrawer({ open, onOpenChange, existingEvent }: AddEventDr
           scheduledDate: scheduledDate.getTime(),
           scheduledTime: time,
           notes: notes.trim() || undefined,
+          googlePlaceId: googlePlaceId || undefined,
+          location,
         })
 
         toast.success("Curry event created!")
@@ -176,22 +195,24 @@ export function AddEventDrawer({ open, onOpenChange, existingEvent }: AddEventDr
 
         <div className="flex-1 overflow-y-auto px-6 py-6">
           <form id="event-form" onSubmit={handleSubmit} className="space-y-5">
-            {/* Restaurant Name */}
-            <div className="space-y-2">
-              <Label htmlFor="restaurant-name">Restaurant Name</Label>
-              <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="restaurant-name"
-                  value={restaurantName}
-                  onChange={(e) => setRestaurantName(e.target.value)}
-                  placeholder="e.g., Spice Garden"
-                  className="pl-10"
-                  required
-                  disabled={loading}
-                />
+            {/* Restaurant Name - Autocomplete */}
+            {!isEditing && (
+              <RestaurantAutocomplete
+                onPlaceSelect={handlePlaceSelect}
+                disabled={loading}
+                initialValue={restaurantName}
+              />
+            )}
+
+            {/* For editing, show static name (can't change restaurant in edit mode) */}
+            {isEditing && (
+              <div className="space-y-2">
+                <Label>Restaurant Name</Label>
+                <div className="p-3 rounded-md bg-muted text-sm">
+                  {restaurantName}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Address */}
             <div className="space-y-2">
