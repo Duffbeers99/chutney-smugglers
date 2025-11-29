@@ -170,7 +170,7 @@ export async function updateRestaurantAggregates(
   const avgService = ratings.reduce((sum: number, r: any) => sum + r.service, 0) / ratings.length;
   const avgExtras = ratings.reduce((sum: number, r: any) => sum + r.extras, 0) / ratings.length;
   const avgAtmosphere = ratings.reduce((sum: number, r: any) => sum + r.atmosphere, 0) / ratings.length;
-  const overall = (avgFood + avgService + avgExtras + avgAtmosphere) / 4;
+  const overall = avgFood + avgService + avgExtras + avgAtmosphere; // Sum of averages (out of 20)
 
   await ctx.db.patch(restaurantId, {
     averageFood: Math.round(avgFood * 10) / 10,

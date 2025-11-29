@@ -8,7 +8,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { ChevronRight, Star, TrendingUp, Loader2, UserPlus } from "lucide-react"
+import { Star, TrendingUp, Loader2, UserPlus, Calendar } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import type { Id } from "@/convex/_generated/dataModel"
@@ -45,13 +45,7 @@ interface RecentActivityProps {
   onRatingClick?: (ratingId: string) => void
 }
 
-function ActivityItem({
-  rating,
-  onClick,
-}: {
-  rating: RatingData
-  onClick?: (ratingId: string) => void
-}) {
+function ActivityItem({ rating }: { rating: RatingData }) {
   const [isClaiming, setIsClaiming] = React.useState(false)
   const claimRatingMutation = useMutation(api.ratings.claimRating)
 
@@ -92,26 +86,7 @@ function ActivityItem({
   }
 
   return (
-    <div
-      className={cn(
-        "flex items-start gap-3 p-4 rounded-lg transition-all duration-200",
-        "hover:bg-muted/50 active:scale-[0.98]",
-        onClick && "cursor-pointer"
-      )}
-      onClick={() => onClick?.(rating._id)}
-      role={onClick ? "button" : undefined}
-      tabIndex={onClick ? 0 : undefined}
-      onKeyDown={
-        onClick
-          ? (e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault()
-                onClick(rating._id)
-              }
-            }
-          : undefined
-      }
-    >
+    <div className="flex items-start gap-3 p-4 rounded-lg">
       {/* User Avatar */}
       <Avatar className="size-10 border-2 border-border">
         {rating.user?.profileImageUrl && (
@@ -157,9 +132,14 @@ function ActivityItem({
             <p className="text-sm font-semibold text-foreground">
               {rating.restaurant.name}
             </p>
-            <p className="text-xs text-muted-foreground">
-              {rating.restaurant.cuisine || "Curry"} • {rating.restaurant.address}
-            </p>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+              <div className="flex items-center gap-1">
+                <Calendar className="size-3" />
+                <span>{format(rating.visitDate, "MMM d, yyyy")}</span>
+              </div>
+              <span>•</span>
+              <span>{rating.restaurant.cuisine || "Curry"}</span>
+            </div>
           </div>
         )}
 
@@ -219,14 +199,6 @@ function ActivityItem({
           </div>
         )}
       </div>
-
-      {/* Chevron */}
-      {onClick && (
-        <ChevronRight
-          className="size-5 text-muted-foreground shrink-0 self-center"
-          aria-hidden="true"
-        />
-      )}
     </div>
   )
 }
@@ -284,11 +256,7 @@ export function RecentActivity({
       <CardContent className="px-0">
         <div className="divide-y divide-border">
           {ratings.map((rating) => (
-            <ActivityItem
-              key={rating._id}
-              rating={rating}
-              onClick={onRatingClick}
-            />
+            <ActivityItem key={rating._id} rating={rating} />
           ))}
         </div>
       </CardContent>

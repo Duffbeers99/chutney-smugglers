@@ -195,8 +195,6 @@ function QuickAccessCard() {
 }
 
 export default function DashboardPage() {
-  const router = useRouter()
-
   // Fetch data
   const user = useQuery(api.users.currentUser)
   const recentRatings = useQuery(api.ratings.getRecentRatings, { limit: 10 })
@@ -222,10 +220,6 @@ export default function DashboardPage() {
   const isLoadingUser = user === undefined
   const isLoadingRatings = recentRatings === undefined
 
-  const handleRatingClick = (ratingId: string) => {
-    router.push(`/ratings/${ratingId}`)
-  }
-
   return (
     <div className="h-screen overflow-y-auto overflow-x-hidden mesh-gradient">
       {/* Header */}
@@ -249,7 +243,6 @@ export default function DashboardPage() {
           <RecentActivity
             ratings={recentRatings}
             isLoading={isLoadingRatings}
-            onRatingClick={handleRatingClick}
           />
         </section>
       </main>

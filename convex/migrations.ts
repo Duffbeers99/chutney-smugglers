@@ -394,7 +394,7 @@ export const importHistoricalCurries = mutation({
         const avgService = ratings.reduce((sum, r) => sum + r.service, 0) / ratings.length;
         const avgExtras = ratings.reduce((sum, r) => sum + r.extras, 0) / ratings.length;
         const avgAtmosphere = ratings.reduce((sum, r) => sum + r.atmosphere, 0) / ratings.length;
-        const overall = (avgFood + avgService + avgExtras + avgAtmosphere) / 4;
+        const overall = avgFood + avgService + avgExtras + avgAtmosphere; // Sum of averages (out of 20)
 
         await ctx.db.patch(restaurantId as any, {
           averageFood: Math.round(avgFood * 10) / 10,

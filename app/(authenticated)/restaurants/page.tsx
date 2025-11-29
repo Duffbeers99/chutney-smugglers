@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useQuery } from "convex/react"
 import { api } from "@/convex/_generated/api"
+import { useRouter } from "next/navigation"
 import { BottomNav } from "@/components/navigation/bottom-nav"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
@@ -87,13 +88,26 @@ export default function RestaurantsPage() {
 }
 
 function RestaurantCard({ restaurant }: { restaurant: any }) {
+  const router = useRouter()
   const hasRatings = restaurant.totalRatings > 0
   const isIncomplete = restaurant.isIncomplete === true
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false)
 
+  const handleCardClick = () => {
+    router.push(`/restaurants/${restaurant._id}`)
+  }
+
+  const handleEditClick = (e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent card click when clicking edit button
+    setIsEditDrawerOpen(true)
+  }
+
   return (
     <>
-      <Card className="card-parchment card-hover">
+      <Card
+        className="card-parchment card-hover cursor-pointer"
+        onClick={handleCardClick}
+      >
         <CardContent className="p-4">
           <div className="flex items-start justify-between gap-4">
             {/* Restaurant Info */}
@@ -126,7 +140,7 @@ function RestaurantCard({ restaurant }: { restaurant: any }) {
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => setIsEditDrawerOpen(true)}
+                  onClick={handleEditClick}
                   className="mt-3 border-curry text-curry hover:bg-curry/10"
                 >
                   <Pencil className="h-3 w-3 mr-1.5" />
