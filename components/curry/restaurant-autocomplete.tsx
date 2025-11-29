@@ -38,18 +38,8 @@ export function RestaurantAutocomplete({
         // Import the PlaceAutocompleteElement from the places library
         const { PlaceAutocompleteElement } = await google.maps.importLibrary("places") as any
 
-        // Create the autocomplete element with optimal configuration
-        const autocompleteElement = new PlaceAutocompleteElement({
-          // Restrict to UK region for better results
-          includedRegionCodes: ['GB'],
-          // Bias towards UK (center of UK approximately)
-          locationBias: {
-            radius: 500000, // 500km radius
-            center: { lat: 54.5, lng: -2.0 } // Center of UK
-          },
-          // Restrict to restaurant type
-          includedPrimaryTypes: ['restaurant'],
-        })
+        // Create the autocomplete element
+        const autocompleteElement = new PlaceAutocompleteElement()
 
         // Set placeholder
         autocompleteElement.setAttribute('placeholder', 'Start typing restaurant name...')
