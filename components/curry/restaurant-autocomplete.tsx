@@ -52,27 +52,36 @@ export function RestaurantAutocomplete({
           }
         })
 
-        // Try multiple event approaches
+        // Handle gmp-select event - this uses a different pattern
         const handlePlaceSelection = async (event: any) => {
           console.log('Event fired! Type:', event.type, 'Event:', event)
 
-          // Try to get place from different sources
-          let place = event.place || event.detail?.place || (autocompleteElement as any).place
-
-          console.log('Place from event:', place)
-
-          if (!place) {
-            console.error('No place found in event or element')
-            return
-          }
-
           try {
-            // Fetch place details
+            // For gmp-select event, we need to get the place from the autocomplete element's value
+            // The element should have a 'value' property with the place prediction
+            const placePrediction = (autocompleteElement as any).value
+            console.log('Place prediction from element.value:', placePrediction)
+
+            if (!placePrediction) {
+              console.error('No place prediction found on autocomplete element')
+              return
+            }
+
+            // Convert prediction to Place object
+            const place = placePrediction.toPlace ? placePrediction.toPlace() : placePrediction
+            console.log('Place object:', place)
+
+            // Fetch the full place details
             await place.fetchFields({
               fields: ['displayName', 'formattedAddress', 'id', 'location']
             })
 
-            console.log('Place after fetchFields:', place)
+            console.log('Place after fetchFields:', {
+              displayName: place.displayName,
+              formattedAddress: place.formattedAddress,
+              id: place.id,
+              location: place.location
+            })
 
             const result: PlaceResult = {
               name: place.displayName || '',
