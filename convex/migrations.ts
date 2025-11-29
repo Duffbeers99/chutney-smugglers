@@ -83,16 +83,25 @@ export const setUserAsCurrentBooker = mutation({
 
 /**
  * One-time migration to import 21 historical curry visits
- * Run this from the Convex dashboard - no arguments needed
+ * Run this from the Convex dashboard with your auth account ID
  * Creates restaurants with placeholder addresses and ratings with booker names
  */
 export const importHistoricalCurries = mutation({
-  args: {},
-  handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      throw new Error("Must be authenticated to run migration");
+  args: {
+    authAccountId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    // Find the user by looking up their auth account
+    const authAccount = await ctx.db
+      .query("authAccounts")
+      .filter((q) => q.eq(q.field("_id"), args.authAccountId))
+      .first();
+
+    if (!authAccount) {
+      throw new Error(`Auth account not found: ${args.authAccountId}`);
     }
+
+    const userId = authAccount.userId;
 
     const now = Date.now();
 
