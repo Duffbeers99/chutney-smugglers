@@ -106,12 +106,12 @@ export function AddEventDrawer({ open, onOpenChange, existingEvent }: AddEventDr
     e.preventDefault()
 
     if (!restaurantName.trim()) {
-      toast.error("Please enter a restaurant name")
+      toast.error("Please select a restaurant from the suggestions")
       return
     }
 
     if (!address.trim()) {
-      toast.error("Please enter an address")
+      toast.error("Please select a restaurant with a valid address")
       return
     }
 
@@ -214,18 +214,18 @@ export function AddEventDrawer({ open, onOpenChange, existingEvent }: AddEventDr
               </div>
             )}
 
-            {/* Address */}
-            <div className="space-y-2">
-              <Label htmlFor="address">Address</Label>
-              <Input
-                id="address"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                placeholder="e.g., 123 Curry Lane, London"
-                required
-                disabled={loading}
-              />
-            </div>
+            {/* Address - Read-only display (auto-filled from Google Places) */}
+            {address && (
+              <div className="space-y-2">
+                <Label>Address</Label>
+                <div className="p-3 rounded-md bg-muted text-sm text-muted-foreground">
+                  {address}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Auto-filled from Google Places
+                </p>
+              </div>
+            )}
 
             {/* Date Picker */}
             <div className="space-y-2">
