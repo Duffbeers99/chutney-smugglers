@@ -1,14 +1,20 @@
 "use client";
 
-
+import * as React from "react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { BottomNav } from "@/components/navigation/bottom-nav";
+import { StatsCards } from "@/components/dashboard/stats-cards";
 import { Loader2, Star, Trophy, TrendingUp, Award, Flame } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function LeaderboardsPage() {
+  const router = useRouter();
+
   const topRated = useQuery(api.restaurants.getTopRated, { limit: 10 });
   const topFood = useQuery(api.restaurants.getCategoryLeaders, {
     category: "food",
@@ -28,6 +34,40 @@ export default function LeaderboardsPage() {
   });
   const mostActive = useQuery(api.ratings.getMostActiveRaters, { limit: 10 });
 
+  // Fetch user stats for the stats cards
+  const userStats = useQuery(api.users.getUserStats);
+
+  // Loading state
+  const isLoadingStats = userStats === undefined;
+
+  // Calculate participation percentage
+  const participationPercentage = userStats
+    ? Math.min(
+        100,
+        Math.round(
+          (userStats.totalRatings / Math.max(userStats.totalRatings, 20)) * 100
+        )
+      )
+    : 0;
+
+  const handleStatCardClick = (
+    cardType: "ratings" | "average" | "participation"
+  ) => {
+    // Navigate to detailed view based on card type
+    switch (cardType) {
+      case "ratings":
+        router.push("/profile?tab=ratings");
+        break;
+      case "average":
+        router.push("/profile?tab=stats");
+        break;
+      case "participation":
+        // Already on leaderboards, maybe scroll to top
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        break;
+    }
+  };
+
   return (
     <div className="h-screen overflow-y-auto overflow-x-hidden bg-background paper-texture">
       {/* Header */}
@@ -44,7 +84,34 @@ export default function LeaderboardsPage() {
       </header>
 
       {/* Main Content */}
-      <main className="p-4 pb-28">
+      <main className="p-4 pb-28 space-y-6">
+        {/* Your Stats Section */}
+        <section aria-labelledby="your-stats-heading">
+          <h2 id="your-stats-heading" className="text-lg font-semibold text-foreground mb-3">
+            Your Stats
+          </h2>
+          {isLoadingStats ? (
+            <div className="grid grid-cols-3 gap-3">
+              {[1, 2, 3].map((i) => (
+                <Card key={i} className="card-parchment">
+                  <CardContent className="flex flex-col items-center justify-center gap-3 p-4">
+                    <Skeleton className="size-28 rounded-full" />
+                    <Skeleton className="h-4 w-20" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <StatsCards
+              ratingsThisMonth={userStats?.ratingsThisMonth || 0}
+              totalRatings={userStats?.totalRatings || 0}
+              averageRating={userStats?.averageRating || 0}
+              participationPercentage={participationPercentage}
+              onCardClick={handleStatCardClick}
+            />
+          )}
+        </section>
+
         <Tabs defaultValue="restaurants" className="w-full">
           <TabsList className="grid w-full grid-cols-2 mb-6 bg-muted">
             <TabsTrigger

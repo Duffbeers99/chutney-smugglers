@@ -9,7 +9,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { StatsCards } from "@/components/dashboard/stats-cards"
 import { RecentActivity } from "@/components/dashboard/recent-activity"
 import { BottomNav } from "@/components/navigation/bottom-nav"
 import { UpcomingCurryCard } from "@/components/curry/upcoming-curry-card"
@@ -248,7 +247,6 @@ export default function DashboardPage() {
 
   // Fetch data
   const user = useQuery(api.users.currentUser)
-  const userStats = useQuery(api.users.getUserStats)
   const recentRatings = useQuery(api.ratings.getRecentRatings, { limit: 10 })
   const canManageEvents = useQuery(api.curryEvents.canManageEvents)
 
@@ -270,41 +268,7 @@ export default function DashboardPage() {
 
   // Loading states
   const isLoadingUser = user === undefined
-  const isLoadingStats = userStats === undefined
   const isLoadingRatings = recentRatings === undefined
-
-  // Calculate participation percentage
-  // (this is a placeholder - you'd calculate based on total group curries vs user's ratings)
-  const participationPercentage = userStats
-    ? Math.min(
-        100,
-        Math.round(
-          (userStats.totalRatings / Math.max(userStats.totalRatings, 20)) * 100
-        )
-      )
-    : 0
-
-  // Get last visit info
-  const lastRating = recentRatings?.[0]
-  const lastVisitDate = lastRating?.visitDate
-  const lastRestaurantName = lastRating?.restaurant?.name
-
-  const handleStatCardClick = (
-    cardType: "ratings" | "average" | "participation"
-  ) => {
-    // Navigate to detailed view based on card type
-    switch (cardType) {
-      case "ratings":
-        router.push("/profile?tab=ratings")
-        break
-      case "average":
-        router.push("/profile?tab=stats")
-        break
-      case "participation":
-        router.push("/leaderboards")
-        break
-    }
-  }
 
   const handleRatingClick = (ratingId: string) => {
     router.push(`/ratings/${ratingId}`)
@@ -321,33 +285,6 @@ export default function DashboardPage() {
       <main className="space-y-6 py-6 pb-28">
         {/* Upcoming Curry Card */}
         <UpcomingCurryCard />
-
-        {/* Stats Cards */}
-        <section aria-labelledby="stats-heading">
-          <h2 id="stats-heading" className="sr-only">
-            Your Statistics
-          </h2>
-          {isLoadingStats ? (
-            <div className="grid grid-cols-3 gap-3 px-4">
-              {[1, 2, 3].map((i) => (
-                <Card key={i} className="card-parchment">
-                  <CardContent className="flex flex-col items-center justify-center gap-3 p-4">
-                    <Skeleton className="size-28 rounded-full" />
-                    <Skeleton className="h-4 w-20" />
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <StatsCards
-              ratingsThisMonth={userStats?.ratingsThisMonth || 0}
-              totalRatings={userStats?.totalRatings || 0}
-              averageRating={userStats?.averageRating || 0}
-              participationPercentage={participationPercentage}
-              onCardClick={handleStatCardClick}
-            />
-          )}
-        </section>
 
         {/* Add New Visit Card */}
         <AddNewVisitCard />
