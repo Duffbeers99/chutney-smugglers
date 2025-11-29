@@ -44,6 +44,15 @@ export function RestaurantAutocomplete({
         // Configure it for establishments (restaurants)
         autocompleteElement.setAttribute('placeholder', 'Start typing restaurant name...')
 
+        // Remove Google's default icon to prevent duplicate with our MapPin
+        const style = document.createElement('style')
+        style.textContent = `
+          gmp-place-autocomplete::part(icon) {
+            display: none !important;
+          }
+        `
+        document.head.appendChild(style)
+
         // Listen for place selection
         autocompleteElement.addEventListener('gmp-placeselect', async (event: any) => {
           const place = event.place
@@ -78,10 +87,14 @@ export function RestaurantAutocomplete({
           containerRef.current.innerHTML = ''
           containerRef.current.appendChild(autocompleteElement)
 
-          // Focus the autocomplete input after a short delay to ensure it's rendered
+          // Focus the autocomplete input and apply inline styles after a short delay
           setTimeout(() => {
             const input = autocompleteElement.querySelector('input')
             if (input) {
+              // Force font-size inline to prevent iOS zoom - this is critical!
+              input.style.fontSize = '16px'
+              input.style.webkitTextSizeAdjust = '100%'
+              input.style.textSizeAdjust = '100%'
               input.focus()
             }
           }, 100)
@@ -142,6 +155,18 @@ export function RestaurantAutocomplete({
           display: block !important;
         }
 
+        /* Hide Google's default icon */
+        gmp-place-autocomplete::part(icon),
+        gmp-place-autocomplete [class*="icon"],
+        gmp-place-autocomplete svg,
+        gmp-place-autocomplete img {
+          display: none !important;
+          visibility: hidden !important;
+          opacity: 0 !important;
+          width: 0 !important;
+          height: 0 !important;
+        }
+
         /* Target the internal input field - need !important to override Shadow DOM styles */
         gmp-place-autocomplete input,
         gmp-place-autocomplete input[type="text"] {
@@ -149,6 +174,7 @@ export function RestaurantAutocomplete({
           height: 2.25rem !important;
           padding: 0.25rem 0.75rem 0.25rem 2.5rem !important;
           font-size: 16px !important; /* Prevent mobile zoom - 16px or larger */
+          min-font-size: 16px !important;
           line-height: 1.5 !important;
           border-radius: calc(var(--radius) - 2px) !important;
           border: 1px solid hsl(var(--input)) !important;
@@ -160,6 +186,8 @@ export function RestaurantAutocomplete({
           box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05) !important;
           -webkit-appearance: none !important;
           appearance: none !important;
+          -webkit-text-size-adjust: 100% !important;
+          text-size-adjust: 100% !important;
         }
 
         /* Placeholder styling */
