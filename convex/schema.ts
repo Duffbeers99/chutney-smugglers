@@ -63,6 +63,9 @@ const schema = defineSchema({
     averageAtmosphere: v.optional(v.number()),
     overallAverage: v.optional(v.number()),
     totalRatings: v.number(),
+
+    // Incomplete status for backdated restaurants
+    isIncomplete: v.optional(v.boolean()),
   })
     .index("by_name", ["name"])
     .index("by_added_by", ["addedBy"])
@@ -83,6 +86,10 @@ const schema = defineSchema({
 
     // Optional notes about the visit
     notes: v.optional(v.string()),
+
+    // Booking claim tracking for backdated ratings
+    bookerName: v.optional(v.string()), // Original booker name (e.g., "Goose", "Duff")
+    claimedBy: v.optional(v.id("users")), // User who claimed this rating
 
     createdAt: v.number(),
   })

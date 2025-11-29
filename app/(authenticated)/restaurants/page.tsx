@@ -7,7 +7,10 @@ import { BottomNav } from "@/components/navigation/bottom-nav"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, MapPin, Search, Star, UtensilsCrossed } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Loader2, MapPin, Search, Star, UtensilsCrossed, Pencil, AlertCircle } from "lucide-react"
+import { EditRestaurantDrawer } from "@/components/restaurant/edit-restaurant-drawer"
+import type { Id } from "@/convex/_generated/dataModel"
 
 export default function RestaurantsPage() {
   const restaurants = useQuery(api.restaurants.list)
@@ -85,28 +88,52 @@ export default function RestaurantsPage() {
 
 function RestaurantCard({ restaurant }: { restaurant: any }) {
   const hasRatings = restaurant.totalRatings > 0
+  const isIncomplete = restaurant.isIncomplete === true
+  const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false)
 
   return (
-    <Card className="card-parchment card-hover">
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between gap-4">
-          {/* Restaurant Info */}
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-foreground text-lg truncate">
-              {restaurant.name}
-            </h3>
+    <>
+      <Card className="card-parchment card-hover">
+        <CardContent className="p-4">
+          <div className="flex items-start justify-between gap-4">
+            {/* Restaurant Info */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="font-semibold text-foreground text-lg truncate">
+                  {restaurant.name}
+                </h3>
+                {isIncomplete && (
+                  <Badge variant="outline" className="shrink-0 border-yellow-500 text-yellow-700 dark:text-yellow-500">
+                    <AlertCircle className="h-3 w-3 mr-1" />
+                    Incomplete
+                  </Badge>
+                )}
+              </div>
 
-            <div className="flex items-center gap-1 mt-1 text-muted-foreground">
-              <MapPin className="h-3 w-3 shrink-0" />
-              <p className="text-sm truncate">{restaurant.address}</p>
+              <div className="flex items-center gap-1 mt-1 text-muted-foreground">
+                <MapPin className="h-3 w-3 shrink-0" />
+                <p className="text-sm truncate">{restaurant.address}</p>
+              </div>
+
+              {restaurant.cuisine && (
+                <Badge variant="secondary" className="mt-2 bg-saffron/20 text-foreground border-0">
+                  {restaurant.cuisine}
+                </Badge>
+              )}
+
+              {/* Edit button for incomplete restaurants */}
+              {isIncomplete && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setIsEditDrawerOpen(true)}
+                  className="mt-3 border-curry text-curry hover:bg-curry/10"
+                >
+                  <Pencil className="h-3 w-3 mr-1.5" />
+                  Complete Details
+                </Button>
+              )}
             </div>
-
-            {restaurant.cuisine && (
-              <Badge variant="secondary" className="mt-2 bg-saffron/20 text-foreground border-0">
-                {restaurant.cuisine}
-              </Badge>
-            )}
-          </div>
 
           {/* Rating */}
           {hasRatings ? (
@@ -158,6 +185,20 @@ function RestaurantCard({ restaurant }: { restaurant: any }) {
         )}
       </CardContent>
     </Card>
+
+    {/* Edit Drawer */}
+    {isIncomplete && (
+      <EditRestaurantDrawer
+        open={isEditDrawerOpen}
+        onOpenChange={setIsEditDrawerOpen}
+        restaurant={{
+          _id: restaurant._id as Id<"restaurants">,
+          name: restaurant.name,
+          address: restaurant.address,
+        }}
+      />
+    )}
+  </>
   )
 }
 

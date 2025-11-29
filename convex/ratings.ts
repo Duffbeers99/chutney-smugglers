@@ -284,3 +284,34 @@ export const getMostActiveRaters = query({
     return enriched;
   },
 });
+
+// Claim a rating (for backdated ratings that can be claimed by users)
+export const claimRating = mutation({
+  args: { ratingId: v.id("ratings") },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const rating = await ctx.db.get(args.ratingId);
+    if (!rating) {
+      throw new Error("Rating not found");
+    }
+
+    // Check if already claimed
+    if (rating.claimedBy) {
+      throw new Error("This rating has already been claimed");
+    }
+
+    // Check if bookerName exists (only backdated ratings can be claimed)
+    if (!rating.bookerName) {
+      throw new Error("This rating cannot be claimed");
+    }
+
+    // Claim the rating
+    await ctx.db.patch(args.ratingId, {
+      claimedBy: userId,
+    });
+
+    return { success: true };
+  },
+});

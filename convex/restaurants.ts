@@ -190,3 +190,39 @@ export const updateAggregates = mutation({
   },
 });
 
+// Update restaurant details (for completing incomplete backdated restaurants)
+export const updateRestaurantDetails = mutation({
+  args: {
+    restaurantId: v.id("restaurants"),
+    name: v.string(),
+    address: v.string(),
+    googlePlaceId: v.optional(v.string()),
+    location: v.optional(
+      v.object({
+        lat: v.number(),
+        lng: v.number(),
+      })
+    ),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const restaurant = await ctx.db.get(args.restaurantId);
+    if (!restaurant) {
+      throw new Error("Restaurant not found");
+    }
+
+    // Update restaurant with complete details and mark as complete
+    await ctx.db.patch(args.restaurantId, {
+      name: args.name,
+      address: args.address,
+      googlePlaceId: args.googlePlaceId,
+      location: args.location,
+      isIncomplete: false,
+    });
+
+    return { success: true };
+  },
+});
+

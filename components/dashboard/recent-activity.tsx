@@ -2,11 +2,16 @@
 
 import * as React from "react"
 import { format, formatDistanceToNow } from "date-fns"
+import { useMutation } from "convex/react"
+import { api } from "@/convex/_generated/api"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ChevronRight, Star, TrendingUp, Loader2 } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { ChevronRight, Star, TrendingUp, Loader2, UserPlus } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { toast } from "sonner"
+import type { Id } from "@/convex/_generated/dataModel"
 
 interface RatingData {
   _id: string
@@ -19,6 +24,8 @@ interface RatingData {
   atmosphere: number
   notes?: string
   createdAt: number
+  bookerName?: string
+  claimedBy?: string
   user: {
     _id: string
     nickname?: string
@@ -45,6 +52,9 @@ function ActivityItem({
   rating: RatingData
   onClick?: (ratingId: string) => void
 }) {
+  const [isClaiming, setIsClaiming] = React.useState(false)
+  const claimRatingMutation = useMutation(api.ratings.claimRating)
+
   // Calculate overall rating
   const overallRating =
     (rating.food + rating.service + rating.extras + rating.atmosphere) / 4
@@ -64,6 +74,21 @@ function ActivityItem({
     if (rating >= 3.5) return "text-turmeric"
     if (rating >= 2.5) return "text-curry"
     return "text-terracotta"
+  }
+
+  const handleClaim = async (e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent triggering onClick
+    setIsClaiming(true)
+
+    try {
+      await claimRatingMutation({ ratingId: rating._id as Id<"ratings"> })
+      toast.success("Rating claimed successfully!")
+    } catch (error) {
+      console.error("Failed to claim rating:", error)
+      toast.error(error instanceof Error ? error.message : "Failed to claim rating")
+    } finally {
+      setIsClaiming(false)
+    }
   }
 
   return (
@@ -159,6 +184,39 @@ function ActivityItem({
           <p className="mt-2 text-sm text-muted-foreground line-clamp-2 italic">
             "{rating.notes}"
           </p>
+        )}
+
+        {/* Booker and Claim UI */}
+        {rating.bookerName && (
+          <div className="mt-3 flex items-center justify-between gap-2">
+            {rating.claimedBy ? (
+              <Badge variant="secondary" className="bg-curry/10 text-curry border border-curry/20">
+                Booked by {rating.user?.nickname || "Unknown"}
+              </Badge>
+            ) : (
+              <>
+                <Badge variant="outline" className="text-xs">
+                  Booked by {rating.bookerName} • Unclaimed
+                </Badge>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleClaim}
+                  disabled={isClaiming}
+                  className="h-7 text-xs border-curry text-curry hover:bg-curry/10"
+                >
+                  {isClaiming ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <>
+                      <UserPlus className="h-3 w-3 mr-1" />
+                      Claim
+                    </>
+                  )}
+                </Button>
+              </>
+            )}
+          </div>
         )}
       </div>
 
