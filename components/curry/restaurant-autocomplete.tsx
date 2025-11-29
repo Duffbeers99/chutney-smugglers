@@ -44,60 +44,15 @@ export function RestaurantAutocomplete({
         // Set placeholder
         autocompleteElement.setAttribute('placeholder', 'Start typing restaurant name...')
 
-        // Add listener to the element itself using the 'place' property
-        Object.defineProperty(autocompleteElement, 'addEventListener', {
-          value: function(type: string, listener: any) {
-            console.log('Adding event listener for:', type)
-            HTMLElement.prototype.addEventListener.call(this, type, listener)
-          }
-        })
-
-        // Handle gmp-select event - this uses a different pattern
-        const handlePlaceSelection = async (event: any) => {
-          console.log('Event fired! Type:', event.type, 'Full Event Object:', event)
-          console.log('Event.target:', event.target)
-          console.log('Event.currentTarget:', event.currentTarget)
-
+        // Handle gmp-select event - destructure placePrediction from event parameter
+        autocompleteElement.addEventListener('gmp-select', async ({ placePrediction }: any) => {
           try {
-            // Try multiple ways to get the place prediction
-            let placePrediction = (event.target as any)?.value ||
-                                  (autocompleteElement as any).value ||
-                                  (event.currentTarget as any)?.value
-
-            console.log('Place prediction (trying multiple sources):', placePrediction)
-            console.log('Autocomplete element properties:', Object.keys(autocompleteElement))
-
-            // Try getting it as a property directly
-            if (!placePrediction) {
-              placePrediction = (autocompleteElement as any).place ||
-                               (autocompleteElement as any).selectedPlace ||
-                               (event.target as any).place
-              console.log('Trying place property:', placePrediction)
-            }
-
-            if (!placePrediction) {
-              console.error('No place prediction found. Autocomplete element:', autocompleteElement)
-              console.error('All autocomplete properties:', Object.getOwnPropertyNames(autocompleteElement))
-              return
-            }
-
-            console.log('Got place prediction, type:', typeof placePrediction)
-            console.log('Place prediction properties:', Object.keys(placePrediction || {}))
-
             // Convert prediction to Place object
-            const place = placePrediction.toPlace ? placePrediction.toPlace() : placePrediction
-            console.log('Place object after conversion:', place)
+            const place = placePrediction.toPlace()
 
             // Fetch the full place details
             await place.fetchFields({
               fields: ['displayName', 'formattedAddress', 'id', 'location']
-            })
-
-            console.log('Place after fetchFields:', {
-              displayName: place.displayName,
-              formattedAddress: place.formattedAddress,
-              id: place.id,
-              location: place.location
             })
 
             const result: PlaceResult = {
@@ -113,31 +68,12 @@ export function RestaurantAutocomplete({
               }
             }
 
-            console.log('Calling onPlaceSelect with result:', result)
+            // Call parent callback
             onPlaceSelect(result)
           } catch (error) {
-            console.error('Error in handlePlaceSelection:', error)
-            console.error('Error stack:', (error as Error).stack)
+            console.error('Error handling place selection:', error)
           }
-        }
-
-        // Try all possible event names
-        console.log('Setting up autocomplete element listeners')
-        autocompleteElement.addEventListener('gmp-placeselect', handlePlaceSelection)
-        autocompleteElement.addEventListener('place_changed', handlePlaceSelection)
-        autocompleteElement.addEventListener('gmp-select', handlePlaceSelection)
-
-        // Also try listening on the input element
-        setTimeout(() => {
-          const input = autocompleteElement.querySelector('input')
-          console.log('Input element found:', input)
-          if (input) {
-            input.addEventListener('change', (e: any) => {
-              console.log('Input change event:', e)
-              handlePlaceSelection(e)
-            })
-          }
-        }, 500)
+        })
 
         // Clear container and add element
         if (containerRef.current) {
