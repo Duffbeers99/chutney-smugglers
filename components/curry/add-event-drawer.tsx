@@ -239,18 +239,14 @@ export function AddEventDrawer({ open, onOpenChange, existingEvent }: AddEventDr
             {/* Time Input */}
             <div className="space-y-2">
               <Label htmlFor="time">Time</Label>
-              <div className="relative">
-                <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="time"
-                  type="time"
-                  value={time}
-                  onChange={(e) => setTime(e.target.value)}
-                  className="pl-10"
-                  required
-                  disabled={loading}
-                />
-              </div>
+              <Input
+                id="time"
+                type="time"
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+                required
+                disabled={loading}
+              />
             </div>
 
             {/* Notes (Optional) */}
