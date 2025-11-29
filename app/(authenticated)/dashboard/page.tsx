@@ -12,6 +12,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { StatsCards } from "@/components/dashboard/stats-cards"
 import { RecentActivity } from "@/components/dashboard/recent-activity"
 import { BottomNav } from "@/components/navigation/bottom-nav"
+import { UpcomingCurryCard } from "@/components/curry/upcoming-curry-card"
 import { Calendar, MapPin, Sparkles, Trophy, ChefHat } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
@@ -301,11 +302,8 @@ export default function DashboardPage() {
 
       {/* Main Content */}
       <main className="space-y-6 py-6 pb-28">
-        {/* Status Card */}
-        <StatusCard
-          lastVisitDate={lastVisitDate}
-          restaurantName={lastRestaurantName}
-        />
+        {/* Upcoming Curry Card */}
+        <UpcomingCurryCard />
 
         {/* Stats Cards */}
         <section aria-labelledby="stats-heading">

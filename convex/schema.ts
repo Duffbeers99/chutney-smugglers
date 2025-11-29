@@ -88,6 +88,34 @@ const schema = defineSchema({
     .index("by_user_and_restaurant", ["userId", "restaurantId"])
     .index("by_created_at", ["createdAt"])
     .index("by_visit_date", ["visitDate"]),
+
+  // Upcoming curry events/bookings
+  curryEvents: defineTable({
+    restaurantId: v.id("restaurants"),
+    restaurantName: v.string(), // Denormalized for quick access
+    address: v.string(), // Denormalized
+    scheduledDate: v.number(), // Timestamp for the date
+    scheduledTime: v.string(), // Time in HH:mm format (e.g., "19:30")
+    createdBy: v.id("users"),
+    createdAt: v.number(),
+    status: v.string(), // "upcoming", "completed", "cancelled"
+    notes: v.optional(v.string()),
+  })
+    .index("by_scheduled_date", ["scheduledDate"])
+    .index("by_status", ["status"])
+    .index("by_created_by", ["createdBy"]),
+
+  // Booking rotation tracking - who's turn it is to book the next curry
+  bookingRotation: defineTable({
+    userId: v.id("users"),
+    rotationOrder: v.number(), // Position in the rotation (0, 1, 2, etc.)
+    isCurrentBooker: v.boolean(), // True for the person whose turn it is
+    canOverride: v.boolean(), // True if user has admin/override permissions
+    addedAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_rotation_order", ["rotationOrder"])
+    .index("by_current_booker", ["isCurrentBooker"]),
 });
 
 export default schema;
