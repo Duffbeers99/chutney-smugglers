@@ -8,7 +8,6 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { RecentActivity } from "@/components/dashboard/recent-activity"
 import { BottomNav } from "@/components/navigation/bottom-nav"
 import { UpcomingCurryCard } from "@/components/curry/upcoming-curry-card"
@@ -144,53 +143,6 @@ function StatusCard({
   )
 }
 
-function AddNewVisitCard() {
-  return (
-    <Card className="card-parchment mx-4">
-      <Accordion type="single" collapsible>
-        <AccordionItem value="add-visit" className="border-none">
-          <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50 rounded-lg transition-colors">
-            <div className="flex items-center gap-3">
-              <div className="flex size-10 items-center justify-center rounded-full bg-curry/20">
-                <Sparkles className="size-5 text-curry" aria-hidden="true" />
-              </div>
-              <div className="text-left">
-                <p className="text-sm font-semibold text-foreground">
-                  Add New Curry Visit
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Rate your latest experience
-                </p>
-              </div>
-            </div>
-          </AccordionTrigger>
-          <AccordionContent className="px-4 pb-4">
-            <div className="space-y-3 pt-2">
-              <p className="text-sm text-muted-foreground">
-                Ready to share your curry experience? Click the floating button
-                below or use the navigation bar to add a new rating.
-              </p>
-              <div className="flex gap-2">
-                <Badge variant="outline" className="text-xs">
-                  <ChefHat className="size-3 mr-1" aria-hidden="true" />
-                  Food Quality
-                </Badge>
-                <Badge variant="outline" className="text-xs">
-                  <Sparkles className="size-3 mr-1" aria-hidden="true" />
-                  Service
-                </Badge>
-                <Badge variant="outline" className="text-xs">
-                  <Trophy className="size-3 mr-1" aria-hidden="true" />
-                  Atmosphere
-                </Badge>
-              </div>
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
-    </Card>
-  )
-}
 
 function QuickAccessCard() {
   const router = useRouter()
@@ -285,9 +237,6 @@ export default function DashboardPage() {
       <main className="space-y-6 py-6 pb-28">
         {/* Upcoming Curry Card */}
         <UpcomingCurryCard />
-
-        {/* Add New Visit Card */}
-        <AddNewVisitCard />
 
         {/* Quick Access */}
         <QuickAccessCard />
