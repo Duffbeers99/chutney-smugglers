@@ -331,7 +331,37 @@ export const deleteEvent = mutation({
       throw new Error("Event not found");
     }
 
+    const restaurantId = event.restaurantId;
+
+    // Delete the event
     await ctx.db.delete(args.eventId);
+
+    // Check if we should also delete the restaurant
+    // Only delete if it has no ratings and no other events
+    const restaurant = await ctx.db.get(restaurantId);
+    if (restaurant) {
+      // Check if restaurant has any ratings
+      const hasRatings = restaurant.totalRatings > 0;
+
+      // Check if there are any other events for this restaurant
+      const otherEvents = await ctx.db
+        .query("curryEvents")
+        .filter((q) => q.eq(q.field("restaurantId"), restaurantId))
+        .collect();
+
+      // If no ratings and no other events, safe to delete the restaurant
+      if (!hasRatings && otherEvents.length === 0) {
+        await ctx.db.delete(restaurantId);
+
+        // Decrement the user's curriesAdded count (since we're removing the restaurant they added)
+        const addedBy = await ctx.db.get(restaurant.addedBy);
+        if (addedBy && addedBy.curriesAdded && addedBy.curriesAdded > 0) {
+          await ctx.db.patch(restaurant.addedBy, {
+            curriesAdded: addedBy.curriesAdded - 1,
+          });
+        }
+      }
+    }
 
     return { success: true };
   },
