@@ -38,19 +38,29 @@ export function RestaurantAutocomplete({
         // Import the PlaceAutocompleteElement from the places library
         const { PlaceAutocompleteElement } = await google.maps.importLibrary("places") as any
 
-        // Create the autocomplete element
-        const autocompleteElement = new PlaceAutocompleteElement()
+        // Create the autocomplete element with optimal configuration
+        const autocompleteElement = new PlaceAutocompleteElement({
+          // Restrict to UK region for better results
+          includedRegionCodes: ['GB'],
+          // Bias towards UK (center of UK approximately)
+          locationBias: {
+            radius: 500000, // 500km radius
+            center: { lat: 54.5, lng: -2.0 } // Center of UK
+          },
+          // Restrict to restaurant type
+          includedPrimaryTypes: ['restaurant'],
+        })
 
-        // Configure it for establishments (restaurants)
+        // Set placeholder
         autocompleteElement.setAttribute('placeholder', 'Start typing restaurant name...')
 
-        // Listen for place selection
+        // Listen for place selection using correct event name
         autocompleteElement.addEventListener('gmp-placeselect', async (event: any) => {
           const place = event.place
 
           if (!place) return
 
-          // Fetch place details
+          // Fetch place details with correct field names
           await place.fetchFields({
             fields: ['displayName', 'formattedAddress', 'id', 'location']
           })
@@ -151,8 +161,8 @@ export function RestaurantAutocomplete({
           width: 100% !important;
           height: 2.25rem !important;
           padding: 0.25rem 0.75rem !important;
-          font-size: 16px !important; /* Prevent mobile zoom - 16px or larger */
-          min-font-size: 16px !important;
+          /* Critical: 16px font-size prevents iOS Safari zoom on focus */
+          font-size: 16px !important;
           line-height: 1.5 !important;
           border-radius: calc(var(--radius) - 2px) !important;
           border: 1px solid hsl(var(--input)) !important;
@@ -164,8 +174,23 @@ export function RestaurantAutocomplete({
           box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05) !important;
           -webkit-appearance: none !important;
           appearance: none !important;
+          /* Prevent text size adjustment which can cause zoom */
           -webkit-text-size-adjust: 100% !important;
+          -moz-text-size-adjust: 100% !important;
+          -ms-text-size-adjust: 100% !important;
           text-size-adjust: 100% !important;
+          /* Prevent tap highlight on mobile */
+          -webkit-tap-highlight-color: transparent !important;
+          /* Ensure touch-action doesn't interfere */
+          touch-action: manipulation !important;
+        }
+
+        /* Mobile-specific adjustments */
+        @media (max-width: 768px) {
+          gmp-place-autocomplete input {
+            /* Ensure 16px minimum on mobile to prevent zoom */
+            font-size: max(16px, 1rem) !important;
+          }
         }
 
         /* Placeholder styling */
