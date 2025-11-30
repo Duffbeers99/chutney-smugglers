@@ -9,13 +9,16 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Loader2, MapPin, Search, Star, UtensilsCrossed, Pencil, AlertCircle } from "lucide-react"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
+import { Loader2, MapPin, Search, Star, UtensilsCrossed, Pencil, AlertCircle, List, Map } from "lucide-react"
 import { EditRestaurantDrawer } from "@/components/restaurant/edit-restaurant-drawer"
+import { RestaurantMap } from "@/components/restaurant/restaurant-map"
 import type { Id } from "@/convex/_generated/dataModel"
 
 export default function RestaurantsPage() {
   const restaurants = useQuery(api.restaurants.list)
   const [searchTerm, setSearchTerm] = useState("")
+  const [view, setView] = useState<"list" | "map">("list")
 
   // Filter restaurants based on search term
   const filteredRestaurants = restaurants?.filter(
@@ -23,6 +26,12 @@ export default function RestaurantsPage() {
       restaurant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       restaurant.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
       restaurant.cuisine?.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
+  // Filter restaurants with location data for map view
+  const restaurantsWithLocation = restaurants?.filter(
+    (restaurant): restaurant is typeof restaurant & { location: { lat: number; lng: number } } =>
+      restaurant.location !== undefined
   )
 
   return (
@@ -41,44 +50,75 @@ export default function RestaurantsPage() {
           </div>
         </div>
 
-        {/* Search Bar */}
-        <div className="mt-4 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Search restaurants..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
+        {/* View Toggle */}
+        <div className="mt-4">
+          <ToggleGroup
+            type="single"
+            value={view}
+            onValueChange={(value) => {
+              if (value) setView(value as "list" | "map")
+            }}
+            className="justify-start"
+          >
+            <ToggleGroupItem value="list" aria-label="List view" className="gap-2">
+              <List className="h-4 w-4" />
+              List
+            </ToggleGroupItem>
+            <ToggleGroupItem value="map" aria-label="Map view" className="gap-2">
+              <Map className="h-4 w-4" />
+              Map
+            </ToggleGroupItem>
+          </ToggleGroup>
         </div>
+
+        {/* Search Bar - only show in list view */}
+        {view === "list" && (
+          <div className="mt-4 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search restaurants..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        )}
       </header>
 
       {/* Main Content */}
-      <main className="p-4 space-y-4 pb-28">
-        {restaurants === undefined ? (
-          <div className="flex flex-col items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-            <p className="text-muted-foreground">Loading restaurants...</p>
-          </div>
-        ) : filteredRestaurants?.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12">
-            <UtensilsCrossed className="h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-foreground font-semibold mb-2">
-              {searchTerm ? "No restaurants found" : "No restaurants yet"}
-            </p>
-            <p className="text-sm text-muted-foreground text-center">
-              {searchTerm
-                ? "Try a different search term"
-                : "Add your first restaurant when rating a curry!"}
-            </p>
-          </div>
+      <main className={view === "map" ? "h-[calc(100vh-180px)]" : "p-4 space-y-4 pb-28"}>
+        {view === "list" ? (
+          // List View
+          <>
+            {restaurants === undefined ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+                <p className="text-muted-foreground">Loading restaurants...</p>
+              </div>
+            ) : filteredRestaurants?.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <UtensilsCrossed className="h-12 w-12 text-muted-foreground mb-4" />
+                <p className="text-foreground font-semibold mb-2">
+                  {searchTerm ? "No restaurants found" : "No restaurants yet"}
+                </p>
+                <p className="text-sm text-muted-foreground text-center">
+                  {searchTerm
+                    ? "Try a different search term"
+                    : "Add your first restaurant when rating a curry!"}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {filteredRestaurants?.map((restaurant) => (
+                  <RestaurantCard key={restaurant._id} restaurant={restaurant} />
+                ))}
+              </div>
+            )}
+          </>
         ) : (
-          <div className="space-y-3">
-            {filteredRestaurants?.map((restaurant) => (
-              <RestaurantCard key={restaurant._id} restaurant={restaurant} />
-            ))}
-          </div>
+          // Map View
+          <RestaurantMap restaurants={restaurantsWithLocation || []} />
         )}
       </main>
 

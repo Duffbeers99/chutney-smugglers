@@ -8,10 +8,11 @@ interface UseGoogleMapsReturn {
   loadError: Error | null
 }
 
-let googleMapsPromise: Promise<any> | null = null
+// Cache promises for each unique set of libraries
+const libraryPromises = new Map<string, Promise<any>>()
 let optionsSet = false
 
-export function useGoogleMaps(): UseGoogleMapsReturn {
+export function useGoogleMaps(libraries: string[] = ["places"]): UseGoogleMapsReturn {
   const [isLoaded, setIsLoaded] = useState(false)
   const [loadError, setLoadError] = useState<Error | null>(null)
 
@@ -32,12 +33,19 @@ export function useGoogleMaps(): UseGoogleMapsReturn {
       optionsSet = true
     }
 
-    // Reuse existing promise if already loading
-    if (!googleMapsPromise) {
-      googleMapsPromise = importLibrary("places")
+    // Create a unique key for this combination of libraries
+    const libraryKey = libraries.sort().join(",")
+
+    // Reuse existing promise if already loading these libraries
+    if (!libraryPromises.has(libraryKey)) {
+      // Load all requested libraries in parallel
+      const loadPromises = libraries.map((lib) => importLibrary(lib))
+      libraryPromises.set(libraryKey, Promise.all(loadPromises))
     }
 
-    googleMapsPromise
+    const promise = libraryPromises.get(libraryKey)!
+
+    promise
       .then(() => {
         setIsLoaded(true)
         setLoadError(null)
@@ -45,10 +53,10 @@ export function useGoogleMaps(): UseGoogleMapsReturn {
       .catch((error) => {
         console.error("Error loading Google Maps:", error)
         setLoadError(error)
-        googleMapsPromise = null // Reset on error so we can retry
+        libraryPromises.delete(libraryKey) // Remove from cache so we can retry
         optionsSet = false // Reset options too
       })
-  }, [])
+  }, [libraries.join(",")]) // Depend on libraries array
 
   return { isLoaded, loadError }
 }
