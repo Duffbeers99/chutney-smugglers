@@ -424,3 +424,65 @@ export const importHistoricalCurries = mutation({
     };
   },
 });
+
+/**
+ * One-time migration to recalculate all restaurant aggregates using sum instead of average
+ * Run this from the Convex dashboard - no arguments needed
+ * This fixes the overall rating to be sum (out of 20) instead of average (out of 5)
+ */
+export const recalculateRestaurantAggregates = mutation({
+  args: {},
+  handler: async (ctx) => {
+    // Get all restaurants
+    const restaurants = await ctx.db.query("restaurants").collect();
+
+    let updated = 0;
+
+    for (const restaurant of restaurants) {
+      // Get all ratings for this restaurant
+      const ratings = await ctx.db
+        .query("ratings")
+        .withIndex("by_restaurant", (q) => q.eq("restaurantId", restaurant._id))
+        .collect();
+
+      if (ratings.length === 0) {
+        // No ratings, set everything to undefined
+        await ctx.db.patch(restaurant._id, {
+          averageFood: undefined,
+          averageService: undefined,
+          averageExtras: undefined,
+          averageAtmosphere: undefined,
+          overallAverage: undefined,
+          totalRatings: 0,
+        });
+      } else {
+        // Calculate averages for each category
+        const avgFood = ratings.reduce((sum, r) => sum + r.food, 0) / ratings.length;
+        const avgService = ratings.reduce((sum, r) => sum + r.service, 0) / ratings.length;
+        const avgExtras = ratings.reduce((sum, r) => sum + r.extras, 0) / ratings.length;
+        const avgAtmosphere = ratings.reduce((sum, r) => sum + r.atmosphere, 0) / ratings.length;
+
+        // Calculate overall as SUM (out of 20) instead of average
+        const overall = avgFood + avgService + avgExtras + avgAtmosphere;
+
+        await ctx.db.patch(restaurant._id, {
+          averageFood: Math.round(avgFood * 10) / 10,
+          averageService: Math.round(avgService * 10) / 10,
+          averageExtras: Math.round(avgExtras * 10) / 10,
+          averageAtmosphere: Math.round(avgAtmosphere * 10) / 10,
+          overallAverage: Math.round(overall * 10) / 10,
+          totalRatings: ratings.length,
+        });
+
+        updated++;
+      }
+    }
+
+    return {
+      success: true,
+      message: `Recalculated aggregates for ${updated} restaurants with ratings`,
+      totalRestaurants: restaurants.length,
+      restaurantsUpdated: updated,
+    };
+  },
+});
