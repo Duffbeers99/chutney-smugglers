@@ -3,12 +3,12 @@
 import * as React from "react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BottomNav } from "@/components/navigation/bottom-nav";
-import { Loader2, Star, Trophy, TrendingUp, Award, Flame } from "lucide-react";
+import { Loader2, Star, Trophy, Award, Calendar } from "lucide-react";
+import { format } from "date-fns";
 
 export default function LeaderboardsPage() {
   const topRated = useQuery(api.restaurants.getTopRated, { limit: 10 });
@@ -28,7 +28,6 @@ export default function LeaderboardsPage() {
     category: "atmosphere",
     limit: 5,
   });
-  const mostActive = useQuery(api.ratings.getMostActiveRaters, { limit: 10 });
 
   return (
     <div className="h-screen overflow-y-auto overflow-x-hidden bg-background paper-texture">
@@ -40,32 +39,13 @@ export default function LeaderboardsPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-foreground">Leaderboards</h1>
-            <p className="text-sm text-muted-foreground">Hall of Fame</p>
+            <p className="text-sm text-muted-foreground">Top Rated Restaurants</p>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
       <main className="p-4 pb-28 space-y-6">
-        <Tabs defaultValue="restaurants" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6 bg-muted">
-            <TabsTrigger
-              value="restaurants"
-              className="data-[state=active]:bg-primary data-[state=active]:text-white"
-            >
-              <Star className="h-4 w-4 mr-2" />
-              Restaurants
-            </TabsTrigger>
-            <TabsTrigger
-              value="raters"
-              className="data-[state=active]:bg-primary data-[state=active]:text-white"
-            >
-              <TrendingUp className="h-4 w-4 mr-2" />
-              Raters
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="restaurants" className="space-y-6">
             {/* Top Overall */}
             <section>
               <h2 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
@@ -112,26 +92,6 @@ export default function LeaderboardsPage() {
                 restaurants={topAtmosphere}
               />
             </section>
-          </TabsContent>
-
-          <TabsContent value="raters" className="space-y-4">
-            <h2 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
-              <Flame className="h-5 w-5 text-primary" />
-              Most Active Raters
-            </h2>
-            {mostActive === undefined ? (
-              <LoadingCard />
-            ) : mostActive.length === 0 ? (
-              <EmptyCard message="No raters yet. Start rating!" />
-            ) : (
-              <div className="space-y-2">
-                {mostActive.map((user, index) => (
-                  <RaterCard key={user._id} user={user} rank={index + 1} />
-                ))}
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
       </main>
 
       <BottomNav />
@@ -155,7 +115,7 @@ function RestaurantCard({
 
   return (
     <div className="card-parchment p-4 card-hover">
-      <div className="flex items-center gap-4">
+      <div className="flex items-start gap-4">
         {/* Rank */}
         <div className="flex-shrink-0">
           {rank <= 3 ? (
@@ -173,8 +133,28 @@ function RestaurantCard({
             {restaurant.name}
           </h3>
           <p className="text-xs text-muted-foreground truncate">{restaurant.address}</p>
+
+          {/* Visit Date and Booker */}
+          {restaurant.mostRecentVisit && (
+            <div className="flex flex-wrap items-center gap-2 mt-2">
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Calendar className="h-3 w-3" />
+                <span>{format(restaurant.mostRecentVisit.visitDate, "MMM d, yyyy")}</span>
+              </div>
+              {restaurant.mostRecentVisit.claimedBy ? (
+                <Badge variant="secondary" className="text-xs bg-curry/10 text-curry border-curry/20">
+                  Booked by {restaurant.mostRecentVisit.claimedBy}
+                </Badge>
+              ) : restaurant.mostRecentVisit.bookerName ? (
+                <Badge variant="outline" className="text-xs">
+                  Booked by {restaurant.mostRecentVisit.bookerName}
+                </Badge>
+              ) : null}
+            </div>
+          )}
+
           {restaurant.cuisine && (
-            <span className="inline-block mt-1 px-2 py-0.5 text-xs rounded-full bg-saffron/20 text-foreground">
+            <span className="inline-block mt-2 px-2 py-0.5 text-xs rounded-full bg-saffron/20 text-foreground">
               {restaurant.cuisine}
             </span>
           )}
@@ -249,59 +229,6 @@ function CategoryLeaderCard({
   );
 }
 
-function RaterCard({ user, rank }: { user: any; rank: number }) {
-  const getMedalColor = (rank: number) => {
-    if (rank === 1) return "text-yellow-500";
-    if (rank === 2) return "text-gray-400";
-    if (rank === 3) return "text-amber-600";
-    return "text-spice/50";
-  };
-
-  return (
-    <div className="card-parchment p-4 card-hover">
-      <div className="flex items-center gap-4">
-        {/* Rank */}
-        <div className="flex-shrink-0">
-          {rank <= 3 ? (
-            <Award className={`h-8 w-8 ${getMedalColor(rank)}`} />
-          ) : (
-            <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
-              <span className="text-sm font-bold text-foreground">{rank}</span>
-            </div>
-          )}
-        </div>
-
-        {/* User Avatar & Info */}
-        <Avatar className="h-12 w-12 border-2 border-border">
-          {user.profileImageUrl && (
-            <AvatarImage src={user.profileImageUrl} alt={user.nickname} />
-          )}
-          <AvatarFallback className="bg-saffron text-foreground">
-            {user.nickname?.slice(0, 2).toUpperCase() || "CS"}
-          </AvatarFallback>
-        </Avatar>
-
-        <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-foreground truncate">
-            {user.nickname || "Anonymous"}
-          </h3>
-          <div className="flex gap-3 mt-1 text-xs text-muted-foreground">
-            <span>🍛 {user.curriesRated} rated</span>
-            <span>➕ {user.curriesAdded} added</span>
-          </div>
-        </div>
-
-        {/* Stats */}
-        <div className="flex-shrink-0 text-right">
-          <div className="text-2xl font-bold text-primary">
-            {user.curriesRated}
-          </div>
-          <p className="text-xs text-muted-foreground">ratings</p>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function LoadingCard() {
   return (

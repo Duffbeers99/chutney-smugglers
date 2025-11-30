@@ -37,7 +37,7 @@ export const search = query({
   },
 });
 
-// Get top rated restaurants
+// Get top rated restaurants with most recent rating info
 export const getTopRated = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, args) => {
@@ -53,7 +53,37 @@ export const getTopRated = query({
       .sort((a, b) => (b.overallAverage || 0) - (a.overallAverage || 0))
       .slice(0, limit);
 
-    return sorted;
+    // Enrich with most recent rating info
+    const enriched = await Promise.all(
+      sorted.map(async (restaurant) => {
+        // Get most recent rating for this restaurant
+        const recentRating = await ctx.db
+          .query("ratings")
+          .withIndex("by_restaurant", (q) => q.eq("restaurantId", restaurant._id))
+          .order("desc")
+          .first();
+
+        let mostRecentVisit = null;
+        if (recentRating) {
+          const user = recentRating.claimedBy
+            ? await ctx.db.get(recentRating.claimedBy)
+            : null;
+
+          mostRecentVisit = {
+            visitDate: recentRating.visitDate,
+            bookerName: recentRating.bookerName,
+            claimedBy: user?.nickname || null,
+          };
+        }
+
+        return {
+          ...restaurant,
+          mostRecentVisit,
+        };
+      })
+    );
+
+    return enriched;
   },
 });
 
