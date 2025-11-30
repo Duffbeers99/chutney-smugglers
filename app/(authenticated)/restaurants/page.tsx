@@ -51,14 +51,13 @@ export default function RestaurantsPage() {
         </div>
 
         {/* View Toggle */}
-        <div className="mt-4">
+        <div className="mt-4 flex justify-center">
           <ToggleGroup
             type="single"
             value={view}
             onValueChange={(value) => {
               if (value) setView(value as "list" | "map")
             }}
-            className="justify-start"
           >
             <ToggleGroupItem value="list" aria-label="List view" className="gap-2">
               <List className="h-4 w-4" />
