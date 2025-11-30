@@ -13,14 +13,31 @@ import { ArrowLeft, MapPin, Star, Loader2, UserPlus } from "lucide-react"
 import { format } from "date-fns"
 import { toast } from "sonner"
 
-export default function RestaurantDetailPage({ params }: { params: { id: string } }) {
+export default function RestaurantDetailPage({
+  params
+}: {
+  params: Promise<{ id: string }>
+}) {
   const router = useRouter()
-  const restaurantId = params.id as Id<"restaurants">
+  const [restaurantId, setRestaurantId] = React.useState<Id<"restaurants"> | null>(null)
 
-  const restaurant = useQuery(api.restaurants.get, { id: restaurantId })
-  const ratings = useQuery(api.ratings.getRestaurantRatings, { restaurantId })
+  // Unwrap params in useEffect
+  React.useEffect(() => {
+    params.then((p) => {
+      setRestaurantId(p.id as Id<"restaurants">)
+    })
+  }, [params])
 
-  const isLoading = restaurant === undefined || ratings === undefined
+  const restaurant = useQuery(
+    api.restaurants.get,
+    restaurantId ? { id: restaurantId } : "skip"
+  )
+  const ratings = useQuery(
+    api.ratings.getRestaurantRatings,
+    restaurantId ? { restaurantId } : "skip"
+  )
+
+  const isLoading = !restaurantId || restaurant === undefined || ratings === undefined
 
   if (isLoading) {
     return (
@@ -115,7 +132,7 @@ function RatingCard({ rating }: { rating: any }) {
   const [isClaiming, setIsClaiming] = React.useState(false)
   const claimRatingMutation = useMutation(api.ratings.claimRating)
 
-  const overallRating = (rating.food + rating.service + rating.extras + rating.atmosphere) / 4
+  const overallRating = rating.food + rating.service + rating.extras + rating.atmosphere
 
   const initials = rating.user?.nickname
     ? rating.user.nickname
@@ -169,7 +186,7 @@ function RatingCard({ rating }: { rating: any }) {
 
           <Badge variant="secondary" className="shrink-0 gap-1">
             <Star className="size-3 fill-current" />
-            {overallRating.toFixed(1)}
+            {overallRating.toFixed(1)}/20
           </Badge>
         </div>
 

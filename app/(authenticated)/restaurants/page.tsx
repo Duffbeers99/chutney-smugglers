@@ -154,9 +154,10 @@ function RestaurantCard({ restaurant }: { restaurant: any }) {
             <div className="flex-shrink-0 text-right">
               <div className="flex items-center gap-1 mb-1">
                 <Star className="h-5 w-5 fill-primary text-primary" />
-                <span className="text-2xl font-bold text-primary">
+                <span className="text-xl font-bold text-primary">
                   {restaurant.overallAverage?.toFixed(1)}
                 </span>
+                <span className="text-sm text-muted-foreground">/20</span>
               </div>
               <p className="text-xs text-muted-foreground">
                 {restaurant.totalRatings} {restaurant.totalRatings === 1 ? "rating" : "ratings"}

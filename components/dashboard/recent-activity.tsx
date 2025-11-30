@@ -49,9 +49,9 @@ function ActivityItem({ rating }: { rating: RatingData }) {
   const [isClaiming, setIsClaiming] = React.useState(false)
   const claimRatingMutation = useMutation(api.ratings.claimRating)
 
-  // Calculate overall rating
+  // Calculate overall rating (sum of all categories out of 20)
   const overallRating =
-    (rating.food + rating.service + rating.extras + rating.atmosphere) / 4
+    rating.food + rating.service + rating.extras + rating.atmosphere
 
   // Get initials for avatar fallback
   const initials = rating.user?.nickname
@@ -64,10 +64,10 @@ function ActivityItem({ rating }: { rating: RatingData }) {
     : "?"
 
   const getRatingColor = (rating: number) => {
-    if (rating >= 4.5) return "text-saffron"
-    if (rating >= 3.5) return "text-turmeric"
-    if (rating >= 2.5) return "text-curry"
-    return "text-terracotta"
+    if (rating >= 18) return "text-saffron" // 90%+
+    if (rating >= 14) return "text-turmeric" // 70%+
+    if (rating >= 10) return "text-curry" // 50%+
+    return "text-terracotta" // Below 50%
   }
 
   const handleClaim = async (e: React.MouseEvent) => {
@@ -122,7 +122,7 @@ function ActivityItem({ rating }: { rating: RatingData }) {
             )}
           >
             <Star className="size-3 fill-current" aria-hidden="true" />
-            {overallRating.toFixed(1)}
+            {overallRating.toFixed(1)}/20
           </Badge>
         </div>
 
