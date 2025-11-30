@@ -161,6 +161,14 @@ function RestaurantCard({ restaurant }: { restaurant: any }) {
                     Incomplete
                   </Badge>
                 )}
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={handleEditClick}
+                  className="h-7 w-7 shrink-0"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </Button>
               </div>
 
               <div className="flex items-center gap-1 mt-1 text-muted-foreground">
@@ -172,19 +180,6 @@ function RestaurantCard({ restaurant }: { restaurant: any }) {
                 <Badge variant="secondary" className="mt-2 bg-saffron/20 text-foreground border-0">
                   {restaurant.cuisine}
                 </Badge>
-              )}
-
-              {/* Edit button for incomplete restaurants */}
-              {isIncomplete && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleEditClick}
-                  className="mt-3 border-curry text-curry hover:bg-curry/10"
-                >
-                  <Pencil className="h-3 w-3 mr-1.5" />
-                  Complete Details
-                </Button>
               )}
             </div>
 
@@ -241,17 +236,15 @@ function RestaurantCard({ restaurant }: { restaurant: any }) {
     </Card>
 
     {/* Edit Drawer */}
-    {isIncomplete && (
-      <EditRestaurantDrawer
-        open={isEditDrawerOpen}
-        onOpenChange={setIsEditDrawerOpen}
-        restaurant={{
-          _id: restaurant._id as Id<"restaurants">,
-          name: restaurant.name,
-          address: restaurant.address,
-        }}
-      />
-    )}
+    <EditRestaurantDrawer
+      open={isEditDrawerOpen}
+      onOpenChange={setIsEditDrawerOpen}
+      restaurant={{
+        _id: restaurant._id as Id<"restaurants">,
+        name: restaurant.name,
+        address: restaurant.address,
+      }}
+    />
   </>
   )
 }

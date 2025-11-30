@@ -9,9 +9,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { ArrowLeft, MapPin, Star, Loader2, UserPlus } from "lucide-react"
+import { ArrowLeft, MapPin, Star, Loader2, UserPlus, Pencil } from "lucide-react"
 import { format } from "date-fns"
 import { toast } from "sonner"
+import { EditRestaurantDrawer } from "@/components/restaurant/edit-restaurant-drawer"
 
 export default function RestaurantDetailPage({
   params
@@ -20,6 +21,7 @@ export default function RestaurantDetailPage({
 }) {
   const router = useRouter()
   const [restaurantId, setRestaurantId] = React.useState<Id<"restaurants"> | null>(null)
+  const [isEditDrawerOpen, setIsEditDrawerOpen] = React.useState(false)
 
   // Unwrap params in useEffect
   React.useEffect(() => {
@@ -83,6 +85,14 @@ export default function RestaurantDetailPage({
               <p className="truncate">{restaurant.address}</p>
             </div>
           </div>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setIsEditDrawerOpen(true)}
+            className="shrink-0"
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
         </div>
 
         {/* Overall Rating */}
@@ -124,6 +134,17 @@ export default function RestaurantDetailPage({
           ))
         )}
       </main>
+
+      {/* Edit Restaurant Drawer */}
+      <EditRestaurantDrawer
+        open={isEditDrawerOpen}
+        onOpenChange={setIsEditDrawerOpen}
+        restaurant={{
+          _id: restaurant._id,
+          name: restaurant.name,
+          address: restaurant.address,
+        }}
+      />
     </div>
   )
 }
