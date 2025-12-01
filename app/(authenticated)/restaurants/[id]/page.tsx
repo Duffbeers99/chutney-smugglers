@@ -155,8 +155,15 @@ function RatingCard({ rating }: { rating: any }) {
 
   const overallRating = rating.food + rating.service + rating.extras + rating.atmosphere
 
-  const initials = rating.user?.nickname
-    ? rating.user.nickname
+  // Determine who to display - prioritize the actual booker
+  const displayUser = rating.claimedBy && rating.claimedByUser
+    ? rating.claimedByUser
+    : rating.bookerName
+      ? { nickname: rating.bookerName, profileImageUrl: null, _id: null }
+      : rating.user
+
+  const initials = displayUser?.nickname
+    ? displayUser.nickname
         .split(" ")
         .map((n: string) => n[0])
         .join("")
@@ -185,10 +192,10 @@ function RatingCard({ rating }: { rating: any }) {
         {/* User Info */}
         <div className="flex items-center gap-3 mb-3">
           <Avatar className="size-10 border-2 border-border">
-            {rating.user?.profileImageUrl && (
+            {displayUser?.profileImageUrl && (
               <AvatarImage
-                src={rating.user.profileImageUrl}
-                alt={rating.user.nickname}
+                src={displayUser.profileImageUrl}
+                alt={displayUser.nickname}
               />
             )}
             <AvatarFallback className="bg-curry/20 text-curry font-semibold">
@@ -198,7 +205,7 @@ function RatingCard({ rating }: { rating: any }) {
 
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-foreground">
-              {rating.user?.nickname || "Unknown User"}
+              {displayUser?.nickname || "Unknown User"}
             </p>
             <p className="text-xs text-muted-foreground">
               {format(rating.visitDate, "MMM d, yyyy")}
@@ -250,36 +257,28 @@ function RatingCard({ rating }: { rating: any }) {
           </p>
         )}
 
-        {/* Booker and Claim UI */}
-        {rating.bookerName && (
+        {/* Claim UI - only show for unclaimed ratings */}
+        {rating.bookerName && !rating.claimedBy && (
           <div className="flex items-center justify-between gap-2 pt-3 border-t border-border">
-            {rating.claimedBy ? (
-              <Badge variant="secondary" className="bg-curry/10 text-curry border border-curry/20">
-                Booked by {rating.claimedByNickname || "Unknown"}
-              </Badge>
-            ) : (
-              <>
-                <Badge variant="outline" className="text-xs">
-                  Booked by {rating.bookerName} • Unclaimed
-                </Badge>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleClaim}
-                  disabled={isClaiming}
-                  className="h-7 text-xs border-curry text-curry hover:bg-curry/10"
-                >
-                  {isClaiming ? (
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                  ) : (
-                    <>
-                      <UserPlus className="h-3 w-3 mr-1" />
-                      Claim
-                    </>
-                  )}
-                </Button>
-              </>
-            )}
+            <Badge variant="outline" className="text-xs text-muted-foreground">
+              Unclaimed
+            </Badge>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleClaim}
+              disabled={isClaiming}
+              className="h-7 text-xs border-curry text-curry hover:bg-curry/10"
+            >
+              {isClaiming ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <>
+                  <UserPlus className="h-3 w-3 mr-1" />
+                  Claim
+                </>
+              )}
+            </Button>
           </div>
         )}
       </CardContent>

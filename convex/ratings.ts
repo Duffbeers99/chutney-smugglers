@@ -241,11 +241,21 @@ export const getRestaurantRatings = query({
           profileImageUrl = await ctx.storage.getUrl(user.profileImageId);
         }
 
-        // Get claimed user nickname if rating was claimed
-        let claimedByNickname = null;
+        // Get claimed user full data if rating was claimed
+        let claimedByUser = null;
         if (rating.claimedBy) {
           const claimedUser = await ctx.db.get(rating.claimedBy);
-          claimedByNickname = claimedUser?.nickname || null;
+          if (claimedUser) {
+            let claimedProfileImageUrl: string | null = null;
+            if (claimedUser.profileImageId) {
+              claimedProfileImageUrl = await ctx.storage.getUrl(claimedUser.profileImageId);
+            }
+            claimedByUser = {
+              _id: claimedUser._id,
+              nickname: claimedUser.nickname,
+              profileImageUrl: claimedProfileImageUrl,
+            };
+          }
         }
 
         return {
@@ -257,7 +267,7 @@ export const getRestaurantRatings = query({
                 profileImageUrl,
               }
             : null,
-          claimedByNickname,
+          claimedByUser,
         };
       })
     );
@@ -298,11 +308,21 @@ export const getRecentRatings = query({
           profileImageUrl = await ctx.storage.getUrl(user.profileImageId);
         }
 
-        // Get claimed user nickname if rating was claimed
-        let claimedByNickname = null;
+        // Get claimed user full data if rating was claimed
+        let claimedByUser = null;
         if (rating.claimedBy) {
           const claimedUser = await ctx.db.get(rating.claimedBy);
-          claimedByNickname = claimedUser?.nickname || null;
+          if (claimedUser) {
+            let claimedProfileImageUrl: string | null = null;
+            if (claimedUser.profileImageId) {
+              claimedProfileImageUrl = await ctx.storage.getUrl(claimedUser.profileImageId);
+            }
+            claimedByUser = {
+              _id: claimedUser._id,
+              nickname: claimedUser.nickname,
+              profileImageUrl: claimedProfileImageUrl,
+            };
+          }
         }
 
         return {
@@ -315,7 +335,7 @@ export const getRecentRatings = query({
               }
             : null,
           restaurant,
-          claimedByNickname,
+          claimedByUser,
         };
       })
     );

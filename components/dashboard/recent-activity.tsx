@@ -54,11 +54,18 @@ function ActivityItem({ rating }: { rating: RatingData }) {
   const overallRating =
     rating.food + rating.service + rating.extras + rating.atmosphere
 
+  // Determine who to display - prioritize the actual booker
+  const displayUser = rating.claimedBy && (rating as any).claimedByUser
+    ? (rating as any).claimedByUser
+    : rating.bookerName
+      ? { nickname: rating.bookerName, profileImageUrl: null, _id: null }
+      : rating.user
+
   // Get initials for avatar fallback
-  const initials = rating.user?.nickname
-    ? rating.user.nickname
+  const initials = displayUser?.nickname
+    ? displayUser.nickname
         .split(" ")
-        .map((n) => n[0])
+        .map((n: string) => n[0])
         .join("")
         .toUpperCase()
         .slice(0, 2)
@@ -90,10 +97,10 @@ function ActivityItem({ rating }: { rating: RatingData }) {
     <div className="flex items-start gap-3 p-4 rounded-lg">
       {/* User Avatar */}
       <Avatar className="size-10 border-2 border-border">
-        {rating.user?.profileImageUrl && (
+        {displayUser?.profileImageUrl && (
           <AvatarImage
-            src={rating.user.profileImageUrl}
-            alt={rating.user.nickname}
+            src={displayUser.profileImageUrl}
+            alt={displayUser.nickname}
           />
         )}
         <AvatarFallback className="bg-curry/20 text-curry font-semibold text-sm">
@@ -107,7 +114,7 @@ function ActivityItem({ rating }: { rating: RatingData }) {
         <div className="flex items-start justify-between gap-2 mb-1">
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-foreground truncate">
-              {rating.user?.nickname || "Unknown User"}
+              {displayUser?.nickname || "Unknown User"}
             </p>
             <p className="text-xs text-muted-foreground">
               {formatDistanceToNow(rating.createdAt, { addSuffix: true })}
@@ -167,36 +174,28 @@ function ActivityItem({ rating }: { rating: RatingData }) {
           </p>
         )}
 
-        {/* Booker and Claim UI */}
-        {rating.bookerName && (
+        {/* Claim UI - only show for unclaimed ratings */}
+        {rating.bookerName && !rating.claimedBy && (
           <div className="mt-3 flex items-center justify-between gap-2">
-            {rating.claimedBy ? (
-              <Badge variant="secondary" className="bg-curry/10 text-curry border border-curry/20">
-                Booked by {rating.claimedByNickname || "Unknown"}
-              </Badge>
-            ) : (
-              <>
-                <Badge variant="outline" className="text-xs">
-                  Booked by {rating.bookerName} • Unclaimed
-                </Badge>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleClaim}
-                  disabled={isClaiming}
-                  className="h-7 text-xs border-curry text-curry hover:bg-curry/10"
-                >
-                  {isClaiming ? (
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                  ) : (
-                    <>
-                      <UserPlus className="h-3 w-3 mr-1" />
-                      Claim
-                    </>
-                  )}
-                </Button>
-              </>
-            )}
+            <Badge variant="outline" className="text-xs text-muted-foreground">
+              Unclaimed
+            </Badge>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleClaim}
+              disabled={isClaiming}
+              className="h-7 text-xs border-curry text-curry hover:bg-curry/10"
+            >
+              {isClaiming ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <>
+                  <UserPlus className="h-3 w-3 mr-1" />
+                  Claim
+                </>
+              )}
+            </Button>
           </div>
         )}
       </div>
