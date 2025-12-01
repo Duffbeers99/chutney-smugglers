@@ -2,11 +2,11 @@
 
 import * as React from "react";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { Star } from "lucide-react";
 
 interface BookerCurriesDialogProps {
@@ -30,15 +30,15 @@ export function BookerCurriesDialog({
   const sortedCurries = [...booker.curries].sort((a, b) => b.score - a.score);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-old-paper paper-texture max-w-md">
-        <DialogHeader>
-          <DialogTitle className="text-curry text-xl font-bold">
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="bottom" className="bg-old-paper paper-texture">
+        <SheetHeader>
+          <SheetTitle className="text-curry text-xl font-bold">
             {booker.nickname}'s Curries
-          </DialogTitle>
-        </DialogHeader>
+          </SheetTitle>
+        </SheetHeader>
 
-        <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-2">
+        <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-2 mt-4">
           {sortedCurries.map((curry, index) => (
             <div
               key={index}
@@ -57,7 +57,7 @@ export function BookerCurriesDialog({
             </div>
           ))}
         </div>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }

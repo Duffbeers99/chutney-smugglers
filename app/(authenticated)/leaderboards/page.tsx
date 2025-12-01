@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { BottomNav } from "@/components/navigation/bottom-nav";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Loader2, Star, Trophy, Award, Calendar, Crown } from "lucide-react";
+import { Loader2, Star, Trophy, Award, Calendar, Crown, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { BookerCurriesDialog } from "@/components/leaderboard/booker-curries-dialog";
@@ -239,6 +239,8 @@ function PodiumPosition({
   medalColor: string;
   textColor: string;
 }) {
+  const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+
   const getMedalEmoji = (rank: number) => {
     if (rank === 1) return "🥇";
     if (rank === 2) return "🥈";
@@ -256,49 +258,64 @@ function PodiumPosition({
     : "?";
 
   return (
-    <div className="flex-1 max-w-[120px]">
-      {/* User Info Above Podium */}
-      <div className="flex flex-col items-center mb-2">
-        <Avatar className="size-16 border-4 border-background shadow-lg mb-2">
-          {booker.profileImageUrl && (
-            <AvatarImage src={booker.profileImageUrl} alt={booker.nickname} />
-          )}
-          <AvatarFallback className={cn("bg-gradient-to-br text-white font-bold", medalColor)}>
-            {initials}
-          </AvatarFallback>
-        </Avatar>
+    <>
+      <div className="flex-1 max-w-[120px]">
+        {/* User Info Above Podium */}
+        <div className="flex flex-col items-center mb-2">
+          <Avatar className="size-16 border-4 border-background shadow-lg mb-2">
+            {booker.profileImageUrl && (
+              <AvatarImage src={booker.profileImageUrl} alt={booker.nickname} />
+            )}
+            <AvatarFallback className={cn("bg-gradient-to-br text-white font-bold", medalColor)}>
+              {initials}
+            </AvatarFallback>
+          </Avatar>
 
-        <p className="text-sm font-bold text-foreground text-center truncate w-full px-1">
-          {booker.nickname}
-        </p>
+          <p className="text-sm font-bold text-foreground text-center truncate w-full px-1">
+            {booker.nickname}
+          </p>
 
-        {/* Average Score */}
-        <div className="flex items-center gap-1 mt-1">
-          <Star className={cn("h-4 w-4 fill-current", textColor)} />
-          <span className={cn("text-lg font-bold", textColor)}>
-            {booker.averageScore}
-          </span>
-          <span className="text-xs text-muted-foreground">/20</span>
+          {/* Average Score */}
+          <div className="flex items-center gap-1 mt-1">
+            <Star className={cn("h-4 w-4 fill-current", textColor)} />
+            <span className={cn("text-lg font-bold", textColor)}>
+              {booker.averageScore}
+            </span>
+            <span className="text-xs text-muted-foreground">/20</span>
+          </div>
+
+          {/* Curries Booked - Clickable Button */}
+          <button
+            onClick={() => setIsDialogOpen(true)}
+            className="flex items-center gap-0.5 px-2 py-1 mt-1 rounded-md bg-muted/50 hover:bg-muted transition-colors border border-border/50"
+          >
+            <span className="text-xs text-foreground font-medium">
+              {booker.curriesBooked} {booker.curriesBooked === 1 ? "curry" : "curries"}
+            </span>
+            <ChevronRight className="h-3 w-3 text-muted-foreground" />
+          </button>
         </div>
 
-        {/* Curries Booked */}
-        <p className="text-xs text-muted-foreground">
-          {booker.curriesBooked} {booker.curriesBooked === 1 ? "curry" : "curries"}
-        </p>
+        {/* Podium Block */}
+        <div
+          className={cn(
+            "relative rounded-t-lg bg-gradient-to-br shadow-lg flex flex-col items-center justify-center",
+            height,
+            medalColor
+          )}
+        >
+          <span className="text-4xl mb-1">{getMedalEmoji(rank)}</span>
+          <span className="text-2xl font-bold text-white">{rank}</span>
+        </div>
       </div>
 
-      {/* Podium Block */}
-      <div
-        className={cn(
-          "relative rounded-t-lg bg-gradient-to-br shadow-lg flex flex-col items-center justify-center",
-          height,
-          medalColor
-        )}
-      >
-        <span className="text-4xl mb-1">{getMedalEmoji(rank)}</span>
-        <span className="text-2xl font-bold text-white">{rank}</span>
-      </div>
-    </div>
+      {/* Sheet for showing curries */}
+      <BookerCurriesDialog
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        booker={booker}
+      />
+    </>
   );
 }
 
@@ -341,9 +358,12 @@ function BookerCard({ booker, rank }: { booker: any; rank: number }) {
             </p>
             <button
               onClick={() => setIsDialogOpen(true)}
-              className="text-xs text-muted-foreground hover:text-primary hover:underline cursor-pointer transition-colors text-left"
+              className="flex items-center gap-1 px-2 py-1 mt-1 rounded-md bg-muted/50 hover:bg-muted transition-colors border border-border/50"
             >
-              {booker.curriesBooked} {booker.curriesBooked === 1 ? "curry" : "curries"} booked
+              <span className="text-xs text-foreground font-medium">
+                {booker.curriesBooked} {booker.curriesBooked === 1 ? "curry" : "curries"} booked
+              </span>
+              <ChevronRight className="h-3 w-3 text-muted-foreground" />
             </button>
           </div>
 
