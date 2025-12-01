@@ -10,7 +10,9 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
-import { Loader2, MapPin, Search, Star, UtensilsCrossed, Pencil, AlertCircle, List, Map } from "lucide-react"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { Loader2, MapPin, Search, Star, UtensilsCrossed, Pencil, AlertCircle, List, Map, ChevronDown } from "lucide-react"
 import { EditRestaurantDrawer } from "@/components/restaurant/edit-restaurant-drawer"
 import { RestaurantMap } from "@/components/restaurant/restaurant-map"
 import type { Id } from "@/convex/_generated/dataModel"
@@ -131,121 +133,170 @@ function RestaurantCard({ restaurant }: { restaurant: any }) {
   const hasRatings = restaurant.totalRatings > 0
   const isIncomplete = restaurant.isIncomplete === true
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(false)
 
-  const handleCardClick = () => {
+  const handleNameClick = () => {
     router.push(`/restaurants/${restaurant._id}`)
   }
 
   const handleEditClick = (e: React.MouseEvent) => {
-    e.stopPropagation() // Prevent card click when clicking edit button
+    e.stopPropagation()
     setIsEditDrawerOpen(true)
   }
 
   return (
     <>
-      <Card
-        className="card-parchment card-hover cursor-pointer"
-        onClick={handleCardClick}
-      >
+      <Card className="card-parchment">
         <CardContent className="p-4">
-          <div className="flex items-start justify-between gap-4">
-            {/* Restaurant Info */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <h3 className="font-semibold text-foreground text-lg truncate">
-                  {restaurant.name}
-                </h3>
-                {isIncomplete && (
-                  <Badge variant="outline" className="shrink-0 border-yellow-500 text-yellow-700 dark:text-yellow-500">
-                    <AlertCircle className="h-3 w-3 mr-1" />
-                    Incomplete
-                  </Badge>
+          <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+            {/* Main visible content */}
+            <div className="flex items-start justify-between gap-4">
+              {/* Restaurant Info */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <h3
+                    className="font-semibold text-foreground text-lg truncate cursor-pointer hover:text-curry transition-colors"
+                    onClick={handleNameClick}
+                  >
+                    {restaurant.name}
+                  </h3>
+                  {isIncomplete && (
+                    <Badge variant="outline" className="shrink-0 border-yellow-500 text-yellow-700 dark:text-yellow-500">
+                      <AlertCircle className="h-3 w-3 mr-1" />
+                      Incomplete
+                    </Badge>
+                  )}
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={handleEditClick}
+                    className="h-7 w-7 shrink-0"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+
+                <div className="flex items-center gap-1 mt-1 text-muted-foreground">
+                  <MapPin className="h-3 w-3 shrink-0" />
+                  <p className="text-sm truncate">{restaurant.address}</p>
+                </div>
+              </div>
+
+              {/* Rating and Expand Button */}
+              <div className="flex items-center gap-2">
+                {hasRatings ? (
+                  <div className="flex-shrink-0 text-right">
+                    <div className="flex items-center gap-1 mb-1">
+                      <Star className="h-5 w-5 fill-primary text-primary" />
+                      <span className="text-xl font-bold text-primary">
+                        {restaurant.overallAverage?.toFixed(1)}
+                      </span>
+                      <span className="text-sm text-muted-foreground">/20</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex-shrink-0 text-right">
+                    <div className="flex items-center gap-1 mb-1">
+                      <Star className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                    <p className="text-xs text-muted-foreground">No ratings</p>
+                  </div>
                 )}
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  onClick={handleEditClick}
-                  className="h-7 w-7 shrink-0"
-                >
-                  <Pencil className="h-3.5 w-3.5" />
-                </Button>
-              </div>
 
-              <div className="flex items-center gap-1 mt-1 text-muted-foreground">
-                <MapPin className="h-3 w-3 shrink-0" />
-                <p className="text-sm truncate">{restaurant.address}</p>
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-9 w-9 p-0">
+                    <ChevronDown
+                      className={`h-4 w-4 transition-transform duration-200 ${
+                        isOpen ? "transform rotate-180" : ""
+                      }`}
+                    />
+                    <span className="sr-only">Toggle details</span>
+                  </Button>
+                </CollapsibleTrigger>
               </div>
+            </div>
 
-              {restaurant.cuisine && (
-                <Badge variant="secondary" className="mt-2 bg-saffron/20 text-foreground border-0">
-                  {restaurant.cuisine}
-                </Badge>
+            {/* Expandable Content */}
+            <CollapsibleContent className="space-y-3 pt-4">
+              {/* Booker Info */}
+              {restaurant.booker && (
+                <div className="flex items-center gap-2 pb-2 border-b border-border">
+                  <Avatar className="h-6 w-6 border border-border">
+                    {restaurant.booker.profileImageUrl && (
+                      <AvatarImage
+                        src={restaurant.booker.profileImageUrl}
+                        alt={restaurant.booker.nickname || "Booker"}
+                      />
+                    )}
+                    <AvatarFallback className="bg-curry/20 text-curry text-xs">
+                      {restaurant.booker.nickname?.charAt(0)?.toUpperCase() || "?"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm text-muted-foreground">
+                    Booked by {restaurant.booker.nickname}
+                  </span>
+                </div>
               )}
-            </div>
 
-          {/* Rating */}
-          {hasRatings ? (
-            <div className="flex-shrink-0 text-right">
-              <div className="flex items-center gap-1 mb-1">
-                <Star className="h-5 w-5 fill-primary text-primary" />
-                <span className="text-xl font-bold text-primary">
-                  {restaurant.overallAverage?.toFixed(1)}
-                </span>
-                <span className="text-sm text-muted-foreground">/20</span>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {restaurant.totalRatings} {restaurant.totalRatings === 1 ? "rating" : "ratings"}
-              </p>
-            </div>
-          ) : (
-            <div className="flex-shrink-0 text-right">
-              <div className="flex items-center gap-1 mb-1">
-                <Star className="h-5 w-5 text-muted-foreground" />
-              </div>
-              <p className="text-xs text-muted-foreground">No ratings yet</p>
-            </div>
-          )}
-        </div>
+              {/* Category Ratings */}
+              {hasRatings && (
+                <>
+                  <div className="grid grid-cols-2 gap-2">
+                    <CategoryRating
+                      label="Food"
+                      value={restaurant.averageFood}
+                      emoji="🍛"
+                    />
+                    <CategoryRating
+                      label="Service"
+                      value={restaurant.averageService}
+                      emoji="👨‍🍳"
+                    />
+                    <CategoryRating
+                      label="Extras"
+                      value={restaurant.averageExtras}
+                      emoji="🥘"
+                    />
+                    <CategoryRating
+                      label="Atmosphere"
+                      value={restaurant.averageAtmosphere}
+                      emoji="🪔"
+                    />
+                  </div>
 
-        {/* Category Ratings */}
-        {hasRatings && (
-          <div className="mt-4 grid grid-cols-2 gap-2">
-            <CategoryRating
-              label="Food"
-              value={restaurant.averageFood}
-              emoji="🍛"
-            />
-            <CategoryRating
-              label="Service"
-              value={restaurant.averageService}
-              emoji="👨‍🍳"
-            />
-            <CategoryRating
-              label="Extras"
-              value={restaurant.averageExtras}
-              emoji="🥘"
-            />
-            <CategoryRating
-              label="Atmosphere"
-              value={restaurant.averageAtmosphere}
-              emoji="🪔"
-            />
-          </div>
-        )}
-      </CardContent>
-    </Card>
+                  {/* Number of ratings */}
+                  <div className="pt-2 border-t border-border">
+                    <p className="text-sm text-muted-foreground text-center">
+                      {restaurant.totalRatings} {restaurant.totalRatings === 1 ? "rating" : "ratings"}
+                    </p>
+                  </div>
+                </>
+              )}
 
-    {/* Edit Drawer */}
-    <EditRestaurantDrawer
-      open={isEditDrawerOpen}
-      onOpenChange={setIsEditDrawerOpen}
-      restaurant={{
-        _id: restaurant._id as Id<"restaurants">,
-        name: restaurant.name,
-        address: restaurant.address,
-      }}
-    />
-  </>
+              {/* Cuisine badge if exists */}
+              {restaurant.cuisine && (
+                <div className="pt-2">
+                  <Badge variant="secondary" className="bg-saffron/20 text-foreground border-0">
+                    {restaurant.cuisine}
+                  </Badge>
+                </div>
+              )}
+            </CollapsibleContent>
+          </Collapsible>
+        </CardContent>
+      </Card>
+
+      {/* Edit Drawer */}
+      <EditRestaurantDrawer
+        open={isEditDrawerOpen}
+        onOpenChange={setIsEditDrawerOpen}
+        restaurant={{
+          _id: restaurant._id as Id<"restaurants">,
+          name: restaurant.name,
+          address: restaurant.address,
+        }}
+      />
+    </>
   )
 }
 

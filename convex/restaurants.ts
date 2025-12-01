@@ -2,7 +2,7 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
-// List all restaurants
+// List all restaurants with booker information
 export const list = query({
   args: {},
   handler: async (ctx) => {
@@ -11,7 +11,55 @@ export const list = query({
       .order("desc")
       .collect();
 
-    return restaurants;
+    // Enrich each restaurant with booker information from most recent event
+    const enriched = await Promise.all(
+      restaurants.map(async (restaurant) => {
+        // Find the most recent curry event for this restaurant
+        const events = await ctx.db
+          .query("curryEvents")
+          .filter((q) => q.eq(q.field("restaurantId"), restaurant._id))
+          .collect();
+
+        // Sort by date (most recent first)
+        const sortedEvents = events.sort((a, b) => {
+          const [aHours, aMinutes] = a.scheduledTime.split(":").map(Number);
+          const aDateTime = new Date(a.scheduledDate);
+          aDateTime.setHours(aHours, aMinutes, 0, 0);
+
+          const [bHours, bMinutes] = b.scheduledTime.split(":").map(Number);
+          const bDateTime = new Date(b.scheduledDate);
+          bDateTime.setHours(bHours, bMinutes, 0, 0);
+
+          return bDateTime.getTime() - aDateTime.getTime();
+        });
+
+        const mostRecentEvent = sortedEvents[0];
+
+        let booker = null;
+        if (mostRecentEvent) {
+          const bookerUser = await ctx.db.get(mostRecentEvent.createdBy);
+          if (bookerUser) {
+            let profileImageUrl: string | null = null;
+            if (bookerUser.profileImageId) {
+              profileImageUrl = await ctx.storage.getUrl(bookerUser.profileImageId);
+            }
+
+            booker = {
+              _id: bookerUser._id,
+              nickname: bookerUser.nickname,
+              profileImageUrl,
+            };
+          }
+        }
+
+        return {
+          ...restaurant,
+          booker,
+        };
+      })
+    );
+
+    return enriched;
   },
 });
 
