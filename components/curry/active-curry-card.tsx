@@ -32,7 +32,7 @@ export function ActiveCurryCard({ className }: ActiveCurryCardProps) {
   const [isRevealing, setIsRevealing] = React.useState(false)
 
   // Loading state
-  if (activeEvent === undefined || currentUser === undefined || attendees === undefined) {
+  if (activeEvent === undefined || !currentUser || attendees === undefined) {
     return (
       <Card className={cn("card-parchment mx-4", className)}>
         <CardContent className="p-4">
