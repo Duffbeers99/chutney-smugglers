@@ -26,6 +26,7 @@ interface RatingData {
   createdAt: number
   bookerName?: string
   claimedBy?: string
+  claimedByNickname?: string | null
   user: {
     _id: string
     nickname?: string
@@ -171,7 +172,7 @@ function ActivityItem({ rating }: { rating: RatingData }) {
           <div className="mt-3 flex items-center justify-between gap-2">
             {rating.claimedBy ? (
               <Badge variant="secondary" className="bg-curry/10 text-curry border border-curry/20">
-                Booked by {rating.claimedBy}
+                Booked by {rating.claimedByNickname || "Unknown"}
               </Badge>
             ) : (
               <>

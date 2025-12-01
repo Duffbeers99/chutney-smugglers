@@ -191,6 +191,13 @@ export const getRestaurantRatings = query({
           profileImageUrl = await ctx.storage.getUrl(user.profileImageId);
         }
 
+        // Get claimed user nickname if rating was claimed
+        let claimedByNickname = null;
+        if (rating.claimedBy) {
+          const claimedUser = await ctx.db.get(rating.claimedBy);
+          claimedByNickname = claimedUser?.nickname || null;
+        }
+
         return {
           ...rating,
           user: user
@@ -200,6 +207,7 @@ export const getRestaurantRatings = query({
                 profileImageUrl,
               }
             : null,
+          claimedByNickname,
         };
       })
     );
@@ -230,6 +238,13 @@ export const getRecentRatings = query({
           profileImageUrl = await ctx.storage.getUrl(user.profileImageId);
         }
 
+        // Get claimed user nickname if rating was claimed
+        let claimedByNickname = null;
+        if (rating.claimedBy) {
+          const claimedUser = await ctx.db.get(rating.claimedBy);
+          claimedByNickname = claimedUser?.nickname || null;
+        }
+
         return {
           ...rating,
           user: user
@@ -240,6 +255,7 @@ export const getRecentRatings = query({
               }
             : null,
           restaurant,
+          claimedByNickname,
         };
       })
     );

@@ -255,7 +255,7 @@ function RatingCard({ rating }: { rating: any }) {
           <div className="flex items-center justify-between gap-2 pt-3 border-t border-border">
             {rating.claimedBy ? (
               <Badge variant="secondary" className="bg-curry/10 text-curry border border-curry/20">
-                Booked by {rating.claimedBy}
+                Booked by {rating.claimedByNickname || "Unknown"}
               </Badge>
             ) : (
               <>
