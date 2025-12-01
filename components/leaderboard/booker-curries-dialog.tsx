@@ -2,12 +2,12 @@
 
 import * as React from "react";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from "@/components/ui/sheet";
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerDescription,
+} from "@/components/ui/drawer";
 import { Star } from "lucide-react";
 
 interface BookerCurriesDialogProps {
@@ -33,21 +33,18 @@ export function BookerCurriesDialog({
   console.log("BookerCurriesDialog render:", { open, nickname: booker.nickname, curriesCount: booker.curries.length });
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent
-        side="bottom"
-        className="min-h-[50vh] max-h-[80vh] bg-old-paper paper-texture p-6"
-      >
-        <SheetHeader className="mb-4">
-          <SheetTitle className="text-curry text-xl font-bold">
+    <Drawer open={open} onOpenChange={onOpenChange}>
+      <DrawerContent className="bg-old-paper paper-texture">
+        <DrawerHeader>
+          <DrawerTitle className="text-curry text-xl font-bold">
             {booker.nickname}'s Curries
-          </SheetTitle>
-          <SheetDescription>
+          </DrawerTitle>
+          <DrawerDescription>
             View all curries booked by {booker.nickname}
-          </SheetDescription>
-        </SheetHeader>
+          </DrawerDescription>
+        </DrawerHeader>
 
-        <div className="space-y-2 overflow-y-auto" style={{ maxHeight: 'calc(70vh - 100px)' }}>
+        <div className="px-4 pb-8 space-y-2 max-h-[60vh] overflow-y-auto">
           {sortedCurries.length === 0 ? (
             <p className="text-muted-foreground text-center py-8">No curries yet</p>
           ) : (
@@ -70,7 +67,7 @@ export function BookerCurriesDialog({
             ))
           )}
         </div>
-      </SheetContent>
-    </Sheet>
+      </DrawerContent>
+    </Drawer>
   );
 }
