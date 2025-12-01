@@ -175,6 +175,21 @@ export const canManageEvents = query({
 });
 
 /**
+ * Check if current user is the admin (can override rating reveals)
+ */
+export const isAdmin = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return false;
+
+    // Only this specific user ID is the admin
+    const ADMIN_USER_ID = "k573zewczry92fgnxw80ndz89d7w33he" as const;
+    return userId === ADMIN_USER_ID;
+  },
+});
+
+/**
  * Create a new curry event
  */
 export const createEvent = mutation({
@@ -717,17 +732,10 @@ export const revealEventRatings = mutation({
       throw new Error("Must be authenticated");
     }
 
-    // Check if user has permission (event creator or override)
-    const rotation = await ctx.db
-      .query("bookingRotation")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .first();
-
-    if (!rotation?.canOverride) {
-      const event = await ctx.db.get(args.eventId);
-      if (!event || event.createdBy !== userId) {
-        throw new Error("You don't have permission to reveal ratings");
-      }
+    // Only the admin user can manually reveal ratings
+    const ADMIN_USER_ID = "k573zewczry92fgnxw80ndz89d7w33he" as const;
+    if (userId !== ADMIN_USER_ID) {
+      throw new Error("Only the admin can manually reveal ratings");
     }
 
     // Reveal ratings and mark as completed
@@ -880,6 +888,170 @@ export const migrateRatingsToHalfPoints = internalMutation({
       ratingsUpdated: updatedCount,
       restaurantsRecalculated: restaurantIds.size,
       totalRatings: allRatings.length,
+    };
+  },
+});
+
+/**
+ * Internal mutation to backfill curry events for restaurants that don't have them
+ * This creates events based on existing ratings with bookerName/claimedBy data
+ */
+export const backfillMissingCurryEvents = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    // Get all restaurants
+    const allRestaurants = await ctx.db.query("restaurants").collect();
+    console.log(`Processing ${allRestaurants.length} restaurants`);
+
+    let eventsCreated = 0;
+    let restaurantsSkipped = 0;
+
+    for (const restaurant of allRestaurants) {
+      // Check if restaurant already has events
+      const existingEvents = await ctx.db
+        .query("curryEvents")
+        .filter((q) => q.eq(q.field("restaurantId"), restaurant._id))
+        .collect();
+
+      if (existingEvents.length > 0) {
+        restaurantsSkipped++;
+        continue;
+      }
+
+      // Get ratings for this restaurant to find booker
+      const ratings = await ctx.db
+        .query("ratings")
+        .withIndex("by_restaurant", (q) => q.eq("restaurantId", restaurant._id))
+        .collect();
+
+      if (ratings.length === 0) {
+        console.log(`No ratings found for ${restaurant.name}, skipping`);
+        restaurantsSkipped++;
+        continue;
+      }
+
+      // Find the earliest rating (first visit)
+      const earliestRating = ratings.reduce((earliest, current) =>
+        current.visitDate < earliest.visitDate ? current : earliest
+      );
+
+      // Determine the booker
+      let createdBy = earliestRating.claimedBy || earliestRating.userId;
+
+      // If no user found, try to match bookerName to a user
+      if (!createdBy && earliestRating.bookerName) {
+        const allUsers = await ctx.db.query("users").collect();
+        const matchedUser = allUsers.find((u) =>
+          u.nickname?.toLowerCase() === earliestRating.bookerName?.toLowerCase() ||
+          u.name?.toLowerCase() === earliestRating.bookerName?.toLowerCase()
+        );
+        if (matchedUser) {
+          createdBy = matchedUser._id;
+        }
+      }
+
+      // If still no user, use the restaurant's addedBy as fallback
+      if (!createdBy) {
+        createdBy = restaurant.addedBy;
+      }
+
+      // Create the curry event
+      const visitDate = new Date(earliestRating.visitDate);
+      const scheduledTime = "19:30"; // Default curry time
+
+      await ctx.db.insert("curryEvents", {
+        restaurantId: restaurant._id,
+        restaurantName: restaurant.name,
+        address: restaurant.address,
+        googlePlaceId: restaurant.googlePlaceId,
+        location: restaurant.location,
+        scheduledDate: earliestRating.visitDate,
+        scheduledTime: scheduledTime,
+        createdBy: createdBy,
+        createdAt: earliestRating.createdAt || earliestRating.visitDate,
+        status: "completed",
+        ratingsRevealed: true,
+      });
+
+      eventsCreated++;
+      console.log(`Created event for ${restaurant.name}, booked by user ${createdBy}`);
+    }
+
+    return {
+      success: true,
+      message: `Backfill complete: ${eventsCreated} events created, ${restaurantsSkipped} restaurants skipped`,
+      eventsCreated,
+      restaurantsSkipped,
+      totalRestaurants: allRestaurants.length,
+    };
+  },
+});
+
+/**
+ * Internal mutation to add missing ratings for Balham Social
+ */
+export const addBalhamSocialRatings = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const restaurantId = "k171nwrgsgr2w8wm4v0hkrgkc97wcm0g" as any;
+
+    // Find the Balham Social event
+    const events = await ctx.db
+      .query("curryEvents")
+      .filter((q) => q.eq(q.field("restaurantId"), restaurantId))
+      .collect();
+
+    if (events.length === 0) {
+      throw new Error("No event found for Balham Social");
+    }
+
+    const event = events[0]; // Get the most recent event
+    const visitDate = event.scheduledDate;
+    const now = Date.now();
+
+    // James's rating
+    const jamesUserId = "k57fgdy9vb8nj8yjc1aa8t1vg57wct8q" as any;
+    await ctx.db.insert("ratings", {
+      userId: jamesUserId,
+      restaurantId: restaurantId,
+      visitDate: visitDate,
+      food: 4,
+      service: 2.5,
+      extras: 2,
+      atmosphere: 2.5,
+      eventId: event._id,
+      createdAt: now,
+    });
+    console.log("Created rating for James");
+
+    // Casper's rating
+    const casperUserId = "k577s9dnmzm1xwtmhnnn4zp6817wd52b" as any;
+    await ctx.db.insert("ratings", {
+      userId: casperUserId,
+      restaurantId: restaurantId,
+      visitDate: visitDate,
+      food: 3,
+      service: 3,
+      extras: 2.5,
+      atmosphere: 2,
+      eventId: event._id,
+      createdAt: now,
+    });
+    console.log("Created rating for Casper");
+
+    // Update the event's hasVoted array
+    const currentHasVoted = event.hasVoted || [];
+    await ctx.db.patch(event._id, {
+      hasVoted: [...currentHasVoted, jamesUserId, casperUserId],
+    });
+
+    // Recalculate restaurant aggregates
+    await updateRestaurantAggregates(ctx, restaurantId);
+    console.log("Recalculated restaurant aggregates");
+
+    return {
+      success: true,
+      message: "Added ratings for James and Casper, updated event and recalculated aggregates",
     };
   },
 });

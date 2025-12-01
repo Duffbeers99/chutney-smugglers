@@ -22,7 +22,7 @@ export function ActiveCurryCard({ className }: ActiveCurryCardProps) {
   const router = useRouter()
   const activeEvent = useQuery(api.curryEvents.getActiveEvent)
   const currentUser = useQuery(api.users.currentUser)
-  const canManage = useQuery(api.curryEvents.canManageEvents)
+  const isAdmin = useQuery(api.curryEvents.isAdmin)
   const attendees = useQuery(
     api.curryEvents.getEventAttendees,
     activeEvent ? { eventId: activeEvent._id } : "skip"
@@ -198,7 +198,7 @@ export function ActiveCurryCard({ className }: ActiveCurryCardProps) {
                 )}
 
                 {/* Admin override */}
-                {canManage && !allVoted && hasVoted && (
+                {isAdmin && !allVoted && hasVoted && (
                   <Button
                     onClick={handleRevealRatings}
                     disabled={isRevealing}
