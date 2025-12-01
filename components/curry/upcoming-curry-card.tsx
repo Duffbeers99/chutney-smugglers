@@ -16,7 +16,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Calendar, Clock, MapPin, Flame, Plus, Pencil, Trash2 } from "lucide-react"
+import { Calendar, Clock, MapPin, Flame, Plus, Pencil, Trash2, Check, Users } from "lucide-react"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Checkbox } from "@/components/ui/checkbox"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
@@ -61,13 +63,22 @@ function calculateTimeRemaining(scheduledDate: number, scheduledTime: string): T
 export function UpcomingCurryCard({ className }: UpcomingCurryCardProps) {
   const nextEvent = useQuery(api.curryEvents.getNextEvent)
   const canManage = useQuery(api.curryEvents.canManageEvents)
+  const currentUser = useQuery(api.users.currentUser)
+  const attendees = useQuery(
+    api.curryEvents.getEventAttendees,
+    nextEvent ? { eventId: nextEvent._id } : "skip"
+  )
+
   const deleteEvent = useMutation(api.curryEvents.deleteEvent)
+  const confirmAttendance = useMutation(api.curryEvents.confirmAttendance)
+  const cancelAttendance = useMutation(api.curryEvents.cancelAttendance)
 
   const [timeRemaining, setTimeRemaining] = React.useState<TimeRemaining | null>(null)
   const [isAddDrawerOpen, setIsAddDrawerOpen] = React.useState(false)
   const [isEditDrawerOpen, setIsEditDrawerOpen] = React.useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false)
   const [isDeleting, setIsDeleting] = React.useState(false)
+  const [isTogglingAttendance, setIsTogglingAttendance] = React.useState(false)
 
   // Update countdown with live ticking
   React.useEffect(() => {
@@ -106,6 +117,30 @@ export function UpcomingCurryCard({ className }: UpcomingCurryCardProps) {
       setIsDeleting(false)
     }
   }
+
+  // Handle attendance toggle
+  const toggleAttendance = async (checked: boolean) => {
+    if (!nextEvent || !currentUser) return
+
+    setIsTogglingAttendance(true)
+    try {
+      if (checked) {
+        await confirmAttendance({ eventId: nextEvent._id })
+        toast.success("Attendance confirmed!")
+      } else {
+        await cancelAttendance({ eventId: nextEvent._id })
+        toast.success("Attendance cancelled")
+      }
+    } catch (error) {
+      console.error("Failed to toggle attendance:", error)
+      toast.error(error instanceof Error ? error.message : "Failed to update attendance")
+    } finally {
+      setIsTogglingAttendance(false)
+    }
+  }
+
+  // Check if current user is attending
+  const isAttending = currentUser && attendees?.some((a) => a._id === currentUser._id)
 
   // Loading state
   if (nextEvent === undefined || canManage === undefined) {
@@ -238,6 +273,52 @@ export function UpcomingCurryCard({ className }: UpcomingCurryCardProps) {
               </div>
             </div>
           )}
+
+          {/* Attendance Section */}
+          <div className="pt-3 border-t border-border space-y-3">
+            {/* Attendance Checkbox */}
+            <label className="flex items-center gap-2 cursor-pointer">
+              <Checkbox
+                checked={isAttending}
+                onCheckedChange={toggleAttendance}
+                disabled={isTogglingAttendance || !currentUser}
+                className="data-[state=checked]:bg-curry data-[state=checked]:border-curry"
+              />
+              <span className="text-sm font-medium text-foreground">
+                I'm attending this curry
+              </span>
+            </label>
+
+            {/* Attendees List */}
+            {attendees && attendees.length > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Users className="size-3" />
+                  <span>{attendees.length} {attendees.length === 1 ? 'person' : 'people'} attending</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {attendees.map((attendee) => (
+                    <div key={attendee._id} className="flex items-center gap-1.5 text-xs">
+                      <Avatar className="size-6 border border-border">
+                        {attendee.profileImageUrl && (
+                          <AvatarImage
+                            src={attendee.profileImageUrl}
+                            alt={attendee.nickname || "User"}
+                          />
+                        )}
+                        <AvatarFallback className="bg-curry/20 text-curry text-[10px]">
+                          {attendee.nickname?.charAt(0)?.toUpperCase() || "?"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="font-medium text-foreground">
+                        {attendee.nickname || "Unknown"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Optional notes */}
           {nextEvent.notes && (

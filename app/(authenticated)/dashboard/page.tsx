@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { RecentActivity } from "@/components/dashboard/recent-activity"
 import { BottomNav } from "@/components/navigation/bottom-nav"
 import { UpcomingCurryCard } from "@/components/curry/upcoming-curry-card"
+import { ActiveCurryCard } from "@/components/curry/active-curry-card"
 import { Calendar, MapPin, Sparkles, Trophy, ChefHat } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
@@ -199,6 +200,7 @@ export default function DashboardPage() {
   const user = useQuery(api.users.currentUser)
   const recentRatings = useQuery(api.ratings.getRecentRatings, { limit: 10 })
   const canManageEvents = useQuery(api.curryEvents.canManageEvents)
+  const activeEvent = useQuery(api.curryEvents.getActiveEvent)
 
   // Auto-initialize booking rotation
   const initializeBooker = useMutation(api.curryEvents.initializeCurrentUserAsBooker)
@@ -229,7 +231,10 @@ export default function DashboardPage() {
 
       {/* Main Content */}
       <main className="space-y-6 py-6 pb-28">
-        {/* Upcoming Curry Card */}
+        {/* Active Curry Card (shows when event has started but not completed) */}
+        {activeEvent && <ActiveCurryCard />}
+
+        {/* Upcoming Curry Card (shows when there's a future event) */}
         <UpcomingCurryCard />
 
         {/* Quick Access */}

@@ -91,13 +91,17 @@ const schema = defineSchema({
     bookerName: v.optional(v.string()), // Original booker name (e.g., "Goose", "Duff")
     claimedBy: v.optional(v.id("users")), // User who claimed this rating
 
+    // Link to curry event (new event-based rating system)
+    eventId: v.optional(v.id("curryEvents")),
+
     createdAt: v.number(),
   })
     .index("by_user", ["userId"])
     .index("by_restaurant", ["restaurantId"])
     .index("by_user_and_restaurant", ["userId", "restaurantId"])
     .index("by_created_at", ["createdAt"])
-    .index("by_visit_date", ["visitDate"]),
+    .index("by_visit_date", ["visitDate"])
+    .index("by_event", ["eventId"]),
 
   // Upcoming curry events/bookings
   curryEvents: defineTable({
@@ -118,8 +122,13 @@ const schema = defineSchema({
     scheduledTime: v.string(), // Time in HH:mm format (e.g., "19:30")
     createdBy: v.id("users"),
     createdAt: v.number(),
-    status: v.string(), // "upcoming", "completed", "cancelled"
+    status: v.string(), // "upcoming", "active", "completed", "cancelled"
     notes: v.optional(v.string()),
+
+    // Attendance tracking
+    attendees: v.optional(v.array(v.id("users"))), // Users who confirmed attendance
+    hasVoted: v.optional(v.array(v.id("users"))), // Users who submitted ratings
+    ratingsRevealed: v.optional(v.boolean()), // Whether ratings are visible (all voted or override)
   })
     .index("by_scheduled_date", ["scheduledDate"])
     .index("by_status", ["status"])

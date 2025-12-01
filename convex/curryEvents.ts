@@ -521,3 +521,195 @@ export const initializeCurrentUserAsBooker = mutation({
     return { success: true, message: "Added to booking rotation as current booker" };
   },
 });
+
+/**
+ * Confirm attendance for a curry event
+ */
+export const confirmAttendance = mutation({
+  args: {
+    eventId: v.id("curryEvents"),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("Must be authenticated to confirm attendance");
+    }
+
+    const event = await ctx.db.get(args.eventId);
+    if (!event) {
+      throw new Error("Event not found");
+    }
+
+    // Check if event is still upcoming
+    if (event.status !== "upcoming") {
+      throw new Error("Can only confirm attendance for upcoming events");
+    }
+
+    // Get current attendees or initialize empty array
+    const attendees = event.attendees || [];
+
+    // Check if user already confirmed
+    if (attendees.includes(userId)) {
+      return { success: true, message: "Already confirmed" };
+    }
+
+    // Add user to attendees
+    await ctx.db.patch(args.eventId, {
+      attendees: [...attendees, userId],
+    });
+
+    return { success: true, message: "Attendance confirmed" };
+  },
+});
+
+/**
+ * Cancel attendance for a curry event
+ */
+export const cancelAttendance = mutation({
+  args: {
+    eventId: v.id("curryEvents"),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("Must be authenticated to cancel attendance");
+    }
+
+    const event = await ctx.db.get(args.eventId);
+    if (!event) {
+      throw new Error("Event not found");
+    }
+
+    // Get current attendees
+    const attendees = event.attendees || [];
+
+    // Remove user from attendees
+    await ctx.db.patch(args.eventId, {
+      attendees: attendees.filter((id) => id !== userId),
+    });
+
+    return { success: true, message: "Attendance cancelled" };
+  },
+});
+
+/**
+ * Get enriched list of attendees for an event
+ */
+export const getEventAttendees = query({
+  args: {
+    eventId: v.id("curryEvents"),
+  },
+  handler: async (ctx, args) => {
+    const event = await ctx.db.get(args.eventId);
+    if (!event) {
+      return [];
+    }
+
+    const attendees = event.attendees || [];
+
+    // Enrich with user data
+    const enriched = await Promise.all(
+      attendees.map(async (userId) => {
+        const user = await ctx.db.get(userId);
+        if (!user) return null;
+
+        let profileImageUrl: string | null = null;
+        if (user.profileImageId) {
+          profileImageUrl = await ctx.storage.getUrl(user.profileImageId);
+        }
+
+        return {
+          _id: user._id,
+          nickname: user.nickname,
+          profileImageUrl,
+        };
+      })
+    );
+
+    // Filter out null values
+    return enriched.filter((user) => user !== null);
+  },
+});
+
+/**
+ * Get the currently active curry event (started but not completed)
+ */
+export const getActiveEvent = query({
+  args: {},
+  handler: async (ctx) => {
+    const now = Date.now();
+
+    // Find events with status "upcoming" that have already started
+    const events = await ctx.db
+      .query("curryEvents")
+      .withIndex("by_status", (q) => q.eq("status", "upcoming"))
+      .collect();
+
+    // Filter to events that have started but ratings not revealed yet
+    const activeEvents = events
+      .filter((event) => {
+        // Parse the time (HH:mm format)
+        const [hours, minutes] = event.scheduledTime.split(":").map(Number);
+
+        // Create full datetime for the event
+        const eventDateTime = new Date(event.scheduledDate);
+        eventDateTime.setHours(hours, minutes, 0, 0);
+
+        // Event has started if datetime is in the past
+        const hasStarted = eventDateTime.getTime() <= now;
+
+        // Only include if event has started and ratings not completed
+        return hasStarted && !event.ratingsRevealed;
+      })
+      .sort((a, b) => {
+        // Sort by date (oldest first - the event that started first)
+        const [aHours, aMinutes] = a.scheduledTime.split(":").map(Number);
+        const aDateTime = new Date(a.scheduledDate);
+        aDateTime.setHours(aHours, aMinutes, 0, 0);
+
+        const [bHours, bMinutes] = b.scheduledTime.split(":").map(Number);
+        const bDateTime = new Date(b.scheduledDate);
+        bDateTime.setHours(bHours, bMinutes, 0, 0);
+
+        return aDateTime.getTime() - bDateTime.getTime();
+      });
+
+    return activeEvents[0] ?? null;
+  },
+});
+
+/**
+ * Manually reveal ratings and complete an event (admin override)
+ */
+export const revealEventRatings = mutation({
+  args: {
+    eventId: v.id("curryEvents"),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("Must be authenticated");
+    }
+
+    // Check if user has permission (event creator or override)
+    const rotation = await ctx.db
+      .query("bookingRotation")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .first();
+
+    if (!rotation?.canOverride) {
+      const event = await ctx.db.get(args.eventId);
+      if (!event || event.createdBy !== userId) {
+        throw new Error("You don't have permission to reveal ratings");
+      }
+    }
+
+    // Reveal ratings and mark as completed
+    await ctx.db.patch(args.eventId, {
+      ratingsRevealed: true,
+      status: "completed",
+    });
+
+    return { success: true };
+  },
+});

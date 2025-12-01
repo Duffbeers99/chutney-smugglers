@@ -5,7 +5,6 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Home, Trophy, User, UtensilsCrossed } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { QuickAddButton } from "@/components/dashboard/quick-add-button"
 
 interface NavItem {
   href: string
@@ -122,13 +121,6 @@ export function BottomNav() {
                 )
               })}
             </div>
-          </div>
-        </div>
-
-        {/* Floating center + button - positioned absolutely above the nav */}
-        <div className="absolute left-1/2 -translate-x-1/2 bottom-3 pointer-events-none">
-          <div className="pointer-events-auto">
-            <QuickAddButton variant="floating" />
           </div>
         </div>
       </div>
