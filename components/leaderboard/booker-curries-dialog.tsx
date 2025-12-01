@@ -32,17 +32,22 @@ export function BookerCurriesDialog({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="bg-old-paper paper-texture">
-        <SheetHeader>
-          <SheetTitle className="text-curry text-xl font-bold">
-            {booker.nickname}'s Curries
-          </SheetTitle>
-          <SheetDescription className="sr-only">
-            View all curries booked by {booker.nickname} with their ratings
-          </SheetDescription>
-        </SheetHeader>
+      <SheetContent
+        side="bottom"
+        className="h-auto max-h-[80vh] rounded-t-3xl overflow-hidden flex flex-col bg-old-paper paper-texture"
+      >
+        <div className="flex-shrink-0 px-6 pt-6 pb-4">
+          <SheetHeader>
+            <SheetTitle className="text-curry text-xl font-bold">
+              {booker.nickname}'s Curries
+            </SheetTitle>
+            <SheetDescription className="sr-only">
+              View all curries booked by {booker.nickname} with their ratings
+            </SheetDescription>
+          </SheetHeader>
+        </div>
 
-        <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-2 mt-4">
+        <div className="flex-1 overflow-y-auto px-6 pb-6 space-y-2">
           {sortedCurries.map((curry, index) => (
             <div
               key={index}
