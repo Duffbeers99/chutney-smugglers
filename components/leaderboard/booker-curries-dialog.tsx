@@ -33,21 +33,19 @@ export function BookerCurriesDialog({
   console.log("BookerCurriesDialog render:", { open, nickname: booker.nickname, curriesCount: booker.curries.length });
 
   return (
-    <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="bg-old-paper paper-texture max-h-[85vh]">
-        <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-muted mb-4" />
+    <Drawer open={open} onOpenChange={onOpenChange} modal={true} dismissible={true} shouldScaleBackground={false} direction="bottom">
+      <DrawerContent className="paper-texture max-h-[70vh] safe-area-bottom !fixed !bottom-0 !left-0 !right-0">
+        <DrawerHeader className="px-4">
+          <DrawerTitle className="text-curry text-xl font-bold">
+            {booker.nickname}'s Curries
+          </DrawerTitle>
+          <DrawerDescription>
+            View all curries booked by {booker.nickname}
+          </DrawerDescription>
+        </DrawerHeader>
 
-        <div className="px-4 pb-4">
-          <DrawerHeader className="px-0">
-            <DrawerTitle className="text-curry text-xl font-bold">
-              {booker.nickname}'s Curries
-            </DrawerTitle>
-            <DrawerDescription>
-              View all curries booked by {booker.nickname}
-            </DrawerDescription>
-          </DrawerHeader>
-
-          <div className="space-y-2 max-h-[50vh] overflow-y-auto mt-4">
+        <div className="px-4 pb-8">
+          <div className="space-y-2 max-h-[50vh] overflow-y-auto">
             {sortedCurries.length === 0 ? (
               <p className="text-muted-foreground text-center py-8">No curries yet</p>
             ) : (
