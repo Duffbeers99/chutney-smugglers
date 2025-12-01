@@ -6,6 +6,7 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
+  SheetDescription,
 } from "@/components/ui/sheet";
 import { Star } from "lucide-react";
 
@@ -36,6 +37,9 @@ export function BookerCurriesDialog({
           <SheetTitle className="text-curry text-xl font-bold">
             {booker.nickname}'s Curries
           </SheetTitle>
+          <SheetDescription className="sr-only">
+            View all curries booked by {booker.nickname} with their ratings
+          </SheetDescription>
         </SheetHeader>
 
         <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-2 mt-4">

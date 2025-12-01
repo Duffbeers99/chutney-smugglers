@@ -361,7 +361,7 @@ function BookerCard({ booker, rank }: { booker: any; rank: number }) {
               className="flex items-center gap-1 px-2 py-1 mt-1 rounded-md bg-muted/50 hover:bg-muted transition-colors border border-border/50"
             >
               <span className="text-xs text-foreground font-medium">
-                {booker.curriesBooked} {booker.curriesBooked === 1 ? "curry" : "curries"} booked
+                {booker.curriesBooked} {booker.curriesBooked === 1 ? "curry" : "curries"}
               </span>
               <ChevronRight className="h-3 w-3 text-muted-foreground" />
             </button>
