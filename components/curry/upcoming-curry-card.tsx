@@ -140,7 +140,7 @@ export function UpcomingCurryCard({ className }: UpcomingCurryCardProps) {
   }
 
   // Check if current user is attending
-  const isAttending = currentUser && attendees?.some((a) => a._id === currentUser._id)
+  const isAttending = Boolean(currentUser && attendees?.some((a) => a._id === currentUser._id))
 
   // Loading state
   if (nextEvent === undefined || canManage === undefined) {

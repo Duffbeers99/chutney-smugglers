@@ -1,0 +1,20 @@
+
+================================================================================
+MANUAL TESTING GUIDE - Event-Based Rating System
+================================================================================
+
+Step 1: Opening http://localhost:3000/dashboard...
+
+
+❌ Error during testing: page.goto: net::ERR_ABORTED; maybe frame was detached?
+Call log:
+[2m  - navigating to "http://localhost:3000/dashboard", waiting until "load"[22m
+
+page.goto: net::ERR_ABORTED; maybe frame was detached?
+Call log:
+[2m  - navigating to "http://localhost:3000/dashboard", waiting until "load"[22m
+
+    at manualTestingGuide (/Users/jake.duffy/git/chutney-smugglers/test-manual-checklist.js:27:16)
+
+✓ Browser closed. Testing complete.
+

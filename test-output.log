@@ -1,0 +1,111 @@
+================================================================================
+COMPREHENSIVE UI TEST REPORT - Event-Based Rating System
+================================================================================
+Test Date: 2025-12-01T11:17:30.669Z
+Base URL: http://localhost:3000
+================================================================================
+
+
+================================================================================
+PHASE 1: INITIAL NAVIGATION & SETUP
+================================================================================
+
+[1] ✗ Navigation > Load dashboard page
+    Error: page.goto: Timeout 30000ms exceeded.
+Call log:
+[2m  - navigating to "http://localhost:3000/dashboard", waiting until "domcontentloaded"[22m
+
+    Could not take error screenshot
+[2] ✓ Navigation > Authentication check
+    User is authenticated
+
+================================================================================
+PHASE 2: NAVIGATION BAR TESTING
+================================================================================
+
+[3] ✗ Navigation > Bottom nav tab count
+    Error: page.waitForSelector: Timeout 5000ms exceeded.
+Call log:
+[2m  - waiting for locator('nav[aria-label="Bottom navigation"]') to be visible[22m
+[2m    - waiting for" http://localhost:3000/dashboard" navigation to finish...[22m
+
+[4] ✗ Navigation > Center plus button removed
+    Error: page.$: Target page, context or browser has been closed
+[5] ✗ Navigation > Navigate to Dashboard/Home
+    Error: page.goto: Target page, context or browser has been closed
+[6] ✗ Navigation > Navigate to Leaderboards
+    Error: page.goto: Target page, context or browser has been closed
+[7] ✗ Navigation > Navigate to Restaurants
+    Error: page.goto: Target page, context or browser has been closed
+[8] ✗ Navigation > Navigate to Profile
+    Error: page.goto: Target page, context or browser has been closed
+
+❌ CRITICAL ERROR: page.goto: Target page, context or browser has been closed
+page.goto: Target page, context or browser has been closed
+    at runTests (/Users/jake.duffy/git/chutney-smugglers/test-event-rating-system.js:150:16)
+
+================================================================================
+TEST SUMMARY REPORT
+================================================================================
+
+Total Tests Run: 8
+✓ Passed: 1 (12.5%)
+✗ Failed: 7 (87.5%)
+⚠ Warnings: 0 (0.0%)
+ℹ Info: 0 (0.0%)
+
+--------------------------------------------------------------------------------
+RESULTS BY CATEGORY:
+--------------------------------------------------------------------------------
+
+Navigation:
+  ✓ Pass: 1/8
+  ✗ Fail: 7/8
+
+--------------------------------------------------------------------------------
+FAILED TESTS:
+--------------------------------------------------------------------------------
+
+[1] Navigation > Load dashboard page
+    Error: page.goto: Timeout 30000ms exceeded.
+Call log:
+[2m  - navigating to "http://localhost:3000/dashboard", waiting until "domcontentloaded"[22m
+
+
+[3] Navigation > Bottom nav tab count
+    Error: page.waitForSelector: Timeout 5000ms exceeded.
+Call log:
+[2m  - waiting for locator('nav[aria-label="Bottom navigation"]') to be visible[22m
+[2m    - waiting for" http://localhost:3000/dashboard" navigation to finish...[22m
+
+
+[4] Navigation > Center plus button removed
+    Error: page.$: Target page, context or browser has been closed
+
+[5] Navigation > Navigate to Dashboard/Home
+    Error: page.goto: Target page, context or browser has been closed
+
+[6] Navigation > Navigate to Leaderboards
+    Error: page.goto: Target page, context or browser has been closed
+
+[7] Navigation > Navigate to Restaurants
+    Error: page.goto: Target page, context or browser has been closed
+
+[8] Navigation > Navigate to Profile
+    Error: page.goto: Target page, context or browser has been closed
+
+================================================================================
+RECOMMENDATIONS & NEXT STEPS
+================================================================================
+
+The following areas need attention:
+
+1. Critical Issues (7 failures):
+   - Review failed tests above and fix implementation bugs
+   - Ensure all error handling is working correctly
+
+================================================================================
+Screenshots saved to: /Users/jake.duffy/git/chutney-smugglers/screenshots/
+Test completed at: 2025-12-01T11:20:50.813Z
+================================================================================
+
