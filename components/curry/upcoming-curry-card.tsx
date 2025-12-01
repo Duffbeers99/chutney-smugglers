@@ -156,34 +156,30 @@ export function UpcomingCurryCard({ className }: UpcomingCurryCardProps) {
     )
   }
 
-  // No event exists - show add prompt (only if user can manage)
+  // No event exists - show add prompt for everyone
   if (!nextEvent) {
-    if (!canManage) {
-      return null // Don't show anything if user can't add events
-    }
-
     return (
       <>
-        <Card className={cn("card-parchment mx-4", className)}>
-          <CardContent className="flex items-center gap-3 p-4">
-            <div className="flex size-12 items-center justify-center rounded-full bg-muted">
-              <Calendar className="size-6 text-muted-foreground" aria-hidden="true" />
+        <Card className={cn("card-parchment mx-4 border-2 border-curry/30", className)}>
+          <CardContent className="flex flex-col items-center text-center gap-4 p-6">
+            <div className="flex size-16 items-center justify-center rounded-full curry-gradient">
+              <Plus className="size-8 text-white" aria-hidden="true" />
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-foreground">
-                No upcoming curry
+            <div className="space-y-2">
+              <p className="text-lg font-bold text-foreground">
+                No upcoming curry scheduled
               </p>
-              <p className="text-xs text-muted-foreground">
-                It's your turn to book the next curry!
+              <p className="text-sm text-muted-foreground max-w-md">
+                If it's your turn to book the next curry, please add it here.
               </p>
             </div>
             <Button
-              size="sm"
+              size="lg"
               onClick={() => setIsAddDrawerOpen(true)}
-              className="shrink-0 curry-gradient text-white"
+              className="curry-gradient text-white font-semibold"
             >
-              <Plus className="size-4 mr-1" />
-              Add
+              <Plus className="size-5 mr-2" />
+              Book Next Curry
             </Button>
           </CardContent>
         </Card>
