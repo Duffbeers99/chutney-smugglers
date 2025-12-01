@@ -456,3 +456,149 @@ export const getEventRatings = query({
     };
   },
 });
+
+// Get top bookers leaderboard (users who book curries)
+export const getTopBookers = query({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const limit = args.limit || 10;
+
+    // Get all ratings
+    const allRatings = await ctx.db.query("ratings").collect();
+
+    // Group ratings by event/restaurant visit to calculate average per curry
+    const visitMap = new Map<string, {
+      bookerId: string | null,
+      restaurantId: string,
+      restaurantName: string,
+      ratings: number[]
+    }>();
+
+    for (const rating of allRatings) {
+      // Skip ratings where we can't determine the booker
+      let bookerId: string | null = null;
+      let visitKey: string;
+
+      // Identify the booker
+      if (rating.eventId) {
+        const event = await ctx.db.get(rating.eventId);
+        if (event && event.ratingsRevealed) {
+          bookerId = event.createdBy;
+          visitKey = rating.eventId; // Use eventId as visit key
+        } else {
+          continue; // Skip unrevealed event ratings
+        }
+      } else if (rating.claimedBy) {
+        bookerId = rating.claimedBy;
+        // For claimed ratings, use combination of booker+restaurant+date as visit key
+        visitKey = `${rating.claimedBy}_${rating.restaurantId}_${rating.visitDate}`;
+      } else {
+        // Skip unclaimed backdated ratings (only bookerName)
+        continue;
+      }
+
+      if (!bookerId) continue;
+
+      // Calculate overall rating (0-20 scale)
+      const overallRating = rating.food + rating.service + rating.extras + rating.atmosphere;
+
+      // Get restaurant name
+      const restaurant = await ctx.db.get(rating.restaurantId);
+      const restaurantName = restaurant?.name || "Unknown";
+
+      if (visitMap.has(visitKey)) {
+        visitMap.get(visitKey)!.ratings.push(overallRating);
+      } else {
+        visitMap.set(visitKey, {
+          bookerId,
+          restaurantId: rating.restaurantId,
+          restaurantName,
+          ratings: [overallRating]
+        });
+      }
+    }
+
+    // Calculate average per curry visit and group by booker
+    const bookerMap = new Map<string, {
+      userId: string,
+      curryScores: number[],
+      curries: Array<{ restaurantId: string, restaurantName: string, score: number }>
+    }>();
+
+    for (const [_, visit] of visitMap) {
+      if (!visit.bookerId) continue;
+
+      // Calculate average rating for this curry
+      const avgRating = visit.ratings.reduce((sum, r) => sum + r, 0) / visit.ratings.length;
+
+      if (bookerMap.has(visit.bookerId)) {
+        const booker = bookerMap.get(visit.bookerId)!;
+        booker.curryScores.push(avgRating);
+        booker.curries.push({
+          restaurantId: visit.restaurantId,
+          restaurantName: visit.restaurantName,
+          score: avgRating
+        });
+      } else {
+        bookerMap.set(visit.bookerId, {
+          userId: visit.bookerId,
+          curryScores: [avgRating],
+          curries: [{
+            restaurantId: visit.restaurantId,
+            restaurantName: visit.restaurantName,
+            score: avgRating
+          }]
+        });
+      }
+    }
+
+    // Calculate final stats and sort
+    const bookers = Array.from(bookerMap.values())
+      .map(b => {
+        const averageScore = b.curryScores.reduce((sum, s) => sum + s, 0) / b.curryScores.length;
+        // Find best curry
+        const bestCurry = b.curries.reduce((best, curr) =>
+          curr.score > best.score ? curr : best
+        );
+
+        return {
+          userId: b.userId,
+          curriesBooked: b.curryScores.length,
+          averageScore: Math.round(averageScore * 10) / 10,
+          bestCurry: {
+            name: bestCurry.restaurantName,
+            score: Math.round(bestCurry.score * 10) / 10
+          }
+        };
+      })
+      .sort((a, b) => b.averageScore - a.averageScore)
+      .slice(0, limit);
+
+    // Enrich with user data
+    const enriched = await Promise.all(
+      bookers.map(async (booker) => {
+        // Type assertion for user ID
+        const userId = booker.userId as any as ReturnType<typeof ctx.db.normalizeId<"users">>;
+        const user = await ctx.db.get(userId as any);
+        if (!user || !("nickname" in user)) return null;
+
+        let profileImageUrl: string | null = null;
+        if ("profileImageId" in user && user.profileImageId) {
+          profileImageUrl = await ctx.storage.getUrl(user.profileImageId);
+        }
+
+        return {
+          _id: user._id,
+          nickname: user.nickname,
+          profileImageUrl,
+          curriesBooked: booker.curriesBooked,
+          averageScore: booker.averageScore,
+          bestCurry: booker.bestCurry,
+        };
+      })
+    );
+
+    // Filter out nulls
+    return enriched.filter((b) => b !== null);
+  },
+});
