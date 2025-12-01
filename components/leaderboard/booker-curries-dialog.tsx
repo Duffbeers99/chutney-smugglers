@@ -36,9 +36,9 @@ export function BookerCurriesDialog({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
-        className="bg-old-paper paper-texture"
+        className="min-h-[50vh] max-h-[80vh] bg-old-paper paper-texture p-6"
       >
-        <SheetHeader>
+        <SheetHeader className="mb-4">
           <SheetTitle className="text-curry text-xl font-bold">
             {booker.nickname}'s Curries
           </SheetTitle>
@@ -47,7 +47,7 @@ export function BookerCurriesDialog({
           </SheetDescription>
         </SheetHeader>
 
-        <div className="mt-4 space-y-2 max-h-[50vh] overflow-y-auto">
+        <div className="space-y-2 overflow-y-auto" style={{ maxHeight: 'calc(70vh - 100px)' }}>
           {sortedCurries.length === 0 ? (
             <p className="text-muted-foreground text-center py-8">No curries yet</p>
           ) : (
