@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Slider } from "@/components/ui/slider"
 import { toast } from "sonner"
 import { ArrowLeft, ChefHat, Loader2, MapPin, Star, Calendar } from "lucide-react"
 import { Id } from "@/convex/_generated/dataModel"
@@ -34,10 +35,10 @@ export default function AddRatingPage() {
   const addRating = useMutation(api.ratings.add)
 
   // Rating form state
-  const [food, setFood] = useState(3)
-  const [service, setService] = useState(3)
-  const [extras, setExtras] = useState(3)
-  const [atmosphere, setAtmosphere] = useState(3)
+  const [food, setFood] = useState(2.5)
+  const [service, setService] = useState(2.5)
+  const [extras, setExtras] = useState(2.5)
+  const [atmosphere, setAtmosphere] = useState(2.5)
   const [notes, setNotes] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -234,28 +235,30 @@ function RatingSlider({
   emoji: string
 }) {
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <div className="flex items-center justify-between">
         <Label className="flex items-center gap-2">
           <span className="text-lg">{emoji}</span>
           {label}
         </Label>
-        <span className="text-lg font-bold text-curry">{value}/5</span>
+        <span className="text-lg font-bold text-curry">
+          {value.toFixed(1)}/5
+        </span>
       </div>
-      <div className="flex gap-2">
-        {[1, 2, 3, 4, 5].map((rating) => (
-          <button
-            key={rating}
-            onClick={() => onChange(rating)}
-            className={`flex-1 h-10 rounded-lg border-2 transition-all ${
-              value >= rating
-                ? "border-curry bg-curry text-white"
-                : "border-border hover:border-curry/50"
-            }`}
-          >
-            {rating}
-          </button>
-        ))}
+      <div className="px-2">
+        <Slider
+          value={[value]}
+          onValueChange={(values) => onChange(values[0])}
+          min={0}
+          max={5}
+          step={0.5}
+          className="cursor-pointer"
+        />
+        <div className="flex justify-between mt-1 text-xs text-muted-foreground">
+          <span>0</span>
+          <span>2.5</span>
+          <span>5</span>
+        </div>
       </div>
     </div>
   )

@@ -561,17 +561,20 @@ export const getTopBookers = query({
           curr.score > best.score ? curr : best
         );
 
+        // Round to nearest 0.5
+        const roundToHalf = (num: number) => Math.round(num * 2) / 2;
+
         return {
           userId: b.userId,
           curriesBooked: b.curryScores.length,
-          averageScore: Math.round(averageScore * 10) / 10,
+          averageScore: roundToHalf(averageScore),
           bestCurry: {
             name: bestCurry.restaurantName,
-            score: Math.round(bestCurry.score * 10) / 10
+            score: roundToHalf(bestCurry.score)
           },
           curries: b.curries.map(c => ({
             restaurantName: c.restaurantName,
-            score: Math.round(c.score * 10) / 10
+            score: roundToHalf(c.score)
           }))
         };
       })

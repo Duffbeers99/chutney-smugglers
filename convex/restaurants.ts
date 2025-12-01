@@ -202,12 +202,15 @@ export async function updateRestaurantAggregates(
   const avgAtmosphere = ratings.reduce((sum: number, r: any) => sum + r.atmosphere, 0) / ratings.length;
   const overall = avgFood + avgService + avgExtras + avgAtmosphere; // Sum of averages (out of 20)
 
+  // Round to nearest 0.5
+  const roundToHalf = (num: number) => Math.round(num * 2) / 2;
+
   await ctx.db.patch(restaurantId, {
-    averageFood: Math.round(avgFood * 10) / 10,
-    averageService: Math.round(avgService * 10) / 10,
-    averageExtras: Math.round(avgExtras * 10) / 10,
-    averageAtmosphere: Math.round(avgAtmosphere * 10) / 10,
-    overallAverage: Math.round(overall * 10) / 10,
+    averageFood: roundToHalf(avgFood),
+    averageService: roundToHalf(avgService),
+    averageExtras: roundToHalf(avgExtras),
+    averageAtmosphere: roundToHalf(avgAtmosphere),
+    overallAverage: roundToHalf(overall),
     totalRatings: ratings.length,
   });
 }

@@ -1,6 +1,7 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalMutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { updateRestaurantAggregates } from "./restaurants";
 
 /**
  * Get the next upcoming curry event
@@ -84,6 +85,31 @@ export const getAllUpcomingEvents = query({
 
         return aDateTime.getTime() - bDateTime.getTime();
       });
+  },
+});
+
+/**
+ * Get all curry events (for admin purposes)
+ */
+export const getAllEvents = query({
+  args: {},
+  handler: async (ctx) => {
+    const events = await ctx.db
+      .query("curryEvents")
+      .collect();
+
+    // Sort by scheduled date (most recent first)
+    return events.sort((a, b) => {
+      const [aHours, aMinutes] = a.scheduledTime.split(":").map(Number);
+      const aDateTime = new Date(a.scheduledDate);
+      aDateTime.setHours(aHours, aMinutes, 0, 0);
+
+      const [bHours, bMinutes] = b.scheduledTime.split(":").map(Number);
+      const bDateTime = new Date(b.scheduledDate);
+      bDateTime.setHours(bHours, bMinutes, 0, 0);
+
+      return bDateTime.getTime() - aDateTime.getTime();
+    });
   },
 });
 
@@ -711,5 +737,149 @@ export const revealEventRatings = mutation({
     });
 
     return { success: true };
+  },
+});
+
+/**
+ * Reassign an event to a different user (admin only)
+ */
+export const reassignEventCreator = mutation({
+  args: {
+    eventId: v.id("curryEvents"),
+    newCreatorId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("Must be authenticated");
+    }
+
+    // Check if current user has override permission
+    const rotation = await ctx.db
+      .query("bookingRotation")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .first();
+
+    if (!rotation?.canOverride) {
+      throw new Error("You don't have permission to reassign events");
+    }
+
+    // Verify the event exists
+    const event = await ctx.db.get(args.eventId);
+    if (!event) {
+      throw new Error("Event not found");
+    }
+
+    // Verify the new creator exists
+    const newCreator = await ctx.db.get(args.newCreatorId);
+    if (!newCreator) {
+      throw new Error("New creator user not found");
+    }
+
+    // Update the event's createdBy field
+    await ctx.db.patch(args.eventId, {
+      createdBy: args.newCreatorId,
+    });
+
+    return {
+      success: true,
+      message: `Event reassigned to ${newCreator.nickname || newCreator.name || "user"}`
+    };
+  },
+});
+
+/**
+ * Internal mutation to reassign event creator (for admin use via dashboard)
+ * This bypasses authentication and can be run from the Convex dashboard
+ */
+export const reassignEventCreatorInternal = internalMutation({
+  args: {
+    eventId: v.id("curryEvents"),
+    newCreatorId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    // Verify the event exists
+    const event = await ctx.db.get(args.eventId);
+    if (!event) {
+      throw new Error("Event not found");
+    }
+
+    // Verify the new creator exists
+    const newCreator = await ctx.db.get(args.newCreatorId);
+    if (!newCreator) {
+      throw new Error("New creator user not found");
+    }
+
+    // Update the event's createdBy field
+    await ctx.db.patch(args.eventId, {
+      createdBy: args.newCreatorId,
+    });
+
+    return {
+      success: true,
+      message: `Event reassigned to ${newCreator.nickname || newCreator.name || "user"}`,
+      eventId: args.eventId,
+      newCreatorId: args.newCreatorId,
+    };
+  },
+});
+
+/**
+ * Internal mutation to migrate all existing ratings to half-point increments
+ * This rounds all existing ratings to the nearest 0.5 and recalculates aggregates
+ */
+export const migrateRatingsToHalfPoints = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    // Helper function to round to nearest 0.5
+    const roundToHalf = (num: number) => Math.round(num * 2) / 2;
+
+    // Get all ratings
+    const allRatings = await ctx.db.query("ratings").collect();
+
+    console.log(`Found ${allRatings.length} ratings to migrate`);
+
+    let updatedCount = 0;
+
+    // Update each rating
+    for (const rating of allRatings) {
+      const roundedFood = roundToHalf(rating.food);
+      const roundedService = roundToHalf(rating.service);
+      const roundedExtras = roundToHalf(rating.extras);
+      const roundedAtmosphere = roundToHalf(rating.atmosphere);
+
+      // Only update if values changed
+      if (
+        roundedFood !== rating.food ||
+        roundedService !== rating.service ||
+        roundedExtras !== rating.extras ||
+        roundedAtmosphere !== rating.atmosphere
+      ) {
+        await ctx.db.patch(rating._id, {
+          food: roundedFood,
+          service: roundedService,
+          extras: roundedExtras,
+          atmosphere: roundedAtmosphere,
+        });
+        updatedCount++;
+      }
+    }
+
+    // Get all unique restaurants to recalculate aggregates
+    const restaurantIds = new Set(allRatings.map((r) => r.restaurantId));
+    console.log(`Recalculating aggregates for ${restaurantIds.size} restaurants`);
+
+    // Recalculate aggregates for each restaurant
+    for (const restaurantId of restaurantIds) {
+      await updateRestaurantAggregates(ctx, restaurantId);
+    }
+
+    return {
+      success: true,
+      message: `Migration complete: ${updatedCount} ratings updated, ${restaurantIds.size} restaurants recalculated`,
+      ratingsUpdated: updatedCount,
+      restaurantsRecalculated: restaurantIds.size,
+      totalRatings: allRatings.length,
+    };
   },
 });

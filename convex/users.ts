@@ -48,6 +48,31 @@ export const getUser = query({
   },
 });
 
+// Get all users (for admin purposes)
+export const getAllUsers = query({
+  args: {},
+  handler: async (ctx) => {
+    const users = await ctx.db.query("users").collect();
+
+    return Promise.all(
+      users.map(async (user) => {
+        let profileImageUrl: string | null = null;
+        if (user.profileImageId) {
+          profileImageUrl = await ctx.storage.getUrl(user.profileImageId);
+        }
+
+        return {
+          _id: user._id,
+          nickname: user.nickname,
+          name: user.name,
+          email: user.email,
+          profileImageUrl,
+        };
+      })
+    );
+  },
+});
+
 // Get user statistics
 export const getUserStats = query({
   args: {},
