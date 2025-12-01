@@ -12,6 +12,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Loader2, Star, Trophy, Award, Calendar, Crown } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { BookerCurriesDialog } from "@/components/leaderboard/booker-curries-dialog";
 
 export default function LeaderboardsPage() {
   const [view, setView] = React.useState<"curries" | "smugglers">("curries");
@@ -303,6 +304,8 @@ function PodiumPosition({
 
 // Booker Card for 4th place and below
 function BookerCard({ booker, rank }: { booker: any; rank: number }) {
+  const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+
   const initials = booker.nickname
     ? booker.nickname
         .split(" ")
@@ -313,55 +316,57 @@ function BookerCard({ booker, rank }: { booker: any; rank: number }) {
     : "?";
 
   return (
-    <div className="card-parchment p-4 card-hover">
-      <div className="flex items-center gap-4">
-        {/* Rank */}
-        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-          <span className="text-sm font-bold text-foreground">{rank}</span>
-        </div>
-
-        {/* User Avatar */}
-        <Avatar className="size-12 border-2 border-border">
-          {booker.profileImageUrl && (
-            <AvatarImage src={booker.profileImageUrl} alt={booker.nickname} />
-          )}
-          <AvatarFallback className="bg-curry/20 text-curry font-semibold">
-            {initials}
-          </AvatarFallback>
-        </Avatar>
-
-        {/* User Info */}
-        <div className="flex-1 min-w-0">
-          <p className="font-semibold text-foreground truncate">
-            {booker.nickname}
-          </p>
-          <p className="text-xs text-muted-foreground">
-            {booker.curriesBooked} {booker.curriesBooked === 1 ? "curry" : "curries"} booked
-          </p>
-          {booker.bestCurry && (
-            <Badge variant="secondary" className="text-xs mt-1 bg-saffron/20 text-foreground border-saffron/30">
-              Best: {booker.bestCurry.name}
-            </Badge>
-          )}
-        </div>
-
-        {/* Average Score */}
-        <div className="flex-shrink-0 text-right">
-          <div className="flex items-center gap-1">
-            <Star className="h-5 w-5 fill-primary text-primary" />
-            <span className="text-lg font-bold text-primary">
-              {booker.averageScore}
-            </span>
-            <span className="text-xs text-muted-foreground">/20</span>
+    <>
+      <div className="card-parchment p-4 card-hover">
+        <div className="flex items-center gap-4">
+          {/* Rank */}
+          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+            <span className="text-sm font-bold text-foreground">{rank}</span>
           </div>
-          {booker.bestCurry && (
-            <p className="text-xs text-muted-foreground">
-              Best: {booker.bestCurry.score}
+
+          {/* User Avatar */}
+          <Avatar className="size-12 border-2 border-border">
+            {booker.profileImageUrl && (
+              <AvatarImage src={booker.profileImageUrl} alt={booker.nickname} />
+            )}
+            <AvatarFallback className="bg-curry/20 text-curry font-semibold">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+
+          {/* User Info */}
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-foreground truncate">
+              {booker.nickname}
             </p>
-          )}
+            <button
+              onClick={() => setIsDialogOpen(true)}
+              className="text-xs text-muted-foreground hover:text-primary hover:underline cursor-pointer transition-colors text-left"
+            >
+              {booker.curriesBooked} {booker.curriesBooked === 1 ? "curry" : "curries"} booked
+            </button>
+          </div>
+
+          {/* Average Score */}
+          <div className="flex-shrink-0 text-right">
+            <div className="flex items-center gap-1">
+              <Star className="h-5 w-5 fill-primary text-primary" />
+              <span className="text-lg font-bold text-primary">
+                {booker.averageScore}
+              </span>
+              <span className="text-xs text-muted-foreground">/20</span>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Dialog for showing curries */}
+      <BookerCurriesDialog
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        booker={booker}
+      />
+    </>
   );
 }
 

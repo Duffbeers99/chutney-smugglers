@@ -568,7 +568,11 @@ export const getTopBookers = query({
           bestCurry: {
             name: bestCurry.restaurantName,
             score: Math.round(bestCurry.score * 10) / 10
-          }
+          },
+          curries: b.curries.map(c => ({
+            restaurantName: c.restaurantName,
+            score: Math.round(c.score * 10) / 10
+          }))
         };
       })
       .sort((a, b) => b.averageScore - a.averageScore)
@@ -594,6 +598,7 @@ export const getTopBookers = query({
           curriesBooked: booker.curriesBooked,
           averageScore: booker.averageScore,
           bestCurry: booker.bestCurry,
+          curries: booker.curries,
         };
       })
     );
