@@ -161,10 +161,7 @@ export function UpcomingCurryCard({ className }: UpcomingCurryCardProps) {
     return (
       <>
         <Card className={cn("card-parchment mx-4 border-2 border-curry/30", className)}>
-          <CardContent className="flex flex-col items-center text-center gap-4 p-6">
-            <div className="flex size-16 items-center justify-center rounded-full curry-gradient">
-              <Plus className="size-8 text-white" aria-hidden="true" />
-            </div>
+          <CardContent className="flex flex-col items-center justify-center text-center gap-4 p-6">
             <div className="space-y-2">
               <p className="text-lg font-bold text-foreground">
                 No upcoming curry scheduled
