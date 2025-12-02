@@ -161,16 +161,64 @@ export function UpcomingCurryCard({ className }: UpcomingCurryCardProps) {
     return (
       <>
         <Card className={cn("card-parchment mx-4 border-2 border-curry/30 relative overflow-hidden", className)}>
-          {/* Floating tiny flags */}
-          <div className="absolute inset-0 pointer-events-none">
-            <span className="absolute text-xs opacity-20 animate-tiny-flag-1" style={{ top: '15%', left: '10%' }}>🇮🇳</span>
-            <span className="absolute text-xs opacity-15 animate-tiny-flag-2" style={{ top: '25%', right: '15%' }}>🇮🇳</span>
-            <span className="absolute text-xs opacity-20 animate-tiny-flag-3" style={{ top: '40%', left: '20%' }}>🇮🇳</span>
-            <span className="absolute text-xs opacity-15 animate-tiny-flag-4" style={{ top: '50%', right: '25%' }}>🇮🇳</span>
-            <span className="absolute text-xs opacity-20 animate-tiny-flag-5" style={{ top: '65%', left: '15%' }}>🇮🇳</span>
-            <span className="absolute text-xs opacity-15 animate-tiny-flag-1" style={{ top: '70%', right: '20%' }}>🇮🇳</span>
-            <span className="absolute text-xs opacity-20 animate-tiny-flag-2" style={{ top: '30%', left: '80%' }}>🇮🇳</span>
-            <span className="absolute text-xs opacity-15 animate-tiny-flag-3" style={{ top: '55%', right: '10%' }}>🇮🇳</span>
+          {/* Abstract Indian flag colors background */}
+          <div className="absolute inset-0 pointer-events-none opacity-30">
+            {/* Saffron orange blobs */}
+            <div
+              className="absolute rounded-full blur-2xl"
+              style={{
+                width: '200px',
+                height: '200px',
+                background: 'radial-gradient(circle, #FF9933 0%, transparent 70%)',
+                top: '-50px',
+                left: '-30px',
+              }}
+            />
+            <div
+              className="absolute rounded-full blur-xl"
+              style={{
+                width: '150px',
+                height: '150px',
+                background: 'radial-gradient(circle, #FF9933 0%, transparent 70%)',
+                bottom: '20px',
+                right: '-20px',
+              }}
+            />
+
+            {/* White/light blobs */}
+            <div
+              className="absolute rounded-full blur-2xl"
+              style={{
+                width: '180px',
+                height: '180px',
+                background: 'radial-gradient(circle, rgba(255, 255, 255, 0.8) 0%, transparent 70%)',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+              }}
+            />
+
+            {/* Green blobs */}
+            <div
+              className="absolute rounded-full blur-2xl"
+              style={{
+                width: '160px',
+                height: '160px',
+                background: 'radial-gradient(circle, #138808 0%, transparent 70%)',
+                top: '-20px',
+                right: '10px',
+              }}
+            />
+            <div
+              className="absolute rounded-full blur-xl"
+              style={{
+                width: '140px',
+                height: '140px',
+                background: 'radial-gradient(circle, #138808 0%, transparent 70%)',
+                bottom: '-30px',
+                left: '30%',
+              }}
+            />
           </div>
 
           <CardContent className="flex flex-col items-center justify-center text-center gap-4 p-6 relative z-10">
