@@ -15,7 +15,6 @@ import { ActiveCurryCard } from "@/components/curry/active-curry-card"
 import { Calendar, MapPin, Sparkles, Trophy, ChefHat } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
-import { FloatingIconsBackground } from "@/components/dashboard/floating-icons-background"
 
 function DashboardHeader({
   user,
@@ -224,10 +223,7 @@ export default function DashboardPage() {
   const isLoadingRatings = recentRatings === undefined
 
   return (
-    <div className="h-screen overflow-y-auto overflow-x-hidden mesh-gradient relative">
-      {/* Floating Icons Background */}
-      <FloatingIconsBackground />
-
+    <div className="h-screen overflow-y-auto overflow-x-hidden mesh-gradient">
       {/* Header */}
       <header className="sticky top-0 z-30 border-b card-parchment shadow-sm">
         <DashboardHeader user={user} isLoading={isLoadingUser} />

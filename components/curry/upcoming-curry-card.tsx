@@ -160,8 +160,20 @@ export function UpcomingCurryCard({ className }: UpcomingCurryCardProps) {
   if (!nextEvent) {
     return (
       <>
-        <Card className={cn("card-parchment mx-4 border-2 border-curry/30", className)}>
-          <CardContent className="flex flex-col items-center justify-center text-center gap-4 p-6">
+        <Card className={cn("card-parchment mx-4 border-2 border-curry/30 relative overflow-hidden", className)}>
+          {/* Floating tiny flags */}
+          <div className="absolute inset-0 pointer-events-none">
+            <span className="absolute text-xs opacity-20 animate-tiny-flag-1" style={{ top: '15%', left: '10%' }}>🇮🇳</span>
+            <span className="absolute text-xs opacity-15 animate-tiny-flag-2" style={{ top: '25%', right: '15%' }}>🇮🇳</span>
+            <span className="absolute text-xs opacity-20 animate-tiny-flag-3" style={{ top: '40%', left: '20%' }}>🇮🇳</span>
+            <span className="absolute text-xs opacity-15 animate-tiny-flag-4" style={{ top: '50%', right: '25%' }}>🇮🇳</span>
+            <span className="absolute text-xs opacity-20 animate-tiny-flag-5" style={{ top: '65%', left: '15%' }}>🇮🇳</span>
+            <span className="absolute text-xs opacity-15 animate-tiny-flag-1" style={{ top: '70%', right: '20%' }}>🇮🇳</span>
+            <span className="absolute text-xs opacity-20 animate-tiny-flag-2" style={{ top: '30%', left: '80%' }}>🇮🇳</span>
+            <span className="absolute text-xs opacity-15 animate-tiny-flag-3" style={{ top: '55%', right: '10%' }}>🇮🇳</span>
+          </div>
+
+          <CardContent className="flex flex-col items-center justify-center text-center gap-4 p-6 relative z-10">
             <div className="space-y-2">
               <p className="text-lg font-bold text-foreground">
                 No upcoming curry scheduled

@@ -857,96 +857,83 @@
 }
 
 /* ===========================
-   FLOATING ICONS ANIMATIONS
+   TINY FLAG ANIMATIONS
    =========================== */
 
 @layer utilities {
-  /* Slow floating animation */
-  .animate-float-slow {
-    animation: float-slow 8s ease-in-out infinite;
+  /* Tiny flag floating animations - various speeds */
+  .animate-tiny-flag-1 {
+    animation: tiny-flag-float-1 7s ease-in-out infinite;
   }
 
-  @keyframes float-slow {
+  @keyframes tiny-flag-float-1 {
     0%, 100% {
-      transform: translateY(0) translateX(0);
-    }
-    25% {
-      transform: translateY(-20px) translateX(10px);
+      transform: translate(0, 0);
     }
     50% {
-      transform: translateY(-10px) translateX(-5px);
-    }
-    75% {
-      transform: translateY(-30px) translateX(5px);
+      transform: translate(-15px, -20px);
     }
   }
 
-  /* Medium speed floating */
-  .animate-float-medium {
-    animation: float-medium 6s ease-in-out infinite;
+  .animate-tiny-flag-2 {
+    animation: tiny-flag-float-2 9s ease-in-out infinite;
   }
 
-  @keyframes float-medium {
+  @keyframes tiny-flag-float-2 {
     0%, 100% {
-      transform: translateY(0) translateX(0);
-    }
-    25% {
-      transform: translateY(-25px) translateX(-8px);
+      transform: translate(0, 0);
     }
     50% {
-      transform: translateY(-15px) translateX(8px);
-    }
-    75% {
-      transform: translateY(-35px) translateX(-5px);
+      transform: translate(20px, -15px);
     }
   }
 
-  /* Fast floating animation */
-  .animate-float-fast {
-    animation: float-fast 4s ease-in-out infinite;
+  .animate-tiny-flag-3 {
+    animation: tiny-flag-float-3 6s ease-in-out infinite;
   }
 
-  @keyframes float-fast {
+  @keyframes tiny-flag-float-3 {
     0%, 100% {
-      transform: translateY(0) translateX(0);
-    }
-    25% {
-      transform: translateY(-30px) translateX(12px);
+      transform: translate(0, 0);
     }
     50% {
-      transform: translateY(-20px) translateX(-10px);
-    }
-    75% {
-      transform: translateY(-40px) translateX(8px);
+      transform: translate(-10px, -25px);
     }
   }
 
-  /* Floating with rotation */
-  .animate-float-rotate {
-    animation: float-rotate 10s ease-in-out infinite;
+  .animate-tiny-flag-4 {
+    animation: tiny-flag-float-4 8s ease-in-out infinite;
   }
 
-  @keyframes float-rotate {
+  @keyframes tiny-flag-4 {
     0%, 100% {
-      transform: translateY(0) translateX(0) rotate(0deg);
-    }
-    25% {
-      transform: translateY(-20px) translateX(15px) rotate(5deg);
+      transform: translate(0, 0);
     }
     50% {
-      transform: translateY(-10px) translateX(-10px) rotate(-5deg);
-    }
-    75% {
-      transform: translateY(-25px) translateX(10px) rotate(3deg);
+      transform: translate(18px, -18px);
     }
   }
 
-  /* Disable floating animations for users who prefer reduced motion */
+  .animate-tiny-flag-5 {
+    animation: tiny-flag-float-5 10s ease-in-out infinite;
+  }
+
+  @keyframes tiny-flag-float-5 {
+    0%, 100% {
+      transform: translate(0, 0);
+    }
+    50% {
+      transform: translate(-12px, -22px);
+    }
+  }
+
+  /* Disable flag animations for users who prefer reduced motion */
   @media (prefers-reduced-motion: reduce) {
-    .animate-float-slow,
-    .animate-float-medium,
-    .animate-float-fast,
-    .animate-float-rotate {
+    .animate-tiny-flag-1,
+    .animate-tiny-flag-2,
+    .animate-tiny-flag-3,
+    .animate-tiny-flag-4,
+    .animate-tiny-flag-5 {
       animation: none;
     }
   }
