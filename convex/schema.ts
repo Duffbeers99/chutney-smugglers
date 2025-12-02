@@ -29,6 +29,9 @@ const schema = defineSchema({
     // Onboarding completion
     onboardingComplete: v.optional(v.boolean()),
 
+    // Group context
+    activeGroupId: v.optional(v.id("groups")),
+
     createdAt: v.optional(v.number()),
   })
     .index("email", ["email"])
@@ -66,11 +69,15 @@ const schema = defineSchema({
 
     // Incomplete status for backdated restaurants
     isIncomplete: v.optional(v.boolean()),
+
+    // Group scoping
+    groupId: v.optional(v.id("groups")),
   })
     .index("by_name", ["name"])
     .index("by_added_by", ["addedBy"])
     .index("by_overall_average", ["overallAverage"])
-    .index("by_added_at", ["addedAt"]),
+    .index("by_added_at", ["addedAt"])
+    .index("by_group", ["groupId"]),
 
   // Individual curry visit ratings
   ratings: defineTable({
@@ -94,6 +101,9 @@ const schema = defineSchema({
     // Link to curry event (new event-based rating system)
     eventId: v.optional(v.id("curryEvents")),
 
+    // Group scoping
+    groupId: v.optional(v.id("groups")),
+
     createdAt: v.number(),
   })
     .index("by_user", ["userId"])
@@ -101,7 +111,8 @@ const schema = defineSchema({
     .index("by_user_and_restaurant", ["userId", "restaurantId"])
     .index("by_created_at", ["createdAt"])
     .index("by_visit_date", ["visitDate"])
-    .index("by_event", ["eventId"]),
+    .index("by_event", ["eventId"])
+    .index("by_group", ["groupId"]),
 
   // Upcoming curry events/bookings
   curryEvents: defineTable({
@@ -129,10 +140,15 @@ const schema = defineSchema({
     attendees: v.optional(v.array(v.id("users"))), // Users who confirmed attendance
     hasVoted: v.optional(v.array(v.id("users"))), // Users who submitted ratings
     ratingsRevealed: v.optional(v.boolean()), // Whether ratings are visible (all voted or override)
+
+    // Group scoping
+    groupId: v.optional(v.id("groups")),
   })
     .index("by_scheduled_date", ["scheduledDate"])
     .index("by_status", ["status"])
-    .index("by_created_by", ["createdBy"]),
+    .index("by_created_by", ["createdBy"])
+    .index("by_group", ["groupId"])
+    .index("by_group_and_status", ["groupId", "status"]),
 
   // Booking rotation tracking - who's turn it is to book the next curry
   bookingRotation: defineTable({
@@ -141,10 +157,45 @@ const schema = defineSchema({
     isCurrentBooker: v.boolean(), // True for the person whose turn it is
     canOverride: v.boolean(), // True if user has admin/override permissions
     addedAt: v.number(),
+
+    // Group scoping - separate rotation per group
+    groupId: v.optional(v.id("groups")),
   })
     .index("by_user", ["userId"])
     .index("by_rotation_order", ["rotationOrder"])
-    .index("by_current_booker", ["isCurrentBooker"]),
+    .index("by_current_booker", ["isCurrentBooker"])
+    .index("by_group", ["groupId"])
+    .index("by_group_and_user", ["groupId", "userId"])
+    .index("by_group_and_current_booker", ["groupId", "isCurrentBooker"]),
+
+  // Groups - curry groups that users can join
+  groups: defineTable({
+    name: v.string(),
+    accessCode: v.string(), // Unique access code for joining (e.g., "curry-club-2024-xk7p")
+    createdBy: v.id("users"),
+    createdAt: v.number(),
+
+    // Optional metadata
+    description: v.optional(v.string()),
+  })
+    .index("by_access_code", ["accessCode"])
+    .index("by_created_by", ["createdBy"]),
+
+  // Group memberships - tracks which users belong to which groups
+  groupMemberships: defineTable({
+    userId: v.id("users"),
+    groupId: v.id("groups"),
+
+    // Role & permissions
+    role: v.string(), // "owner", "admin", "member"
+
+    // Metadata
+    joinedAt: v.number(),
+    isActive: v.boolean(), // For soft deletes
+  })
+    .index("by_user", ["userId"])
+    .index("by_group", ["groupId"])
+    .index("by_user_and_group", ["userId", "groupId"]),
 });
 
 export default schema;

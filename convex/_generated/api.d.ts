@@ -11,6 +11,7 @@
 import type * as ResendPasswordReset from "../ResendPasswordReset.js";
 import type * as auth from "../auth.js";
 import type * as curryEvents from "../curryEvents.js";
+import type * as groups from "../groups.js";
 import type * as http from "../http.js";
 import type * as migrations from "../migrations.js";
 import type * as ratings from "../ratings.js";
@@ -28,6 +29,7 @@ declare const fullApi: ApiFromModules<{
   ResendPasswordReset: typeof ResendPasswordReset;
   auth: typeof auth;
   curryEvents: typeof curryEvents;
+  groups: typeof groups;
   http: typeof http;
   migrations: typeof migrations;
   ratings: typeof ratings;

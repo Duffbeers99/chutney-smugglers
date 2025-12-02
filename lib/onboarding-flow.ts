@@ -1,10 +1,10 @@
 import { Doc } from "@/convex/_generated/dataModel";
 
-export type OnboardingStep = "avatar" | "nickname" | "complete";
+export type OnboardingStep = "nickname" | "group" | "avatar" | "complete";
 
 export function isOnboardingComplete(user: Doc<"users"> | null): boolean {
   if (!user) return false;
-  return user.onboardingComplete === true && !!user.nickname;
+  return user.onboardingComplete === true && !!user.nickname && !!user.activeGroupId;
 }
 
 export function getCurrentOnboardingStep(
@@ -21,7 +21,12 @@ export function getCurrentOnboardingStep(
     return "nickname";
   }
 
-  // If nickname is set but not completed, consider it done
+  // If nickname is set but no group, go to group step
+  if (!user.activeGroupId) {
+    return "group";
+  }
+
+  // If nickname and group are set but not completed, consider it done
   return "complete";
 }
 
@@ -31,10 +36,12 @@ export function getNextOnboardingPath(user: Doc<"users"> | null): string {
   const step = getCurrentOnboardingStep(user);
 
   switch (step) {
-    case "avatar":
-      return "/onboarding/avatar";
     case "nickname":
       return "/onboarding/nickname";
+    case "group":
+      return "/onboarding/group";
+    case "avatar":
+      return "/onboarding/avatar";
     case "complete":
       return "/dashboard";
     default:
@@ -74,11 +81,14 @@ export function getOnboardingProgress(user: Doc<"users"> | null): number {
 
   let progress = 0;
 
-  // Nickname is required (50%)
-  if (user.nickname) progress += 50;
+  // Nickname is required (40%)
+  if (user.nickname) progress += 40;
 
-  // Profile image is optional but adds to progress (50%)
-  if (user.profileImageId) progress += 50;
+  // Group is required (40%)
+  if (user.activeGroupId) progress += 40;
+
+  // Profile image is optional but adds to progress (20%)
+  if (user.profileImageId) progress += 20;
 
   // If onboarding is marked complete, return 100
   if (user.onboardingComplete) return 100;

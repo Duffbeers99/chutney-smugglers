@@ -23,6 +23,9 @@ import {
   Award,
   TrendingUp,
   Star,
+  Users,
+  Copy,
+  CheckCircle2,
 } from "lucide-react";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { Id } from "@/convex/_generated/dataModel";
@@ -34,12 +37,14 @@ export default function ProfilePage() {
   const user = useQuery(api.users.currentUser);
   const userStats = useQuery(api.users.getUserStats);
   const userRatings = useQuery(api.ratings.getUserRatings, {});
+  const userGroup = useQuery(api.groups.getUserGroup);
   const updateProfile = useMutation(api.users.updateProfile);
   const removeProfileImage = useMutation(api.users.removeProfileImage);
 
   const [editingNickname, setEditingNickname] = useState(false);
   const [nickname, setNickname] = useState("");
   const [savingNickname, setSavingNickname] = useState(false);
+  const [codeCopied, setCodeCopied] = useState(false);
 
   const handleEditNickname = () => {
     setNickname(user?.nickname || "");
@@ -84,6 +89,19 @@ export default function ProfilePage() {
       toast.success("Profile image removed");
     } catch (error: any) {
       toast.error(error.message || "Failed to remove image");
+    }
+  };
+
+  const handleCopyCode = async () => {
+    if (!userGroup?.accessCode) return;
+
+    try {
+      await navigator.clipboard.writeText(userGroup.accessCode);
+      setCodeCopied(true);
+      toast.success("Group code copied to clipboard!");
+      setTimeout(() => setCodeCopied(false), 2000);
+    } catch (error) {
+      toast.error("Failed to copy code");
     }
   };
 
@@ -197,6 +215,54 @@ export default function ProfilePage() {
             </div>
           </div>
         </section>
+
+        {/* Group Code Section */}
+        {userGroup && (
+          <section className="card-parchment p-6 space-y-4">
+            <h2 className="text-lg font-semibold text-foreground border-b border-border pb-2 flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Your Group
+            </h2>
+
+            <div>
+              <Label className="text-foreground text-sm">Group Name</Label>
+              <div className="mt-2 p-3 rounded-lg bg-card/50 border border-border">
+                <span className="font-medium text-foreground">
+                  {userGroup.name}
+                </span>
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-foreground text-sm">Access Code</Label>
+              <div className="mt-2 flex gap-2">
+                <div className="flex-1 p-3 rounded-lg bg-card/50 border border-border font-mono text-sm">
+                  {userGroup.accessCode}
+                </div>
+                <Button
+                  onClick={handleCopyCode}
+                  size="icon"
+                  variant="outline"
+                  className="border-border hover:bg-primary/10 hover:border-primary"
+                >
+                  {codeCopied ? (
+                    <CheckCircle2 className="h-4 w-4 text-green-600" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                Share this code with friends to invite them to your group
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Users className="h-4 w-4" />
+              <span>{userGroup.memberCount} {userGroup.memberCount === 1 ? 'member' : 'members'}</span>
+            </div>
+          </section>
+        )}
 
         {/* Stats Section */}
         <section className="card-parchment p-6">

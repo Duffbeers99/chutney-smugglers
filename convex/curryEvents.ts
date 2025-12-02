@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { mutation, query, internalMutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { updateRestaurantAggregates } from "./restaurants";
+import { getUserActiveGroup, checkGroupAccess } from "./groups";
 
 /**
  * Get the next upcoming curry event
@@ -9,12 +10,18 @@ import { updateRestaurantAggregates } from "./restaurants";
 export const getNextEvent = query({
   args: {},
   handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+
+    const groupId = await getUserActiveGroup(ctx, userId);
+    if (!groupId) return null;
+
     const now = Date.now();
 
-    // Find the next upcoming event (status = "upcoming")
+    // Find the next upcoming event for the user's group
     const events = await ctx.db
       .query("curryEvents")
-      .withIndex("by_status", (q) => q.eq("status", "upcoming"))
+      .withIndex("by_group_and_status", (q) => q.eq("groupId", groupId).eq("status", "upcoming"))
       .collect();
 
     // Filter to only future events (combining date + time) and sort by scheduled datetime
@@ -53,11 +60,17 @@ export const getNextEvent = query({
 export const getAllUpcomingEvents = query({
   args: {},
   handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+
+    const groupId = await getUserActiveGroup(ctx, userId);
+    if (!groupId) return [];
+
     const now = Date.now();
 
     const events = await ctx.db
       .query("curryEvents")
-      .withIndex("by_status", (q) => q.eq("status", "upcoming"))
+      .withIndex("by_group_and_status", (q) => q.eq("groupId", groupId).eq("status", "upcoming"))
       .collect();
 
     // Filter to only future events (combining date + time) and sort by scheduled datetime
@@ -94,8 +107,15 @@ export const getAllUpcomingEvents = query({
 export const getAllEvents = query({
   args: {},
   handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+
+    const groupId = await getUserActiveGroup(ctx, userId);
+    if (!groupId) return [];
+
     const events = await ctx.db
       .query("curryEvents")
+      .withIndex("by_group", (q) => q.eq("groupId", groupId))
       .collect();
 
     // Sort by scheduled date (most recent first)
@@ -119,9 +139,15 @@ export const getAllEvents = query({
 export const getCurrentBooker = query({
   args: {},
   handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+
+    const groupId = await getUserActiveGroup(ctx, userId);
+    if (!groupId) return null;
+
     const rotation = await ctx.db
       .query("bookingRotation")
-      .withIndex("by_current_booker", (q) => q.eq("isCurrentBooker", true))
+      .withIndex("by_group_and_current_booker", (q) => q.eq("groupId", groupId).eq("isCurrentBooker", true))
       .first();
 
     if (!rotation) return null;
@@ -137,9 +163,15 @@ export const getCurrentBooker = query({
 export const getBookingRotation = query({
   args: {},
   handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+
+    const groupId = await getUserActiveGroup(ctx, userId);
+    if (!groupId) return [];
+
     const rotations = await ctx.db
       .query("bookingRotation")
-      .withIndex("by_rotation_order")
+      .withIndex("by_group", (q) => q.eq("groupId", groupId))
       .collect();
 
     const rotationsWithUsers = await Promise.all(
@@ -162,9 +194,12 @@ export const canManageEvents = query({
     const userId = await getAuthUserId(ctx);
     if (!userId) return false;
 
+    const groupId = await getUserActiveGroup(ctx, userId);
+    if (!groupId) return false;
+
     const rotation = await ctx.db
       .query("bookingRotation")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .withIndex("by_group_and_user", (q) => q.eq("groupId", groupId).eq("userId", userId))
       .first();
 
     if (!rotation) return false;
@@ -214,10 +249,15 @@ export const createEvent = mutation({
       throw new Error("Must be authenticated to create events");
     }
 
+    const groupId = await getUserActiveGroup(ctx, userId);
+    if (!groupId) {
+      throw new Error("You must be in a group to create events");
+    }
+
     // Check if user has permission
     const rotation = await ctx.db
       .query("bookingRotation")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .withIndex("by_group_and_user", (q) => q.eq("groupId", groupId).eq("userId", userId))
       .first();
 
     if (!rotation) {
@@ -228,10 +268,14 @@ export const createEvent = mutation({
       throw new Error("It's not your turn to book. Contact an admin for override.");
     }
 
-    // Verify the restaurant exists
+    // Verify the restaurant exists and belongs to the user's group
     const restaurant = await ctx.db.get(args.restaurantId);
     if (!restaurant) {
       throw new Error("Restaurant not found");
+    }
+
+    if (restaurant.groupId !== groupId) {
+      throw new Error("Restaurant does not belong to your group");
     }
 
     // Validate that the event is not in the past
@@ -256,6 +300,7 @@ export const createEvent = mutation({
       createdAt: Date.now(),
       status: "upcoming",
       notes: args.notes,
+      groupId,
     });
 
     return eventId;
@@ -289,10 +334,15 @@ export const updateEvent = mutation({
       throw new Error("Must be authenticated to update events");
     }
 
+    const groupId = await getUserActiveGroup(ctx, userId);
+    if (!groupId) {
+      throw new Error("You must be in a group to update events");
+    }
+
     // Check if user has permission
     const rotation = await ctx.db
       .query("bookingRotation")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .withIndex("by_group_and_user", (q) => q.eq("groupId", groupId).eq("userId", userId))
       .first();
 
     if (!rotation) {
@@ -306,6 +356,11 @@ export const updateEvent = mutation({
     const event = await ctx.db.get(args.eventId);
     if (!event) {
       throw new Error("Event not found");
+    }
+
+    // Verify event belongs to user's group
+    if (event.groupId !== groupId) {
+      throw new Error("Event does not belong to your group");
     }
 
     // Validate that the updated event is not in the past (if date or time is being changed)
@@ -353,10 +408,15 @@ export const deleteEvent = mutation({
       throw new Error("Must be authenticated to delete events");
     }
 
+    const groupId = await getUserActiveGroup(ctx, userId);
+    if (!groupId) {
+      throw new Error("You must be in a group to delete events");
+    }
+
     // Check if user has permission
     const rotation = await ctx.db
       .query("bookingRotation")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .withIndex("by_group_and_user", (q) => q.eq("groupId", groupId).eq("userId", userId))
       .first();
 
     if (!rotation) {
@@ -370,6 +430,11 @@ export const deleteEvent = mutation({
     const event = await ctx.db.get(args.eventId);
     if (!event) {
       throw new Error("Event not found");
+    }
+
+    // Verify event belongs to user's group
+    if (event.groupId !== groupId) {
+      throw new Error("Event does not belong to your group");
     }
 
     const restaurantId = event.restaurantId;
@@ -422,30 +487,38 @@ export const addToRotation = mutation({
       throw new Error("Must be authenticated");
     }
 
+    const groupId = await getUserActiveGroup(ctx, currentUserId);
+    if (!groupId) {
+      throw new Error("You must be in a group to manage the rotation");
+    }
+
     // Check if current user has override permission to add others
     const currentRotation = await ctx.db
       .query("bookingRotation")
-      .withIndex("by_user", (q) => q.eq("userId", currentUserId))
+      .withIndex("by_group_and_user", (q) => q.eq("groupId", groupId).eq("userId", currentUserId))
       .first();
 
     if (!currentRotation?.canOverride) {
       throw new Error("You don't have permission to manage the rotation");
     }
 
+    // Verify the user being added has access to the group
+    await checkGroupAccess(ctx, args.userId, groupId);
+
     // Check if user already in rotation
     const existing = await ctx.db
       .query("bookingRotation")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_group_and_user", (q) => q.eq("groupId", groupId).eq("userId", args.userId))
       .first();
 
     if (existing) {
       throw new Error("User is already in the rotation");
     }
 
-    // Get the highest rotation order and add 1
+    // Get the highest rotation order for this group and add 1
     const allRotations = await ctx.db
       .query("bookingRotation")
-      .withIndex("by_rotation_order")
+      .withIndex("by_group", (q) => q.eq("groupId", groupId))
       .collect();
 
     const maxOrder = allRotations.length > 0
@@ -454,6 +527,7 @@ export const addToRotation = mutation({
 
     await ctx.db.insert("bookingRotation", {
       userId: args.userId,
+      groupId,
       rotationOrder: maxOrder + 1,
       isCurrentBooker: false,
       canOverride: args.canOverride ?? false,
@@ -475,30 +549,35 @@ export const advanceRotation = mutation({
       throw new Error("Must be authenticated");
     }
 
+    const groupId = await getUserActiveGroup(ctx, userId);
+    if (!groupId) {
+      throw new Error("You must be in a group to advance the rotation");
+    }
+
     // Check if current user has override permission
     const currentRotation = await ctx.db
       .query("bookingRotation")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .withIndex("by_group_and_user", (q) => q.eq("groupId", groupId).eq("userId", userId))
       .first();
 
     if (!currentRotation?.canOverride) {
       throw new Error("You don't have permission to advance the rotation");
     }
 
-    // Get current booker
+    // Get current booker for this group
     const currentBooker = await ctx.db
       .query("bookingRotation")
-      .withIndex("by_current_booker", (q) => q.eq("isCurrentBooker", true))
+      .withIndex("by_group_and_current_booker", (q) => q.eq("groupId", groupId).eq("isCurrentBooker", true))
       .first();
 
     if (!currentBooker) {
       throw new Error("No current booker set");
     }
 
-    // Get all rotations sorted by order
+    // Get all rotations for this group sorted by order
     const allRotations = await ctx.db
       .query("bookingRotation")
-      .withIndex("by_rotation_order")
+      .withIndex("by_group", (q) => q.eq("groupId", groupId))
       .collect();
 
     const sorted = allRotations.sort((a, b) => a.rotationOrder - b.rotationOrder);
@@ -530,10 +609,15 @@ export const initializeCurrentUserAsBooker = mutation({
       throw new Error("Must be authenticated");
     }
 
+    const groupId = await getUserActiveGroup(ctx, userId);
+    if (!groupId) {
+      throw new Error("You must be in a group to initialize as booker");
+    }
+
     // Check if user already exists in rotation
     const existing = await ctx.db
       .query("bookingRotation")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .withIndex("by_group_and_user", (q) => q.eq("groupId", groupId).eq("userId", userId))
       .first();
 
     if (existing) {
@@ -545,14 +629,16 @@ export const initializeCurrentUserAsBooker = mutation({
       return { success: true, message: "Updated as current booker" };
     }
 
-    // Get count of existing rotations to determine order
+    // Get count of existing rotations for this group to determine order
     const allRotations = await ctx.db
       .query("bookingRotation")
+      .withIndex("by_group", (q) => q.eq("groupId", groupId))
       .collect();
 
     // Add user to rotation
     await ctx.db.insert("bookingRotation", {
       userId,
+      groupId,
       rotationOrder: allRotations.length,
       isCurrentBooker: true,
       canOverride: true,
@@ -576,9 +662,19 @@ export const confirmAttendance = mutation({
       throw new Error("Must be authenticated to confirm attendance");
     }
 
+    const groupId = await getUserActiveGroup(ctx, userId);
+    if (!groupId) {
+      throw new Error("You must be in a group to confirm attendance");
+    }
+
     const event = await ctx.db.get(args.eventId);
     if (!event) {
       throw new Error("Event not found");
+    }
+
+    // Verify event belongs to user's group
+    if (event.groupId !== groupId) {
+      throw new Error("Event does not belong to your group");
     }
 
     // Check if event is still upcoming
@@ -616,9 +712,19 @@ export const cancelAttendance = mutation({
       throw new Error("Must be authenticated to cancel attendance");
     }
 
+    const groupId = await getUserActiveGroup(ctx, userId);
+    if (!groupId) {
+      throw new Error("You must be in a group to cancel attendance");
+    }
+
     const event = await ctx.db.get(args.eventId);
     if (!event) {
       throw new Error("Event not found");
+    }
+
+    // Verify event belongs to user's group
+    if (event.groupId !== groupId) {
+      throw new Error("Event does not belong to your group");
     }
 
     // Get current attendees
@@ -641,8 +747,19 @@ export const getEventAttendees = query({
     eventId: v.id("curryEvents"),
   },
   handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+
+    const groupId = await getUserActiveGroup(ctx, userId);
+    if (!groupId) return [];
+
     const event = await ctx.db.get(args.eventId);
     if (!event) {
+      return [];
+    }
+
+    // Verify event belongs to user's group
+    if (event.groupId !== groupId) {
       return [];
     }
 
@@ -678,12 +795,18 @@ export const getEventAttendees = query({
 export const getActiveEvent = query({
   args: {},
   handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+
+    const groupId = await getUserActiveGroup(ctx, userId);
+    if (!groupId) return null;
+
     const now = Date.now();
 
-    // Find events with status "upcoming" that have already started
+    // Find events with status "upcoming" that have already started in the user's group
     const events = await ctx.db
       .query("curryEvents")
-      .withIndex("by_status", (q) => q.eq("status", "upcoming"))
+      .withIndex("by_group_and_status", (q) => q.eq("groupId", groupId).eq("status", "upcoming"))
       .collect();
 
     // Filter to events that have started but ratings not revealed yet
@@ -732,10 +855,25 @@ export const revealEventRatings = mutation({
       throw new Error("Must be authenticated");
     }
 
+    const groupId = await getUserActiveGroup(ctx, userId);
+    if (!groupId) {
+      throw new Error("You must be in a group to reveal ratings");
+    }
+
     // Only the admin user can manually reveal ratings
     const ADMIN_USER_ID = "k573zewczry92fgnxw80ndz89d7w33he" as const;
     if (userId !== ADMIN_USER_ID) {
       throw new Error("Only the admin can manually reveal ratings");
+    }
+
+    const event = await ctx.db.get(args.eventId);
+    if (!event) {
+      throw new Error("Event not found");
+    }
+
+    // Verify event belongs to user's group
+    if (event.groupId !== groupId) {
+      throw new Error("Event does not belong to your group");
     }
 
     // Reveal ratings and mark as completed
@@ -762,10 +900,15 @@ export const reassignEventCreator = mutation({
       throw new Error("Must be authenticated");
     }
 
+    const groupId = await getUserActiveGroup(ctx, userId);
+    if (!groupId) {
+      throw new Error("You must be in a group to reassign events");
+    }
+
     // Check if current user has override permission
     const rotation = await ctx.db
       .query("bookingRotation")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .withIndex("by_group_and_user", (q) => q.eq("groupId", groupId).eq("userId", userId))
       .first();
 
     if (!rotation?.canOverride) {
@@ -778,11 +921,18 @@ export const reassignEventCreator = mutation({
       throw new Error("Event not found");
     }
 
-    // Verify the new creator exists
+    // Verify event belongs to user's group
+    if (event.groupId !== groupId) {
+      throw new Error("Event does not belong to your group");
+    }
+
+    // Verify the new creator exists and has access to the group
     const newCreator = await ctx.db.get(args.newCreatorId);
     if (!newCreator) {
       throw new Error("New creator user not found");
     }
+
+    await checkGroupAccess(ctx, args.newCreatorId, groupId);
 
     // Update the event's createdBy field
     await ctx.db.patch(args.eventId, {

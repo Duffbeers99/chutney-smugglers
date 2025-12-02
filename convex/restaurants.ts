@@ -1,14 +1,21 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { getUserActiveGroup, checkGroupAccess } from "./groups";
 
 // List all restaurants with booker information
 export const list = query({
   args: {},
   handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+
+    const groupId = await getUserActiveGroup(ctx, userId);
+    if (!groupId) return [];
+
     const restaurants = await ctx.db
       .query("restaurants")
-      .order("desc")
+      .withIndex("by_group", (q) => q.eq("groupId", groupId))
       .collect();
 
     // Enrich each restaurant with booker information from most recent event
@@ -67,7 +74,20 @@ export const list = query({
 export const get = query({
   args: { id: v.id("restaurants") },
   handler: async (ctx, args) => {
-    return await ctx.db.get(args.id);
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+
+    const groupId = await getUserActiveGroup(ctx, userId);
+    if (!groupId) return null;
+
+    const restaurant = await ctx.db.get(args.id);
+
+    // Verify restaurant belongs to user's group
+    if (!restaurant || restaurant.groupId !== groupId) {
+      return null;
+    }
+
+    return restaurant;
   },
 });
 
@@ -75,7 +95,16 @@ export const get = query({
 export const search = query({
   args: { searchTerm: v.string() },
   handler: async (ctx, args) => {
-    const allRestaurants = await ctx.db.query("restaurants").collect();
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+
+    const groupId = await getUserActiveGroup(ctx, userId);
+    if (!groupId) return [];
+
+    const allRestaurants = await ctx.db
+      .query("restaurants")
+      .withIndex("by_group", (q) => q.eq("groupId", groupId))
+      .collect();
 
     const searchLower = args.searchTerm.toLowerCase();
     return allRestaurants.filter((restaurant) =>
@@ -89,10 +118,17 @@ export const search = query({
 export const getTopRated = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+
+    const groupId = await getUserActiveGroup(ctx, userId);
+    if (!groupId) return [];
+
     const limit = args.limit || 10;
 
     const restaurants = await ctx.db
       .query("restaurants")
+      .withIndex("by_group", (q) => q.eq("groupId", groupId))
       .filter((q) => q.gt(q.field("totalRatings"), 0))
       .collect();
 
@@ -147,10 +183,17 @@ export const getCategoryLeaders = query({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+
+    const groupId = await getUserActiveGroup(ctx, userId);
+    if (!groupId) return [];
+
     const limit = args.limit || 5;
 
     const restaurants = await ctx.db
       .query("restaurants")
+      .withIndex("by_group", (q) => q.eq("groupId", groupId))
       .filter((q) => q.gt(q.field("totalRatings"), 0))
       .collect();
 
@@ -189,14 +232,18 @@ export const add = mutation({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
 
-    // Check if restaurant already exists
+    const groupId = await getUserActiveGroup(ctx, userId);
+    if (!groupId) throw new Error("You must be in a group to add restaurants");
+
+    // Check if restaurant already exists in this group
     const existing = await ctx.db
       .query("restaurants")
+      .withIndex("by_group", (q) => q.eq("groupId", groupId))
       .filter((q) => q.eq(q.field("name"), args.name))
       .first();
 
     if (existing) {
-      throw new Error("A restaurant with this name already exists");
+      throw new Error("A restaurant with this name already exists in your group");
     }
 
     const restaurantId = await ctx.db.insert("restaurants", {
@@ -208,6 +255,7 @@ export const add = mutation({
       addedBy: userId,
       addedAt: Date.now(),
       totalRatings: 0,
+      groupId,
     });
 
     // Update user's curriesAdded count
@@ -267,6 +315,18 @@ export async function updateRestaurantAggregates(
 export const updateAggregates = mutation({
   args: { restaurantId: v.id("restaurants") },
   handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const groupId = await getUserActiveGroup(ctx, userId);
+    if (!groupId) throw new Error("You must be in a group");
+
+    // Verify restaurant belongs to user's group
+    const restaurant = await ctx.db.get(args.restaurantId);
+    if (!restaurant || restaurant.groupId !== groupId) {
+      throw new Error("Restaurant not found or you don't have access");
+    }
+
     await updateRestaurantAggregates(ctx, args.restaurantId);
   },
 });
@@ -289,9 +349,17 @@ export const updateRestaurantDetails = mutation({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
 
+    const groupId = await getUserActiveGroup(ctx, userId);
+    if (!groupId) throw new Error("You must be in a group");
+
     const restaurant = await ctx.db.get(args.restaurantId);
     if (!restaurant) {
       throw new Error("Restaurant not found");
+    }
+
+    // Verify restaurant belongs to user's group
+    if (restaurant.groupId !== groupId) {
+      throw new Error("You don't have access to this restaurant");
     }
 
     // Update restaurant with complete details and mark as complete

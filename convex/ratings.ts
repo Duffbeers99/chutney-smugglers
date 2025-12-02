@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { updateRestaurantAggregates } from "./restaurants";
+import { getUserActiveGroup, checkGroupAccess } from "./groups";
 
 // Add a new rating (event-based)
 export const add = mutation({
@@ -58,7 +59,7 @@ export const add = mutation({
       }
     }
 
-    // Create the rating
+    // Create the rating with groupId from event
     const ratingId = await ctx.db.insert("ratings", {
       userId,
       restaurantId: event.restaurantId,
@@ -69,6 +70,7 @@ export const add = mutation({
       extras: args.extras,
       atmosphere: args.atmosphere,
       notes: args.notes,
+      groupId: event.groupId,
       createdAt: Date.now(),
     });
 
@@ -122,11 +124,19 @@ export const update = mutation({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
 
+    const groupId = await getUserActiveGroup(ctx, userId);
+    if (!groupId) throw new Error("You must be in a group");
+
     const rating = await ctx.db.get(args.ratingId);
     if (!rating) throw new Error("Rating not found");
 
     if (rating.userId !== userId) {
       throw new Error("You can only update your own ratings");
+    }
+
+    // Verify rating belongs to user's group
+    if (rating.groupId !== groupId) {
+      throw new Error("You don't have access to this rating");
     }
 
     // Validate ratings if provided
@@ -161,11 +171,19 @@ export const remove = mutation({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
 
+    const groupId = await getUserActiveGroup(ctx, userId);
+    if (!groupId) throw new Error("You must be in a group");
+
     const rating = await ctx.db.get(args.ratingId);
     if (!rating) throw new Error("Rating not found");
 
     if (rating.userId !== userId) {
       throw new Error("You can only delete your own ratings");
+    }
+
+    // Verify rating belongs to user's group
+    if (rating.groupId !== groupId) {
+      throw new Error("You don't have access to this rating");
     }
 
     await ctx.db.delete(args.ratingId);
@@ -189,8 +207,13 @@ export const remove = mutation({
 export const getUserRatings = query({
   args: { userId: v.optional(v.id("users")) },
   handler: async (ctx, args) => {
-    const userId = args.userId || (await getAuthUserId(ctx));
-    if (!userId) return [];
+    const currentUserId = await getAuthUserId(ctx);
+    if (!currentUserId) return [];
+
+    const groupId = await getUserActiveGroup(ctx, currentUserId);
+    if (!groupId) return [];
+
+    const userId = args.userId || currentUserId;
 
     const ratings = await ctx.db
       .query("ratings")
@@ -198,9 +221,14 @@ export const getUserRatings = query({
       .order("desc")
       .collect();
 
-    // Enrich with restaurant data
+    // Filter by group and enrich with restaurant data
     const enriched = await Promise.all(
       ratings.map(async (rating) => {
+        // Only include ratings from the user's group
+        if (rating.groupId !== groupId) {
+          return null;
+        }
+
         const restaurant = await ctx.db.get(rating.restaurantId);
         return {
           ...rating,
@@ -209,7 +237,8 @@ export const getUserRatings = query({
       })
     );
 
-    return enriched;
+    // Filter out nulls (ratings from other groups)
+    return enriched.filter((rating) => rating !== null);
   },
 });
 
@@ -217,6 +246,18 @@ export const getUserRatings = query({
 export const getRestaurantRatings = query({
   args: { restaurantId: v.id("restaurants") },
   handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+
+    const groupId = await getUserActiveGroup(ctx, userId);
+    if (!groupId) return [];
+
+    // Verify restaurant belongs to user's group
+    const restaurant = await ctx.db.get(args.restaurantId);
+    if (!restaurant || restaurant.groupId !== groupId) {
+      return [];
+    }
+
     const ratings = await ctx.db
       .query("ratings")
       .withIndex("by_restaurant", (q) => q.eq("restaurantId", args.restaurantId))
@@ -281,12 +322,22 @@ export const getRestaurantRatings = query({
 export const getRecentRatings = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+
+    const groupId = await getUserActiveGroup(ctx, userId);
+    if (!groupId) return [];
+
     const limit = args.limit || 10;
 
-    const ratings = await ctx.db
+    // Get ratings filtered by group
+    const allRatings = await ctx.db
       .query("ratings")
+      .withIndex("by_group", (q) => q.eq("groupId", groupId))
       .order("desc")
-      .take(limit * 2); // Fetch more to account for filtered ratings
+      .collect();
+
+    const ratings = allRatings.slice(0, limit * 2); // Take more to account for filtered ratings
 
     // Filter out unrevealed event ratings and enrich with user and restaurant data
     const enriched = await Promise.all(
@@ -349,14 +400,33 @@ export const getRecentRatings = query({
 export const getMostActiveRaters = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+
+    const groupId = await getUserActiveGroup(ctx, userId);
+    if (!groupId) return [];
+
     const limit = args.limit || 10;
 
-    const users = await ctx.db.query("users").collect();
+    // Get all users in the same group
+    const memberships = await ctx.db
+      .query("groupMemberships")
+      .withIndex("by_group", (q) => q.eq("groupId", groupId))
+      .filter((q) => q.eq(q.field("isActive"), true))
+      .collect();
+
+    const groupUserIds = memberships.map((m) => m.userId);
+
+    // Get users from the group
+    const users = await Promise.all(
+      groupUserIds.map((id) => ctx.db.get(id))
+    );
+    const validUsers = users.filter((u) => u !== null);
 
     // Filter and sort by rating count
-    const activeUsers = users
-      .filter((u) => (u.curriesRated || 0) > 0)
-      .sort((a, b) => (b.curriesRated || 0) - (a.curriesRated || 0))
+    const activeUsers = validUsers
+      .filter((u) => (u!.curriesRated || 0) > 0)
+      .sort((a, b) => (b!.curriesRated || 0) - (a!.curriesRated || 0))
       .slice(0, limit);
 
     // Enrich with profile images
@@ -389,9 +459,17 @@ export const claimRating = mutation({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
 
+    const groupId = await getUserActiveGroup(ctx, userId);
+    if (!groupId) throw new Error("You must be in a group");
+
     const rating = await ctx.db.get(args.ratingId);
     if (!rating) {
       throw new Error("Rating not found");
+    }
+
+    // Verify rating belongs to user's group
+    if (rating.groupId !== groupId) {
+      throw new Error("You don't have access to this rating");
     }
 
     // Check if already claimed
@@ -417,8 +495,19 @@ export const claimRating = mutation({
 export const getEventRatings = query({
   args: { eventId: v.id("curryEvents") },
   handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return { ratings: [], ratingsRevealed: false };
+
+    const groupId = await getUserActiveGroup(ctx, userId);
+    if (!groupId) return { ratings: [], ratingsRevealed: false };
+
     const event = await ctx.db.get(args.eventId);
     if (!event) {
+      return { ratings: [], ratingsRevealed: false };
+    }
+
+    // Verify event belongs to user's group
+    if (event.groupId !== groupId) {
       return { ratings: [], ratingsRevealed: false };
     }
 
@@ -461,10 +550,19 @@ export const getEventRatings = query({
 export const getTopBookers = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+
+    const groupId = await getUserActiveGroup(ctx, userId);
+    if (!groupId) return [];
+
     const limit = args.limit || 10;
 
-    // Get all ratings
-    const allRatings = await ctx.db.query("ratings").collect();
+    // Get ratings from the user's group only
+    const allRatings = await ctx.db
+      .query("ratings")
+      .withIndex("by_group", (q) => q.eq("groupId", groupId))
+      .collect();
 
     // Group ratings by event/restaurant visit to calculate average per curry
     const visitMap = new Map<string, {
