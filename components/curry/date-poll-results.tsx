@@ -20,24 +20,60 @@ interface DatePollResultsProps {
   className?: string
 }
 
-// Generate consistent color for each user based on their ID
+// Generate consistent orange-themed color for each user based on their ID
 const getUserColor = (userId: string) => {
   const colors = [
-    { border: "border-red-500", bg: "bg-red-500/10", text: "text-red-700" },
-    { border: "border-blue-500", bg: "bg-blue-500/10", text: "text-blue-700" },
-    { border: "border-green-500", bg: "bg-green-500/10", text: "text-green-700" },
-    { border: "border-purple-500", bg: "bg-purple-500/10", text: "text-purple-700" },
     { border: "border-orange-500", bg: "bg-orange-500/10", text: "text-orange-700" },
-    { border: "border-pink-500", bg: "bg-pink-500/10", text: "text-pink-700" },
-    { border: "border-cyan-500", bg: "bg-cyan-500/10", text: "text-cyan-700" },
     { border: "border-amber-500", bg: "bg-amber-500/10", text: "text-amber-700" },
-    { border: "border-emerald-500", bg: "bg-emerald-500/10", text: "text-emerald-700" },
-    { border: "border-indigo-500", bg: "bg-indigo-500/10", text: "text-indigo-700" },
+    { border: "border-red-500", bg: "bg-red-500/10", text: "text-red-700" },
+    { border: "border-yellow-500", bg: "bg-yellow-500/10", text: "text-yellow-700" },
+    { border: "border-rose-500", bg: "bg-rose-500/10", text: "text-rose-700" },
+    { border: "border-orange-600", bg: "bg-orange-600/10", text: "text-orange-800" },
+    { border: "border-amber-600", bg: "bg-amber-600/10", text: "text-amber-800" },
+    { border: "border-red-600", bg: "bg-red-600/10", text: "text-red-800" },
   ]
 
   // Generate a consistent index based on userId
   const hash = userId.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0)
   return colors[hash % colors.length]
+}
+
+// Get medal styling for top 3 positions
+const getMedalStyling = (position: number) => {
+  switch (position) {
+    case 0: // Gold - 1st place
+      return {
+        bg: "bg-gradient-to-br from-yellow-50/80 to-amber-50/60",
+        border: "border-yellow-400/40",
+        badgeBg: "bg-yellow-100/80",
+        badgeText: "text-yellow-800",
+        badgeBorder: "border-yellow-300/50",
+      }
+    case 1: // Silver - 2nd place
+      return {
+        bg: "bg-gradient-to-br from-gray-50/80 to-slate-50/60",
+        border: "border-gray-400/40",
+        badgeBg: "bg-gray-100/80",
+        badgeText: "text-gray-800",
+        badgeBorder: "border-gray-300/50",
+      }
+    case 2: // Bronze - 3rd place
+      return {
+        bg: "bg-gradient-to-br from-orange-50/80 to-amber-50/60",
+        border: "border-orange-400/40",
+        badgeBg: "bg-orange-100/80",
+        badgeText: "text-orange-800",
+        badgeBorder: "border-orange-300/50",
+      }
+    default:
+      return {
+        bg: "bg-background/50",
+        border: "border-border",
+        badgeBg: "",
+        badgeText: "",
+        badgeBorder: "",
+      }
+  }
 }
 
 export function DatePollResults({ className }: DatePollResultsProps) {
@@ -81,26 +117,34 @@ export function DatePollResults({ className }: DatePollResultsProps) {
 
   // Helper function to render a date item
   const renderDateItem = (item: any, index: number, isInAccordion: boolean = false) => {
-    const isTopVote = item.count === topVoteCount && index === 0 && !isInAccordion
     const dateStr = format(new Date(item.date), "EEEE, MMMM d, yyyy")
+
+    // Get medal styling for top 3 (only if not in accordion)
+    const medalStyle = !isInAccordion && index < 3 ? getMedalStyling(index) : getMedalStyling(-1)
+    const isTop3 = !isInAccordion && index < 3
 
     return (
       <div
         key={item.date}
         className={cn(
           "rounded-lg border p-3 transition-all",
-          isTopVote
-            ? "bg-saffron-gold/5 border-saffron-gold/30 shadow-sm"
-            : "bg-background/50"
+          medalStyle.bg,
+          medalStyle.border,
+          isTop3 ? "shadow-sm" : ""
         )}
       >
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium">{dateStr}</span>
-            {isTopVote && (
+            {index === 0 && !isInAccordion && (
               <Badge
                 variant="secondary"
-                className="bg-saffron-gold/10 text-saffron-gold border-saffron-gold/20 text-xs"
+                className={cn(
+                  "text-xs border",
+                  medalStyle.badgeBg,
+                  medalStyle.badgeText,
+                  medalStyle.badgeBorder
+                )}
               >
                 Most Popular
               </Badge>
@@ -110,8 +154,8 @@ export function DatePollResults({ className }: DatePollResultsProps) {
             variant="outline"
             className={cn(
               "font-semibold",
-              isTopVote
-                ? "bg-saffron-gold/10 text-saffron-gold border-saffron-gold/30"
+              isTop3 && medalStyle.badgeBg && medalStyle.badgeText
+                ? `${medalStyle.badgeBg} ${medalStyle.badgeText} ${medalStyle.badgeBorder}`
                 : ""
             )}
           >
