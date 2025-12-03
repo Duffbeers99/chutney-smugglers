@@ -1,10 +1,9 @@
 import { v } from "convex/values";
-import { mutation, query, internalMutation } from "./_generated/server";
+import { mutation, query, internalMutation, internalAction, action, internalQuery } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { updateRestaurantAggregates } from "./restaurants";
 import { getUserActiveGroup, checkGroupAccess } from "./groups";
-import { sendBookingConfirmation } from "./emails/bookingConfirmation";
-import { sendEventReminder } from "./emails/eventReminder";
+import { internal } from "./_generated/api";
 
 /**
  * Get the next upcoming curry event
@@ -305,52 +304,12 @@ export const createEvent = mutation({
       groupId,
     });
 
-    // Send booking confirmation emails to all group members
-    try {
-      // Get the creator's info
-      const creator = await ctx.db.get(userId);
-      const creatorName = creator?.nickname || creator?.name || "A curry enthusiast";
-
-      // Get all group members
-      const groupMemberships = await ctx.db
-        .query("groupMemberships")
-        .withIndex("by_group", (q) => q.eq("groupId", groupId))
-        .filter((q) => q.eq(q.field("isActive"), true))
-        .collect();
-
-      // Format the date for display
-      const eventDate = new Date(args.scheduledDate);
-      const formattedDate = eventDate.toLocaleDateString("en-GB", {
-        weekday: "long",
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
-
-      // Send email to each group member
-      for (const membership of groupMemberships) {
-        const member = await ctx.db.get(membership.userId);
-        if (member?.email) {
-          const recipientName = member.nickname || member.name || "Curry lover";
-
-          await sendBookingConfirmation({
-            recipientEmail: member.email,
-            recipientName,
-            venueName: args.restaurantName,
-            address: args.address,
-            date: formattedDate,
-            time: args.scheduledTime,
-            googlePlaceId: args.googlePlaceId,
-            bookerName: creatorName,
-          });
-        }
-      }
-
-      console.log(`Sent booking confirmation emails for event ${eventId}`);
-    } catch (error) {
-      // Log email errors but don't fail the event creation
-      console.error("Failed to send booking confirmation emails:", error);
-    }
+    // Schedule action to send booking confirmation emails (async, won't block event creation)
+    await ctx.scheduler.runAfter(0, internal.curryEvents.sendBookingConfirmationEmails, {
+      eventId,
+      groupId,
+      creatorId: userId,
+    });
 
     return eventId;
   },
@@ -1256,21 +1215,19 @@ export const addBalhamSocialRatings = internalMutation({
 });
 
 /**
- * Internal mutation to send reminder emails for upcoming events
+ * Internal action to send reminder emails for upcoming events
  * Called by cron job daily at 9:00 AM
  */
-export const sendEventReminders = internalMutation({
+export const sendEventReminders = internalAction({
   args: {},
   handler: async (ctx) => {
+    const { sendEventReminder } = await import("./emails/eventReminder");
     const now = Date.now();
     const twentyFourHoursFromNow = now + (24 * 60 * 60 * 1000);
     const fortyEightHoursFromNow = now + (48 * 60 * 60 * 1000);
 
-    // Get all upcoming events
-    const allEvents = await ctx.db
-      .query("curryEvents")
-      .withIndex("by_status", (q) => q.eq("status", "upcoming"))
-      .collect();
+    // Get all upcoming events via query
+    const allEvents = await ctx.runQuery(internal.curryEvents.getUpcomingEventsForReminders);
 
     let emailsSent = 0;
     let eventsProcessed = 0;
@@ -1293,23 +1250,16 @@ export const sendEventReminders = internalMutation({
           }
 
           // Get all attendees (or all group members if no attendees confirmed yet)
-          const recipientUserIds = event.attendees && event.attendees.length > 0
-            ? event.attendees
-            : (await ctx.db
-                .query("groupMemberships")
-                .withIndex("by_group", (q) => q.eq("groupId", event.groupId!))
-                .filter((q) => q.eq(q.field("isActive"), true))
-                .collect()
-              ).map(m => m.userId);
+          const groupMembers = await ctx.runQuery(internal.curryEvents.getGroupMembers, {
+            groupId: event.groupId,
+          });
+
+          const recipients = event.attendees && event.attendees.length > 0
+            ? groupMembers.filter(m => event.attendees!.some(a => a === m._id))
+            : groupMembers;
 
           // Get attendee names for the email
-          const attendeeNames: string[] = [];
-          for (const userId of recipientUserIds) {
-            const user = await ctx.db.get(userId);
-            if (user && "_id" in user && "nickname" in user) {
-              attendeeNames.push(user.nickname || user.name || "Curry lover");
-            }
-          }
+          const attendeeNames = recipients.map(r => r.nickname || r.name || "Curry lover");
 
           // Format the date for display
           const formattedDate = eventDateTime.toLocaleDateString("en-GB", {
@@ -1323,28 +1273,29 @@ export const sendEventReminders = internalMutation({
           const hoursUntilEvent = (eventTime - now) / (60 * 60 * 1000);
 
           // Send reminder to each recipient
-          for (const userId of recipientUserIds) {
-            const user = await ctx.db.get(userId);
-            if (user && "_id" in user && "email" in user && user.email) {
-              const recipientName = user.nickname || user.name || "Curry lover";
+          for (const recipient of recipients) {
+            if (recipient.email) {
+              try {
+                await sendEventReminder({
+                  recipientEmail: recipient.email,
+                  recipientName: recipient.nickname || recipient.name || "Curry lover",
+                  venueName: event.restaurantName,
+                  address: event.address,
+                  date: formattedDate,
+                  time: event.scheduledTime,
+                  googlePlaceId: event.googlePlaceId,
+                  attendeeNames,
+                  hoursUntilEvent,
+                });
 
-              await sendEventReminder({
-                recipientEmail: user.email,
-                recipientName,
-                venueName: event.restaurantName,
-                address: event.address,
-                date: formattedDate,
-                time: event.scheduledTime,
-                googlePlaceId: event.googlePlaceId,
-                attendeeNames,
-                hoursUntilEvent,
-              });
-
-              emailsSent++;
+                emailsSent++;
+              } catch (error) {
+                console.error(`Failed to send reminder to ${recipient.email}:`, error);
+              }
             }
           }
 
-          console.log(`Sent ${recipientUserIds.length} reminder emails for event: ${event.restaurantName}`);
+          console.log(`Sent ${recipients.length} reminder emails for event: ${event.restaurantName}`);
         } catch (error) {
           console.error(`Failed to send reminders for event ${event._id}:`, error);
         }
@@ -1357,5 +1308,136 @@ export const sendEventReminders = internalMutation({
       eventsProcessed,
       emailsSent,
     };
+  },
+});
+
+/**
+ * Internal action to send booking confirmation emails
+ * Called by scheduler after event is created
+ */
+export const sendBookingConfirmationEmails = internalAction({
+  args: {
+    eventId: v.id("curryEvents"),
+    groupId: v.id("groups"),
+    creatorId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const { sendBookingConfirmation } = await import("./emails/bookingConfirmation");
+
+    // Get the event details
+    const event = await ctx.runQuery(internal.curryEvents.getEventById, {
+      eventId: args.eventId,
+    });
+
+    if (!event) {
+      console.error(`Event ${args.eventId} not found`);
+      return;
+    }
+
+    // Get the creator's info
+    const creator = await ctx.runQuery(internal.curryEvents.getUserById, {
+      userId: args.creatorId,
+    });
+    const creatorName = creator?.nickname || creator?.name || "A curry enthusiast";
+
+    // Get all group members
+    const groupMembers = await ctx.runQuery(internal.curryEvents.getGroupMembers, {
+      groupId: args.groupId,
+    });
+
+    // Format the date for display
+    const eventDate = new Date(event.scheduledDate);
+    const formattedDate = eventDate.toLocaleDateString("en-GB", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+
+    // Send email to each group member
+    let emailsSent = 0;
+    for (const member of groupMembers) {
+      if (member.email) {
+        try {
+          await sendBookingConfirmation({
+            recipientEmail: member.email,
+            recipientName: member.nickname || member.name || "Curry lover",
+            venueName: event.restaurantName,
+            address: event.address,
+            date: formattedDate,
+            time: event.scheduledTime,
+            googlePlaceId: event.googlePlaceId,
+            bookerName: creatorName,
+          });
+          emailsSent++;
+        } catch (error) {
+          console.error(`Failed to send email to ${member.email}:`, error);
+        }
+      }
+    }
+
+    console.log(`Sent ${emailsSent} booking confirmation emails for event ${args.eventId}`);
+  },
+});
+
+/**
+ * Internal query to get event by ID (for actions)
+ */
+export const getEventById = internalQuery({
+  args: { eventId: v.id("curryEvents") },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.eventId);
+  },
+});
+
+/**
+ * Internal query to get user by ID (for actions)
+ */
+export const getUserById = internalQuery({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.userId);
+  },
+});
+
+/**
+ * Internal query to get group members (for actions)
+ */
+export const getGroupMembers = internalQuery({
+  args: { groupId: v.id("groups") },
+  handler: async (ctx, args) => {
+    const memberships = await ctx.db
+      .query("groupMemberships")
+      .withIndex("by_group", (q) => q.eq("groupId", args.groupId))
+      .filter((q) => q.eq(q.field("isActive"), true))
+      .collect();
+
+    const members = [];
+    for (const membership of memberships) {
+      const user = await ctx.db.get(membership.userId);
+      if (user) {
+        members.push({
+          _id: user._id,
+          email: user.email,
+          nickname: user.nickname,
+          name: user.name,
+        });
+      }
+    }
+
+    return members;
+  },
+});
+
+/**
+ * Internal query to get upcoming events (for reminder action)
+ */
+export const getUpcomingEventsForReminders = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db
+      .query("curryEvents")
+      .withIndex("by_status", (q) => q.eq("status", "upcoming"))
+      .collect();
   },
 });
