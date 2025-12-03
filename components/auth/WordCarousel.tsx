@@ -1,24 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Star, Utensils, Smile } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
 
 const carouselItems = [
   {
     word: "Rate",
-    icon: Star,
     gradient: "from-curry to-saffron",
   },
   {
     word: "Eat",
-    icon: Utensils,
     gradient: "from-saffron to-turmeric",
   },
   {
     word: "Enjoy",
-    icon: Smile,
     gradient: "from-terracotta to-curry",
   },
 ];
@@ -50,7 +46,6 @@ export function WordCarousel() {
     <div className="overflow-hidden w-full py-2 sm:py-4" ref={emblaRef}>
       <div className="flex">
         {carouselItems.map((item, index) => {
-          const Icon = item.icon;
           const isActive = index === selectedIndex;
 
           return (
@@ -59,30 +54,14 @@ export function WordCarousel() {
               className="flex-[0_0_100%] min-w-0"
               style={{ transform: "translateZ(0)" }}
             >
-              <div className="flex items-center justify-center gap-2 sm:gap-3">
-                <div
-                  className={`
-                    transition-all duration-700 ease-out
-                    ${isActive ? "opacity-100 scale-100" : "opacity-0 scale-90"}
-                  `}
-                >
-                  <Icon
-                    className={`
-                      w-8 h-8 sm:w-10 sm:h-10
-                      bg-gradient-to-r ${item.gradient}
-                      bg-clip-text text-transparent
-                      drop-shadow-sm
-                    `}
-                    strokeWidth={2.5}
-                  />
-                </div>
+              <div className="flex items-center justify-center">
                 <span
                   className={`
-                    text-2xl sm:text-3xl font-bold
+                    text-2xl sm:text-3xl font-bold italic font-serif
                     bg-gradient-to-r ${item.gradient}
                     bg-clip-text text-transparent
                     transition-all duration-700 ease-out
-                    ${isActive ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4"}
+                    ${isActive ? "opacity-100 scale-100" : "opacity-0 scale-90"}
                   `}
                 >
                   {item.word}
