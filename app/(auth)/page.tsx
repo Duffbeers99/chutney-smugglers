@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { getNextOnboardingPath } from "@/lib/onboarding-flow";
 import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
+import { WordCarousel } from "@/components/auth/WordCarousel";
 
 export default function Home() {
   return (
@@ -78,10 +79,11 @@ function AuthPage() {
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-block paper-aged px-8 py-4 rounded-2xl mb-4">
+          <div className="inline-block paper-aged px-8 py-4 pb-6 rounded-2xl mb-4">
             <h1 className="text-4xl font-bold text-curry text-center">
               Chutney Smugglers
             </h1>
+            <WordCarousel />
           </div>
         </div>
 
