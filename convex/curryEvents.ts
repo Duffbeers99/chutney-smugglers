@@ -4,6 +4,7 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { updateRestaurantAggregates } from "./restaurants";
 import { getUserActiveGroup, checkGroupAccess } from "./groups";
 import { internal } from "./_generated/api";
+import { clearAllVotes } from "./dateVotes";
 
 /**
  * Get the next upcoming curry event
@@ -303,6 +304,9 @@ export const createEvent = mutation({
       notes: args.notes,
       groupId,
     });
+
+    // Clear all date votes now that curry is scheduled
+    await clearAllVotes(ctx, groupId);
 
     // Schedule action to send booking confirmation emails (async, won't block event creation)
     await ctx.scheduler.runAfter(0, internal.curryEvents.sendBookingConfirmationEmails, {

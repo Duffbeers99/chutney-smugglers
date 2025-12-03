@@ -12,6 +12,8 @@ import { RecentActivity } from "@/components/dashboard/recent-activity"
 import { BottomNav } from "@/components/navigation/bottom-nav"
 import { UpcomingCurryCard } from "@/components/curry/upcoming-curry-card"
 import { ActiveCurryCard } from "@/components/curry/active-curry-card"
+import { DateVotingCard } from "@/components/curry/date-voting-card"
+import { DatePollResults } from "@/components/curry/date-poll-results"
 import { Calendar, MapPin, Sparkles, Trophy, ChefHat } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
@@ -236,6 +238,15 @@ export default function DashboardPage() {
 
         {/* Upcoming Curry Card (shows when there's a future event) */}
         <UpcomingCurryCard />
+
+        {/* Date Voting Section */}
+        <section aria-labelledby="voting-heading" className="px-4 space-y-4">
+          <h2 id="voting-heading" className="sr-only">
+            Vote for next curry date
+          </h2>
+          <DateVotingCard />
+          <DatePollResults />
+        </section>
 
         {/* Quick Access */}
         <QuickAccessCard />

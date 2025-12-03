@@ -196,6 +196,17 @@ const schema = defineSchema({
     .index("by_user", ["userId"])
     .index("by_group", ["groupId"])
     .index("by_user_and_group", ["userId", "groupId"]),
+
+  // Date voting for collaborative scheduling
+  dateVotes: defineTable({
+    userId: v.id("users"),
+    date: v.number(), // Timestamp of the date (midnight UTC)
+    groupId: v.id("groups"),
+    votedAt: v.number(), // When the vote was cast
+  })
+    .index("by_group", ["groupId"])
+    .index("by_group_and_date", ["groupId", "date"])
+    .index("by_user_and_group", ["userId", "groupId"]),
 });
 
 export default schema;

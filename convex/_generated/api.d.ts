@@ -12,6 +12,7 @@ import type * as BrevoPasswordReset from "../BrevoPasswordReset.js";
 import type * as auth from "../auth.js";
 import type * as crons from "../crons.js";
 import type * as curryEvents from "../curryEvents.js";
+import type * as dateVotes from "../dateVotes.js";
 import type * as emails_bookingConfirmation from "../emails/bookingConfirmation.js";
 import type * as emails_brevoClient from "../emails/brevoClient.js";
 import type * as emails_eventReminder from "../emails/eventReminder.js";
@@ -35,6 +36,7 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   crons: typeof crons;
   curryEvents: typeof curryEvents;
+  dateVotes: typeof dateVotes;
   "emails/bookingConfirmation": typeof emails_bookingConfirmation;
   "emails/brevoClient": typeof emails_brevoClient;
   "emails/eventReminder": typeof emails_eventReminder;
