@@ -75,12 +75,12 @@ function AuthPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center mesh-gradient p-4">
+    <div className="flex min-h-screen items-center justify-center mesh-gradient p-4 safe-area-top">
       <div className="w-full max-w-md">
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="paper-aged px-8 py-4 rounded-2xl mb-4 inline-block">
-            <h1 className="text-4xl font-bold text-curry mb-2">
+        <div className="flex flex-col items-center mb-8">
+          <div className="paper-aged px-6 py-4 rounded-2xl mb-4 w-full max-w-[320px] sm:max-w-sm">
+            <h1 className="text-3xl sm:text-4xl font-bold text-curry mb-2 text-center">
               Chutney Smugglers
             </h1>
             <WordCarousel />

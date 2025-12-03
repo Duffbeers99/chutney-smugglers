@@ -47,7 +47,7 @@ export function WordCarousel() {
   }, [emblaApi]);
 
   return (
-    <div className="overflow-hidden w-full py-4" ref={emblaRef}>
+    <div className="overflow-hidden w-full py-2 sm:py-4" ref={emblaRef}>
       <div className="flex">
         {carouselItems.map((item, index) => {
           const Icon = item.icon;
@@ -59,7 +59,7 @@ export function WordCarousel() {
               className="flex-[0_0_100%] min-w-0"
               style={{ transform: "translateZ(0)" }}
             >
-              <div className="flex items-center justify-center gap-3">
+              <div className="flex items-center justify-center gap-2 sm:gap-3">
                 <div
                   className={`
                     transition-all duration-700 ease-out
@@ -68,7 +68,7 @@ export function WordCarousel() {
                 >
                   <Icon
                     className={`
-                      w-10 h-10
+                      w-8 h-8 sm:w-10 sm:h-10
                       bg-gradient-to-r ${item.gradient}
                       bg-clip-text text-transparent
                       drop-shadow-sm
@@ -78,7 +78,7 @@ export function WordCarousel() {
                 </div>
                 <span
                   className={`
-                    text-3xl font-bold
+                    text-2xl sm:text-3xl font-bold
                     bg-gradient-to-r ${item.gradient}
                     bg-clip-text text-transparent
                     transition-all duration-700 ease-out
