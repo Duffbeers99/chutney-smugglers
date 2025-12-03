@@ -79,8 +79,8 @@ function AuthPage() {
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-block paper-aged px-8 py-4 pb-6 rounded-2xl mb-4">
-            <h1 className="text-4xl font-bold text-curry text-center">
+          <div className="paper-aged px-8 py-4 rounded-2xl mb-4 inline-block">
+            <h1 className="text-4xl font-bold text-curry mb-2">
               Chutney Smugglers
             </h1>
             <WordCarousel />
