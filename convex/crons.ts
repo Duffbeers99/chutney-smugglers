@@ -13,4 +13,20 @@ crons.daily(
   internal.curryEvents.sendEventReminders
 );
 
+/**
+ * Send voting reminder emails to users who haven't voted yet
+ * Runs twice a week: Monday and Thursday at 10:00 AM UTC (11:00 AM BST / 10:00 AM GMT)
+ */
+crons.weekly(
+  "send voting reminders - Monday",
+  { dayOfWeek: "monday", hourUTC: 10, minuteUTC: 0 },
+  internal.dateVotes.sendVotingReminders
+);
+
+crons.weekly(
+  "send voting reminders - Thursday",
+  { dayOfWeek: "thursday", hourUTC: 10, minuteUTC: 0 },
+  internal.dateVotes.sendVotingReminders
+);
+
 export default crons;

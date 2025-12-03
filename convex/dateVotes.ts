@@ -1,8 +1,9 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalAction, internalQuery } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { getUserActiveGroup } from "./groups";
 import { startOfMonth, addMonths, startOfDay, endOfMonth } from "date-fns";
+import { internal } from "./_generated/api";
 
 /**
  * Get all votes for the next month with user details
@@ -229,3 +230,129 @@ export async function clearAllVotes(ctx: any, groupId: any) {
 
   return { cleared: votes.length };
 }
+
+/**
+ * Internal query to get all groups
+ */
+export const getAllGroups = internalQuery({
+  handler: async (ctx) => {
+    const groups = await ctx.db.query("groups").collect();
+    return groups;
+  },
+});
+
+/**
+ * Internal query to get users who haven't voted yet in a group
+ */
+export const getUsersWithoutVotes = internalQuery({
+  args: {
+    groupId: v.id("groups"),
+  },
+  handler: async (ctx, args) => {
+    // Calculate date range for next month
+    const now = new Date();
+    const nextMonth = addMonths(now, 1);
+    const startOfNextMonth = startOfMonth(nextMonth).getTime();
+    const endOfNextMonth = endOfMonth(nextMonth).getTime();
+
+    // Get all votes for next month in this group
+    const votes = await ctx.db
+      .query("dateVotes")
+      .withIndex("by_group", (q) => q.eq("groupId", args.groupId))
+      .filter((q) =>
+        q.and(
+          q.gte(q.field("date"), startOfNextMonth),
+          q.lte(q.field("date"), endOfNextMonth)
+        )
+      )
+      .collect();
+
+    // Get unique user IDs who have voted
+    const usersWhoVoted = new Set(votes.map((vote) => vote.userId));
+
+    // Get all active group members
+    const memberships = await ctx.db
+      .query("groupMemberships")
+      .withIndex("by_group", (q) => q.eq("groupId", args.groupId))
+      .filter((q) => q.eq(q.field("isActive"), true))
+      .collect();
+
+    // Filter to only users who haven't voted
+    const usersWithoutVotes = [];
+    for (const membership of memberships) {
+      if (!usersWhoVoted.has(membership.userId)) {
+        const user = await ctx.db.get(membership.userId);
+        if (user && user.email) {
+          usersWithoutVotes.push({
+            _id: user._id,
+            email: user.email,
+            name: user.nickname || user.name || "Curry Lover",
+          });
+        }
+      }
+    }
+
+    return usersWithoutVotes;
+  },
+});
+
+/**
+ * Internal action to send voting reminder emails
+ * Called by cron job twice a week
+ */
+export const sendVotingReminders = internalAction({
+  handler: async (ctx) => {
+    const { sendVotingReminder } = await import("./emails/votingReminder");
+
+    // Get all groups
+    const groups = await ctx.runQuery(internal.dateVotes.getAllGroups);
+
+    let totalEmailsSent = 0;
+    const failedEmails: string[] = [];
+
+    console.log(`📧 Starting voting reminder emails for ${groups.length} groups...`);
+
+    for (const group of groups) {
+      // Get users who haven't voted in this group
+      const usersWithoutVotes = await ctx.runQuery(
+        internal.dateVotes.getUsersWithoutVotes,
+        { groupId: group._id }
+      );
+
+      console.log(
+        `Group "${group.name}": ${usersWithoutVotes.length} users need reminders`
+      );
+
+      // Send email to each user who hasn't voted
+      for (const user of usersWithoutVotes) {
+        try {
+          const dashboardUrl = process.env.NEXT_PUBLIC_APP_URL
+            ? `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`
+            : "https://chutney-smugglers.vercel.app/dashboard";
+
+          await sendVotingReminder({
+            recipientEmail: user.email,
+            recipientName: user.name,
+            groupName: group.name,
+            dashboardUrl,
+          });
+
+          totalEmailsSent++;
+          console.log(`✅ Sent reminder to ${user.name} (${user.email})`);
+        } catch (error) {
+          console.error(`❌ Failed to send to ${user.email}:`, error);
+          failedEmails.push(user.email);
+        }
+      }
+    }
+
+    console.log(
+      `📊 Voting reminders complete: ${totalEmailsSent} sent, ${failedEmails.length} failed`
+    );
+
+    return {
+      emailsSent: totalEmailsSent,
+      failedEmails,
+    };
+  },
+});

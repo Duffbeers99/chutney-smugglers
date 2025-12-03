@@ -6,8 +6,14 @@ import { api } from "@/convex/_generated/api"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
 import { cn } from "@/lib/utils"
-import { BarChart3, Trophy, Users } from "lucide-react"
+import { BarChart3, Users } from "lucide-react"
 import { format } from "date-fns"
 
 interface DatePollResultsProps {
@@ -48,8 +54,85 @@ export function DatePollResults({ className }: DatePollResultsProps) {
     )
   }
 
-  // Get the top vote count for highlighting the winner
+  // Split into top 3 and remaining dates
+  const topThree = voteSummary.slice(0, 3)
+  const remaining = voteSummary.slice(3)
   const topVoteCount = voteSummary[0]?.count || 0
+
+  // Helper function to render a date item
+  const renderDateItem = (item: any, index: number, isInAccordion: boolean = false) => {
+    const isTopVote = item.count === topVoteCount && index === 0 && !isInAccordion
+    const dateStr = format(new Date(item.date), "EEEE, MMMM d, yyyy")
+
+    return (
+      <div
+        key={item.date}
+        className={cn(
+          "rounded-lg border p-3 transition-all",
+          isTopVote
+            ? "bg-saffron-gold/5 border-saffron-gold/30 shadow-sm"
+            : "bg-background/50"
+        )}
+      >
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium">{dateStr}</span>
+            {isTopVote && (
+              <Badge
+                variant="secondary"
+                className="bg-saffron-gold/10 text-saffron-gold border-saffron-gold/20 text-xs"
+              >
+                Most Popular
+              </Badge>
+            )}
+          </div>
+          <Badge
+            variant="outline"
+            className={cn(
+              "font-semibold",
+              isTopVote
+                ? "bg-saffron-gold/10 text-saffron-gold border-saffron-gold/30"
+                : ""
+            )}
+          >
+            {item.count} {item.count === 1 ? "vote" : "votes"}
+          </Badge>
+        </div>
+
+        {/* User avatars */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {item.users.map((user: any) => {
+            const displayName = user.nickname || user.name || "User"
+            const initials = displayName
+              .split(" ")
+              .map((n: string) => n[0])
+              .join("")
+              .toUpperCase()
+              .slice(0, 2)
+
+            return (
+              <div key={user._id} className="flex items-center gap-1.5">
+                <Avatar className="h-6 w-6 border border-border">
+                  {user.profileImageId && storageUrl ? (
+                    <AvatarImage
+                      src={`${storageUrl}/api/storage/${user.profileImageId}`}
+                      alt={displayName}
+                    />
+                  ) : null}
+                  <AvatarFallback className="text-[10px]">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-xs text-muted-foreground">
+                  {displayName}
+                </span>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <Card className={cn("card-parchment", className)}>
@@ -68,87 +151,22 @@ export function DatePollResults({ className }: DatePollResultsProps) {
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
-          {voteSummary.map((item, index) => {
-            const isTopVote = item.count === topVoteCount
-            const dateStr = format(new Date(item.date), "EEEE, MMMM d, yyyy")
+          {/* Top 3 dates */}
+          {topThree.map((item, index) => renderDateItem(item, index))}
 
-            return (
-              <div
-                key={item.date}
-                className={cn(
-                  "relative rounded-lg border p-3 transition-all",
-                  isTopVote && index === 0
-                    ? "bg-saffron-gold/5 border-saffron-gold/30 shadow-sm"
-                    : "bg-background/50"
-                )}
-              >
-                {isTopVote && index === 0 && (
-                  <div className="absolute -top-2 -right-2">
-                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-saffron-gold shadow-sm">
-                      <Trophy className="h-3 w-3 text-white" />
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">{dateStr}</span>
-                    {isTopVote && index === 0 && (
-                      <Badge
-                        variant="secondary"
-                        className="bg-saffron-gold/10 text-saffron-gold border-saffron-gold/20 text-xs"
-                      >
-                        Most Popular
-                      </Badge>
-                    )}
-                  </div>
-                  <Badge
-                    variant="outline"
-                    className={cn(
-                      "font-semibold",
-                      isTopVote && index === 0
-                        ? "bg-saffron-gold/10 text-saffron-gold border-saffron-gold/30"
-                        : ""
-                    )}
-                  >
-                    {item.count} {item.count === 1 ? "vote" : "votes"}
-                  </Badge>
-                </div>
-
-                {/* User avatars */}
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  {item.users.map((user) => {
-                    const displayName = user.nickname || user.name || "User"
-                    const initials = displayName
-                      .split(" ")
-                      .map((n: string) => n[0])
-                      .join("")
-                      .toUpperCase()
-                      .slice(0, 2)
-
-                    return (
-                      <div key={user._id} className="flex items-center gap-1.5">
-                        <Avatar className="h-6 w-6 border border-border">
-                          {user.profileImageId && storageUrl ? (
-                            <AvatarImage
-                              src={`${storageUrl}/api/storage/${user.profileImageId}`}
-                              alt={displayName}
-                            />
-                          ) : null}
-                          <AvatarFallback className="text-[10px]">
-                            {initials}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="text-xs text-muted-foreground">
-                          {displayName}
-                        </span>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            )
-          })}
+          {/* Remaining dates in accordion */}
+          {remaining.length > 0 && (
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="more-dates" className="border-none">
+                <AccordionTrigger className="py-2 text-sm text-muted-foreground hover:text-foreground">
+                  Show {remaining.length} more {remaining.length === 1 ? "date" : "dates"}
+                </AccordionTrigger>
+                <AccordionContent className="space-y-3 pt-3">
+                  {remaining.map((item, index) => renderDateItem(item, index + 3, true))}
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          )}
         </div>
 
         <div className="mt-4 pt-3 border-t border-border/50 text-xs text-muted-foreground text-center">
