@@ -20,6 +20,26 @@ interface DatePollResultsProps {
   className?: string
 }
 
+// Generate consistent color for each user based on their ID
+const getUserColor = (userId: string) => {
+  const colors = [
+    { border: "border-red-500", bg: "bg-red-500/10", text: "text-red-700" },
+    { border: "border-blue-500", bg: "bg-blue-500/10", text: "text-blue-700" },
+    { border: "border-green-500", bg: "bg-green-500/10", text: "text-green-700" },
+    { border: "border-purple-500", bg: "bg-purple-500/10", text: "text-purple-700" },
+    { border: "border-orange-500", bg: "bg-orange-500/10", text: "text-orange-700" },
+    { border: "border-pink-500", bg: "bg-pink-500/10", text: "text-pink-700" },
+    { border: "border-cyan-500", bg: "bg-cyan-500/10", text: "text-cyan-700" },
+    { border: "border-amber-500", bg: "bg-amber-500/10", text: "text-amber-700" },
+    { border: "border-emerald-500", bg: "bg-emerald-500/10", text: "text-emerald-700" },
+    { border: "border-indigo-500", bg: "bg-indigo-500/10", text: "text-indigo-700" },
+  ]
+
+  // Generate a consistent index based on userId
+  const hash = userId.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0)
+  return colors[hash % colors.length]
+}
+
 export function DatePollResults({ className }: DatePollResultsProps) {
   const voteSummary = useQuery(api.dateVotes.getVoteSummary)
   const storageUrl = process.env.NEXT_PUBLIC_CONVEX_URL
@@ -110,16 +130,18 @@ export function DatePollResults({ className }: DatePollResultsProps) {
               .toUpperCase()
               .slice(0, 2)
 
+            const colors = getUserColor(user._id)
+
             return (
               <div key={user._id} className="flex items-center gap-1.5">
-                <Avatar className="h-6 w-6 border border-border">
+                <Avatar className={cn("h-6 w-6 border-2", colors.border)}>
                   {user.profileImageId && storageUrl ? (
                     <AvatarImage
                       src={`${storageUrl}/api/storage/${user.profileImageId}`}
                       alt={displayName}
                     />
                   ) : null}
-                  <AvatarFallback className="text-[10px]">
+                  <AvatarFallback className={cn("text-[10px] font-semibold", colors.bg, colors.text)}>
                     {initials}
                   </AvatarFallback>
                 </Avatar>

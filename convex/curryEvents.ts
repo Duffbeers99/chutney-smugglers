@@ -155,7 +155,23 @@ export const getCurrentBooker = query({
     if (!rotation) return null;
 
     const user = await ctx.db.get(rotation.userId);
-    return { rotation, user };
+    if (!user) return null;
+
+    // Get profile image URL if available
+    let profileImageUrl: string | null = null;
+    if (user.profileImageId) {
+      profileImageUrl = await ctx.storage.getUrl(user.profileImageId);
+    }
+
+    return {
+      rotation,
+      user: {
+        _id: user._id,
+        nickname: user.nickname,
+        name: user.name,
+        profileImageUrl,
+      },
+    };
   },
 });
 

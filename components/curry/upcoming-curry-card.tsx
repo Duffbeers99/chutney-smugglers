@@ -162,9 +162,7 @@ export function UpcomingCurryCard({ className }: UpcomingCurryCardProps) {
     // Check if current user is the booker
     const isCurrentBooker = currentBooker && currentUser && currentBooker.user?._id === currentUser._id
     const bookerName = currentBooker?.user?.nickname || currentBooker?.user?.name || "Someone"
-    const bookerImageUrl = currentBooker?.user?.profileImageId
-      ? `${process.env.NEXT_PUBLIC_CONVEX_URL}/api/storage/${currentBooker.user.profileImageId}`
-      : null
+    const bookerImageUrl = currentBooker?.user?.profileImageUrl || null
 
     return (
       <>
