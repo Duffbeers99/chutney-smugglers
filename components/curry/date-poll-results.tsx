@@ -154,24 +154,20 @@ export function DatePollResults({ className }: DatePollResultsProps) {
         )}
       >
         <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">{dateStr}</span>
-            {isFirstPlace && (
-              <Badge
-                variant="secondary"
-                className={cn(
-                  "text-xs border",
-                  medalStyle.badgeBg,
-                  medalStyle.badgeText,
-                  medalStyle.badgeBorder
-                )}
-              >
-                Most Popular
-              </Badge>
-            )}
-          </div>
-          {/* Only show vote count badge if NOT first place */}
-          {!isFirstPlace && (
+          <span className="text-sm font-medium">{dateStr}</span>
+          {isFirstPlace ? (
+            <Badge
+              variant="secondary"
+              className={cn(
+                "text-xs border",
+                medalStyle.badgeBg,
+                medalStyle.badgeText,
+                medalStyle.badgeBorder
+              )}
+            >
+              Most Popular
+            </Badge>
+          ) : (
             <Badge
               variant="outline"
               className={cn(
