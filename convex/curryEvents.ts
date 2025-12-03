@@ -1454,3 +1454,132 @@ export const getUpcomingEventsForReminders = internalQuery({
       .collect();
   },
 });
+
+/**
+ * Internal query to get all groups
+ */
+export const getAllGroupsInternal = internalQuery({
+  handler: async (ctx) => {
+    const groups = await ctx.db.query("groups").collect();
+    return groups;
+  },
+});
+
+/**
+ * Internal query to get current booker for a specific group
+ */
+export const getCurrentBookerForGroup = internalQuery({
+  args: {
+    groupId: v.id("groups"),
+  },
+  handler: async (ctx, args) => {
+    const rotation = await ctx.db
+      .query("bookingRotation")
+      .withIndex("by_group_and_current_booker", (q) =>
+        q.eq("groupId", args.groupId).eq("isCurrentBooker", true)
+      )
+      .first();
+
+    if (!rotation) return null;
+
+    const user = await ctx.db.get(rotation.userId);
+    return { rotation, user };
+  },
+});
+
+/**
+ * Internal action to send booking reminder emails
+ * Called by cron job weekly on Wednesdays
+ * Only sends if there's no upcoming curry scheduled for the group
+ */
+export const sendBookerReminders = internalAction({
+  handler: async (ctx) => {
+    const { sendBookerReminder } = await import("./emails/bookerReminder");
+
+    // Get all groups
+    const groups = await ctx.runQuery(internal.curryEvents.getAllGroupsInternal);
+
+    let totalEmailsSent = 0;
+    const failedEmails: string[] = [];
+
+    console.log(`📧 Starting booker reminder emails for ${groups.length} groups...`);
+
+    for (const group of groups) {
+      // Check if there's already an upcoming curry scheduled for this group
+      const upcomingEvents = await ctx.runQuery(
+        internal.curryEvents.getUpcomingEventsForReminders
+      );
+
+      const groupHasUpcomingEvent = upcomingEvents.some(
+        (event) => event.groupId === group._id
+      );
+
+      if (groupHasUpcomingEvent) {
+        console.log(
+          `✓ Group "${group.name}" already has a curry scheduled, skipping reminder`
+        );
+        continue;
+      }
+
+      // Get the current booker for this group
+      const currentBooker = await ctx.runQuery(
+        internal.curryEvents.getCurrentBookerForGroup,
+        { groupId: group._id }
+      );
+
+      if (!currentBooker || !currentBooker.user) {
+        console.log(
+          `⚠️ No current booker found for group "${group.name}", skipping`
+        );
+        continue;
+      }
+
+      const user = currentBooker.user;
+
+      // Check if user has an email
+      if (!("email" in user) || !(user as any).email) {
+        console.log(
+          `⚠️ Current booker for "${group.name}" has no email, skipping`
+        );
+        continue;
+      }
+
+      const userEmail = (user as any).email;
+      const userName = (user as any).nickname || (user as any).name || "Curry Lover";
+
+      // Send reminder email
+      try {
+        const dashboardUrl = process.env.NEXT_PUBLIC_APP_URL
+          ? `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`
+          : "https://chutney-smugglers.vercel.app/dashboard";
+
+        await sendBookerReminder({
+          recipientEmail: userEmail,
+          recipientName: userName,
+          groupName: group.name,
+          dashboardUrl,
+        });
+
+        totalEmailsSent++;
+        console.log(
+          `✅ Sent booker reminder to ${userName} (${userEmail}) for group "${group.name}"`
+        );
+      } catch (error) {
+        console.error(
+          `❌ Failed to send reminder to ${userEmail} for group "${group.name}":`,
+          error
+        );
+        failedEmails.push(userEmail);
+      }
+    }
+
+    console.log(
+      `📊 Booker reminders complete: ${totalEmailsSent} sent, ${failedEmails.length} failed`
+    );
+
+    return {
+      emailsSent: totalEmailsSent,
+      failedEmails,
+    };
+  },
+});

@@ -29,4 +29,15 @@ crons.weekly(
   internal.dateVotes.sendVotingReminders
 );
 
+/**
+ * Send booking reminder to current booker if no curry is scheduled
+ * Runs every Wednesday at 10:00 AM UTC (11:00 AM BST / 10:00 AM GMT)
+ * Stops automatically when a curry is booked
+ */
+crons.weekly(
+  "send booker reminder - Wednesday",
+  { dayOfWeek: "wednesday", hourUTC: 10, minuteUTC: 0 },
+  internal.curryEvents.sendBookerReminders
+);
+
 export default crons;
