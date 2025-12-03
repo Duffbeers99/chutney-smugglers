@@ -43,7 +43,7 @@ export function WordCarousel() {
   }, [emblaApi]);
 
   return (
-    <div className="overflow-hidden w-full py-2 sm:py-4" ref={emblaRef}>
+    <div className="overflow-hidden w-full py-2 sm:py-4 px-4" ref={emblaRef}>
       <div className="flex">
         {carouselItems.map((item, index) => {
           const isActive = index === selectedIndex;
@@ -54,7 +54,7 @@ export function WordCarousel() {
               className="flex-[0_0_100%] min-w-0"
               style={{ transform: "translateZ(0)" }}
             >
-              <div className="flex items-center justify-center">
+              <div className="flex items-center justify-center px-2">
                 <span
                   className={`
                     text-2xl sm:text-3xl font-bold italic font-serif
