@@ -79,12 +79,9 @@ function AuthPage() {
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-block paper-aged px-8 py-4 rounded-2xl mb-4">
-            <h1 className="text-4xl font-bold text-curry mb-2">
-              🍛 Chutney Smugglers
+            <h1 className="text-4xl font-bold text-curry text-center">
+              Chutney Smugglers
             </h1>
-            <p className="text-spice text-sm uppercase tracking-wider">
-              Rate Your Curry Adventures
-            </p>
           </div>
         </div>
 
