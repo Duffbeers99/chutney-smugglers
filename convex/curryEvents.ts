@@ -1273,6 +1273,9 @@ export const sendEventReminders = internalAction({
           const hoursUntilEvent = (eventTime - now) / (60 * 60 * 1000);
 
           // Send reminder to each recipient
+          console.log(`⏰ Sending reminders for "${event.restaurantName}" (${Math.round(hoursUntilEvent)}h away) to ${recipients.length} recipients...`);
+
+          let sentCount = 0;
           for (const recipient of recipients) {
             if (recipient.email) {
               try {
@@ -1289,13 +1292,14 @@ export const sendEventReminders = internalAction({
                 });
 
                 emailsSent++;
+                sentCount++;
               } catch (error) {
-                console.error(`Failed to send reminder to ${recipient.email}:`, error);
+                console.error(`❌ Failed to send reminder to ${recipient.email}:`, error);
               }
             }
           }
 
-          console.log(`Sent ${recipients.length} reminder emails for event: ${event.restaurantName}`);
+          console.log(`✅ Event reminder summary: ${sentCount}/${recipients.length} sent for "${event.restaurantName}"`);
         } catch (error) {
           console.error(`Failed to send reminders for event ${event._id}:`, error);
         }
@@ -1356,6 +1360,10 @@ export const sendBookingConfirmationEmails = internalAction({
 
     // Send email to each group member
     let emailsSent = 0;
+    const failedEmails: string[] = [];
+
+    console.log(`📧 Sending booking confirmations for "${event.restaurantName}" to ${groupMembers.length} group members...`);
+
     for (const member of groupMembers) {
       if (member.email) {
         try {
@@ -1371,12 +1379,13 @@ export const sendBookingConfirmationEmails = internalAction({
           });
           emailsSent++;
         } catch (error) {
-          console.error(`Failed to send email to ${member.email}:`, error);
+          failedEmails.push(member.email);
+          console.error(`❌ Failed to send to ${member.email}:`, error);
         }
       }
     }
 
-    console.log(`Sent ${emailsSent} booking confirmation emails for event ${args.eventId}`);
+    console.log(`✅ Booking confirmation summary: ${emailsSent} sent successfully${failedEmails.length > 0 ? `, ${failedEmails.length} failed (${failedEmails.join(", ")})` : ""}`);
   },
 });
 

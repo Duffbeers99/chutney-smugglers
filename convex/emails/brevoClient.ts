@@ -49,5 +49,6 @@ export async function sendEmail(params: SendEmailParams): Promise<void> {
   }
 
   const result = await response.json();
-  console.log(`Email sent successfully. Message ID: ${result.messageId}`);
+  const recipients = params.to.map(r => r.email).join(", ");
+  console.log(`✅ Email sent to ${recipients} - Subject: "${params.subject}" - Message ID: ${result.messageId}`);
 }
