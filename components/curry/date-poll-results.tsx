@@ -38,6 +38,25 @@ const getUserColor = (userId: string) => {
   return colors[hash % colors.length]
 }
 
+// Get ordinal suffix for day (1st, 2nd, 3rd, 4th, etc.)
+const getOrdinalSuffix = (day: number) => {
+  if (day > 3 && day < 21) return "th"
+  switch (day % 10) {
+    case 1: return "st"
+    case 2: return "nd"
+    case 3: return "rd"
+    default: return "th"
+  }
+}
+
+// Format date as "Tuesday, 6th January"
+const formatDateWithOrdinal = (date: Date) => {
+  const dayOfWeek = format(date, "EEEE") // Tuesday
+  const day = date.getDate() // 6
+  const month = format(date, "MMMM") // January
+  return `${dayOfWeek}, ${day}${getOrdinalSuffix(day)} ${month}`
+}
+
 // Get medal styling for top 3 positions
 const getMedalStyling = (position: number) => {
   switch (position) {
@@ -117,11 +136,12 @@ export function DatePollResults({ className }: DatePollResultsProps) {
 
   // Helper function to render a date item
   const renderDateItem = (item: any, index: number, isInAccordion: boolean = false) => {
-    const dateStr = format(new Date(item.date), "EEEE, MMMM d, yyyy")
+    const dateStr = formatDateWithOrdinal(new Date(item.date))
 
     // Get medal styling for top 3 (only if not in accordion)
     const medalStyle = !isInAccordion && index < 3 ? getMedalStyling(index) : getMedalStyling(-1)
     const isTop3 = !isInAccordion && index < 3
+    const isFirstPlace = index === 0 && !isInAccordion
 
     return (
       <div
@@ -136,7 +156,7 @@ export function DatePollResults({ className }: DatePollResultsProps) {
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium">{dateStr}</span>
-            {index === 0 && !isInAccordion && (
+            {isFirstPlace && (
               <Badge
                 variant="secondary"
                 className={cn(
@@ -150,17 +170,20 @@ export function DatePollResults({ className }: DatePollResultsProps) {
               </Badge>
             )}
           </div>
-          <Badge
-            variant="outline"
-            className={cn(
-              "font-semibold",
-              isTop3 && medalStyle.badgeBg && medalStyle.badgeText
-                ? `${medalStyle.badgeBg} ${medalStyle.badgeText} ${medalStyle.badgeBorder}`
-                : ""
-            )}
-          >
-            {item.count} {item.count === 1 ? "vote" : "votes"}
-          </Badge>
+          {/* Only show vote count badge if NOT first place */}
+          {!isFirstPlace && (
+            <Badge
+              variant="outline"
+              className={cn(
+                "font-semibold",
+                isTop3 && medalStyle.badgeBg && medalStyle.badgeText
+                  ? `${medalStyle.badgeBg} ${medalStyle.badgeText} ${medalStyle.badgeBorder}`
+                  : ""
+              )}
+            >
+              {item.count} {item.count === 1 ? "vote" : "votes"}
+            </Badge>
+          )}
         </div>
 
         {/* User avatars */}
