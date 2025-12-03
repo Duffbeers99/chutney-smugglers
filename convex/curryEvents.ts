@@ -3,6 +3,8 @@ import { mutation, query, internalMutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { updateRestaurantAggregates } from "./restaurants";
 import { getUserActiveGroup, checkGroupAccess } from "./groups";
+import { sendBookingConfirmation } from "./emails/bookingConfirmation";
+import { sendEventReminder } from "./emails/eventReminder";
 
 /**
  * Get the next upcoming curry event
@@ -302,6 +304,53 @@ export const createEvent = mutation({
       notes: args.notes,
       groupId,
     });
+
+    // Send booking confirmation emails to all group members
+    try {
+      // Get the creator's info
+      const creator = await ctx.db.get(userId);
+      const creatorName = creator?.nickname || creator?.name || "A curry enthusiast";
+
+      // Get all group members
+      const groupMemberships = await ctx.db
+        .query("groupMemberships")
+        .withIndex("by_group", (q) => q.eq("groupId", groupId))
+        .filter((q) => q.eq(q.field("isActive"), true))
+        .collect();
+
+      // Format the date for display
+      const eventDate = new Date(args.scheduledDate);
+      const formattedDate = eventDate.toLocaleDateString("en-GB", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+
+      // Send email to each group member
+      for (const membership of groupMemberships) {
+        const member = await ctx.db.get(membership.userId);
+        if (member?.email) {
+          const recipientName = member.nickname || member.name || "Curry lover";
+
+          await sendBookingConfirmation({
+            recipientEmail: member.email,
+            recipientName,
+            venueName: args.restaurantName,
+            address: args.address,
+            date: formattedDate,
+            time: args.scheduledTime,
+            googlePlaceId: args.googlePlaceId,
+            bookerName: creatorName,
+          });
+        }
+      }
+
+      console.log(`Sent booking confirmation emails for event ${eventId}`);
+    } catch (error) {
+      // Log email errors but don't fail the event creation
+      console.error("Failed to send booking confirmation emails:", error);
+    }
 
     return eventId;
   },
@@ -1202,6 +1251,111 @@ export const addBalhamSocialRatings = internalMutation({
     return {
       success: true,
       message: "Added ratings for James and Casper, updated event and recalculated aggregates",
+    };
+  },
+});
+
+/**
+ * Internal mutation to send reminder emails for upcoming events
+ * Called by cron job daily at 9:00 AM
+ */
+export const sendEventReminders = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const now = Date.now();
+    const twentyFourHoursFromNow = now + (24 * 60 * 60 * 1000);
+    const fortyEightHoursFromNow = now + (48 * 60 * 60 * 1000);
+
+    // Get all upcoming events
+    const allEvents = await ctx.db
+      .query("curryEvents")
+      .withIndex("by_status", (q) => q.eq("status", "upcoming"))
+      .collect();
+
+    let emailsSent = 0;
+    let eventsProcessed = 0;
+
+    for (const event of allEvents) {
+      // Parse the event datetime
+      const [hours, minutes] = event.scheduledTime.split(":").map(Number);
+      const eventDateTime = new Date(event.scheduledDate);
+      eventDateTime.setHours(hours, minutes, 0, 0);
+      const eventTime = eventDateTime.getTime();
+
+      // Only send reminders for events happening in the next 24-48 hours
+      if (eventTime > twentyFourHoursFromNow && eventTime <= fortyEightHoursFromNow) {
+        eventsProcessed++;
+
+        try {
+          // Skip events without a group
+          if (!event.groupId) {
+            continue;
+          }
+
+          // Get all attendees (or all group members if no attendees confirmed yet)
+          const recipientUserIds = event.attendees && event.attendees.length > 0
+            ? event.attendees
+            : (await ctx.db
+                .query("groupMemberships")
+                .withIndex("by_group", (q) => q.eq("groupId", event.groupId!))
+                .filter((q) => q.eq(q.field("isActive"), true))
+                .collect()
+              ).map(m => m.userId);
+
+          // Get attendee names for the email
+          const attendeeNames: string[] = [];
+          for (const userId of recipientUserIds) {
+            const user = await ctx.db.get(userId);
+            if (user && "_id" in user && "nickname" in user) {
+              attendeeNames.push(user.nickname || user.name || "Curry lover");
+            }
+          }
+
+          // Format the date for display
+          const formattedDate = eventDateTime.toLocaleDateString("en-GB", {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          });
+
+          // Calculate hours until event
+          const hoursUntilEvent = (eventTime - now) / (60 * 60 * 1000);
+
+          // Send reminder to each recipient
+          for (const userId of recipientUserIds) {
+            const user = await ctx.db.get(userId);
+            if (user && "_id" in user && "email" in user && user.email) {
+              const recipientName = user.nickname || user.name || "Curry lover";
+
+              await sendEventReminder({
+                recipientEmail: user.email,
+                recipientName,
+                venueName: event.restaurantName,
+                address: event.address,
+                date: formattedDate,
+                time: event.scheduledTime,
+                googlePlaceId: event.googlePlaceId,
+                attendeeNames,
+                hoursUntilEvent,
+              });
+
+              emailsSent++;
+            }
+          }
+
+          console.log(`Sent ${recipientUserIds.length} reminder emails for event: ${event.restaurantName}`);
+        } catch (error) {
+          console.error(`Failed to send reminders for event ${event._id}:`, error);
+        }
+      }
+    }
+
+    return {
+      success: true,
+      message: `Processed ${eventsProcessed} events and sent ${emailsSent} reminder emails`,
+      eventsProcessed,
+      emailsSent,
     };
   },
 });

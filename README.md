@@ -11,6 +11,8 @@ A beautiful, mobile-first PWA for tracking and rating your monthly curry adventu
 - 🏆 **Leaderboards** - Top rated restaurants and most active raters
 - 📊 **Personal Dashboard** with statistics and recent activity
 - 🏪 **Restaurant Management** - Add and search curry houses
+- 📅 **Event Booking** - Schedule upcoming curry adventures
+- 📧 **Email Notifications** - Booking confirmations and event reminders
 - 📱 **PWA Support** - Install on mobile devices
 - 🎨 **Indian-Themed UI** - Vintage curry menu aesthetic with warm colors
 
@@ -28,7 +30,7 @@ A beautiful, mobile-first PWA for tracking and rating your monthly curry adventu
 
 - Node.js 18+ and npm
 - A Convex account (free at [convex.dev](https://convex.dev))
-- A Resend account for password reset emails (free at [resend.com](https://resend.com))
+- A Brevo account for transactional emails (free tier: 300 emails/day at [brevo.com](https://brevo.com))
 
 ### Installation
 
@@ -46,28 +48,47 @@ A beautiful, mobile-first PWA for tracking and rating your monthly curry adventu
    - Give you a deployment URL
    - Start the Convex dev server
 
-3. **Configure environment variables**
+3. **Set up Brevo for transactional emails**
+
+   a. Create a Brevo account at [brevo.com](https://brevo.com)
+
+   b. Verify your domain (e.g., chutneysmugglers.app):
+      - Go to Settings → Senders & IP → Add a sender
+      - Enter your sender email (e.g., noreply@chutneysmugglers.app)
+      - Add the provided DNS records to your domain registrar:
+        - SPF record (TXT): `v=spf1 include:spf.brevo.com ~all`
+        - DKIM record (TXT): Brevo will provide a specific key
+        - DMARC record (TXT): `v=DMARC1; p=none;`
+      - Wait for DNS propagation (can take up to 48 hours)
+      - Click "Verify" in Brevo dashboard
+
+   c. Get your API key:
+      - Go to Settings → API Keys
+      - Create a new API key
+      - Copy the key (shown only once!)
+
+4. **Configure environment variables**
 
    Create a `.env.local` file:
    ```bash
    # Convex
    NEXT_PUBLIC_CONVEX_URL=<your-convex-url-from-step-2>
 
-   # Resend (for password reset emails)
-   AUTH_RESEND_KEY=<your-resend-api-key>
-   RESEND_FROM_EMAIL=onboarding@yourdomain.com
+   # Brevo (for transactional emails)
+   BREVO_API_KEY=<your-brevo-api-key>
+   BREVO_FROM_EMAIL=noreply@chutneysmugglers.app
 
    # Site URLs
    NEXT_PUBLIC_SITE_URL=http://localhost:3000
    CONVEX_SITE_URL=http://localhost:3000
    ```
 
-4. **Run the development server**
+5. **Run the development server**
    ```bash
    npm run dev
    ```
 
-5. **Open your browser**
+6. **Open your browser**
 
    Navigate to [http://localhost:3000](http://localhost:3000)
 
@@ -97,6 +118,13 @@ chutney-smugglers/
 │   ├── users.ts                 # User queries/mutations
 │   ├── restaurants.ts           # Restaurant queries/mutations
 │   ├── ratings.ts               # Rating queries/mutations
+│   ├── curryEvents.ts           # Event booking system
+│   ├── crons.ts                 # Scheduled jobs (email reminders)
+│   ├── emails/                  # Email notification system
+│   │   ├── brevoClient.ts      # Brevo API integration
+│   │   ├── templates.ts        # HTML email templates
+│   │   ├── bookingConfirmation.ts  # Booking emails
+│   │   └── eventReminder.ts    # Reminder emails
 │   └── storage.ts               # File storage utilities
 │
 └── public/                       # Static assets

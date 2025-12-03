@@ -13,7 +13,7 @@
 You'll need accounts for:
 - **Vercel** (deployment) - https://vercel.com
 - **Convex** (backend) - https://convex.dev
-- **Resend** (email) - https://resend.com
+- **Brevo** (transactional emails) - https://brevo.com
 
 ## 📋 Step-by-Step Deployment
 
@@ -33,12 +33,27 @@ You'll need accounts for:
    - It will look like: `https://your-project-name.convex.cloud`
    - Save this for Step 2
 
-### Step 2: Set Up Resend
+### Step 2: Set Up Brevo
 
-1. Go to https://resend.com/api-keys
-2. Create a new API key
-3. Save the key securely
-4. (Optional) Add and verify your domain for custom email sending
+1. **Create Brevo Account**
+   - Go to https://brevo.com and sign up
+   - Free tier includes 300 emails/day
+
+2. **Verify Your Domain**
+   - Go to Settings → Senders & IP → Add a sender
+   - Enter your sender email (e.g., `noreply@chutneysmugglers.app`)
+   - Add the provided DNS records to your domain registrar:
+     - **SPF record** (TXT): `v=spf1 include:spf.brevo.com ~all`
+     - **DKIM record** (TXT): Brevo will provide a specific key
+     - **DMARC record** (TXT): `v=DMARC1; p=none;`
+   - Wait for DNS propagation (up to 48 hours)
+   - Click "Verify" in Brevo dashboard
+
+3. **Get API Key**
+   - Go to Settings → API Keys
+   - Create a new API key named "Chutney Smugglers Production"
+   - Copy the key (shown only once!)
+   - Save it securely for Step 3
 
 ### Step 3: Deploy to Vercel
 
@@ -60,8 +75,8 @@ You'll need accounts for:
 
    ```
    NEXT_PUBLIC_CONVEX_URL=<your-prod-convex-url-from-step-1>
-   AUTH_RESEND_KEY=<your-resend-api-key-from-step-2>
-   RESEND_FROM_EMAIL=noreply@yourdomain.com
+   BREVO_API_KEY=<your-brevo-api-key-from-step-2>
+   BREVO_FROM_EMAIL=noreply@chutneysmugglers.app
    NEXT_PUBLIC_SITE_URL=https://your-app.vercel.app
    CONVEX_SITE_URL=https://your-app.vercel.app
    ```
@@ -69,6 +84,7 @@ You'll need accounts for:
    **Important**:
    - Use your actual Vercel domain for SITE_URL variables
    - Or use a custom domain if you have one
+   - Ensure `BREVO_FROM_EMAIL` matches the verified sender in Brevo
 
 4. **Deploy**
    - Click "Deploy"
@@ -97,11 +113,12 @@ After your first deployment, update the site URL in Convex:
 | Variable | Required | Description | Example |
 |----------|----------|-------------|---------|
 | `NEXT_PUBLIC_CONVEX_URL` | ✅ Yes | Convex deployment URL | `https://happy-animal-123.convex.cloud` |
-| `AUTH_RESEND_KEY` | ✅ Yes | Resend API key for emails | `re_xxxxxxxxxxxx` |
-| `RESEND_FROM_EMAIL` | ✅ Yes | Sender email address | `noreply@yourdomain.com` |
+| `BREVO_API_KEY` | ✅ Yes | Brevo API key for transactional emails | `xkeysib-xxxxxxxxxxxx` |
+| `BREVO_FROM_EMAIL` | ✅ Yes | Verified sender email address | `noreply@chutneysmugglers.app` |
 | `NEXT_PUBLIC_SITE_URL` | ✅ Yes | Your app's public URL | `https://chutney-smugglers.vercel.app` |
 | `CONVEX_SITE_URL` | ✅ Yes | Same as SITE_URL | `https://chutney-smugglers.vercel.app` |
 | `CONVEX_DEPLOY_KEY` | ⚠️ Optional | For CI/CD automation | From Convex dashboard |
+| `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | ⚠️ Optional | Google Maps integration | From Google Cloud Console |
 
 ## 🔄 Redeployment
 
@@ -140,17 +157,19 @@ In Vercel dashboard:
 
 **Solutions**:
 1. Check `CONVEX_SITE_URL` matches your domain
-2. Verify Resend API key is correct
+2. Verify Brevo API key is correct
 3. Check Convex dashboard auth settings
-4. Ensure `AUTH_RESEND_KEY` is set
+4. Ensure `BREVO_API_KEY` is set
 
-### Password Reset Emails Not Sending
+### Emails Not Sending (Password Reset / Booking Confirmations / Reminders)
 
 **Solutions**:
-1. Verify `RESEND_FROM_EMAIL` is correct
-2. Check Resend dashboard for errors
-3. Verify domain in Resend (if using custom domain)
-4. Check `AUTH_RESEND_KEY` is valid
+1. Verify `BREVO_FROM_EMAIL` matches a verified sender in Brevo
+2. Check Brevo dashboard → Transactional → Logs for errors
+3. Ensure domain is verified in Brevo (check DNS records)
+4. Verify `BREVO_API_KEY` is valid and active
+5. Check Convex function logs for email errors
+6. Confirm you haven't exceeded Brevo's daily limit (300 emails on free tier)
 
 ### Images Not Uploading
 
@@ -213,11 +232,34 @@ After deployment, users can install the app:
    - Monitor Convex usage
    - Watch for errors
 
+## 📧 Email Notifications
+
+The app sends three types of emails via Brevo:
+
+1. **Password Reset Emails**
+   - Triggered when user requests password reset
+   - Contains magic link valid for 24 hours
+   - Sent immediately
+
+2. **Booking Confirmation Emails**
+   - Triggered when a new curry event is created
+   - Sent to all group members
+   - Includes event details and Google Maps link
+   - Sent immediately
+
+3. **Event Reminder Emails**
+   - Triggered by cron job (runs daily at 9:00 AM UTC)
+   - Sent to confirmed attendees 24-48 hours before event
+   - Includes event details and attendee list
+   - Automatically scheduled
+
+**Note**: Cron jobs are automatically deployed with Convex. No additional setup needed!
+
 ## 🆘 Need Help?
 
 - **Vercel Docs**: https://vercel.com/docs
 - **Convex Docs**: https://docs.convex.dev
-- **Resend Docs**: https://resend.com/docs
+- **Brevo Docs**: https://developers.brevo.com
 
 ---
 

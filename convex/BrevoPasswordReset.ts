@@ -1,21 +1,28 @@
 import Resend from "@auth/core/providers/resend";
 
-export const ResendPasswordReset = Resend({
-  id: "resend-password-reset",
-  apiKey: process.env.AUTH_RESEND_KEY ?? process.env.RESEND_API_KEY,
-  from: process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev",
+export const BrevoPasswordReset = Resend({
+  id: "brevo-password-reset",
+  apiKey: process.env.BREVO_API_KEY,
+  from: process.env.BREVO_FROM_EMAIL || "noreply@chutneysmugglers.app",
   async sendVerificationRequest({ identifier: email, url, provider }) {
-    const response = await fetch("https://api.resend.com/emails", {
+    const response = await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${provider.apiKey}`,
+        "api-key": provider.apiKey!,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: provider.from,
-        to: email,
+        sender: {
+          email: provider.from,
+          name: "Chutney Smugglers",
+        },
+        to: [
+          {
+            email: email,
+          },
+        ],
         subject: "Reset your password - Chutney Smugglers",
-        html: `
+        htmlContent: `
           <div style="font-family: 'Georgia', serif; max-width: 500px; margin: 0 auto; background: linear-gradient(to bottom, #FFF8E7, #FFEFD5); padding: 32px; border: 2px solid #D2691E;">
             <div style="text-align: center; margin-bottom: 24px;">
               <h1 style="color: #8B4513; font-size: 28px; margin: 0; text-shadow: 1px 1px 2px rgba(0,0,0,0.1);">🍛 Chutney Smugglers</h1>

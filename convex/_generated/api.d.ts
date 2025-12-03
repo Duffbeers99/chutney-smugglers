@@ -8,9 +8,14 @@
  * @module
  */
 
-import type * as ResendPasswordReset from "../ResendPasswordReset.js";
+import type * as BrevoPasswordReset from "../BrevoPasswordReset.js";
 import type * as auth from "../auth.js";
+import type * as crons from "../crons.js";
 import type * as curryEvents from "../curryEvents.js";
+import type * as emails_bookingConfirmation from "../emails/bookingConfirmation.js";
+import type * as emails_brevoClient from "../emails/brevoClient.js";
+import type * as emails_eventReminder from "../emails/eventReminder.js";
+import type * as emails_templates from "../emails/templates.js";
 import type * as groups from "../groups.js";
 import type * as http from "../http.js";
 import type * as migrations from "../migrations.js";
@@ -26,9 +31,14 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
-  ResendPasswordReset: typeof ResendPasswordReset;
+  BrevoPasswordReset: typeof BrevoPasswordReset;
   auth: typeof auth;
+  crons: typeof crons;
   curryEvents: typeof curryEvents;
+  "emails/bookingConfirmation": typeof emails_bookingConfirmation;
+  "emails/brevoClient": typeof emails_brevoClient;
+  "emails/eventReminder": typeof emails_eventReminder;
+  "emails/templates": typeof emails_templates;
   groups: typeof groups;
   http: typeof http;
   migrations: typeof migrations;
