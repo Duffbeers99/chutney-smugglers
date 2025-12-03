@@ -204,21 +204,21 @@ export default function DashboardPage() {
   const canManageEvents = useQuery(api.curryEvents.canManageEvents)
   const activeEvent = useQuery(api.curryEvents.getActiveEvent)
 
-  // Auto-initialize booking rotation
-  const initializeBooker = useMutation(api.curryEvents.initializeCurrentUserAsBooker)
-
-  React.useEffect(() => {
-    // If user is loaded and can't manage events, initialize them
-    if (user && canManageEvents === false) {
-      initializeBooker({})
-        .then(() => {
-          console.log("Initialized booking rotation for user")
-        })
-        .catch((error) => {
-          console.error("Failed to initialize booking rotation:", error)
-        })
-    }
-  }, [user, canManageEvents, initializeBooker])
+  // Note: Auto-initialization disabled - rotation order is managed via migration script
+  // const initializeBooker = useMutation(api.curryEvents.initializeCurrentUserAsBooker)
+  //
+  // React.useEffect(() => {
+  //   // If user is loaded and can't manage events, initialize them
+  //   if (user && canManageEvents === false) {
+  //     initializeBooker({})
+  //       .then(() => {
+  //         console.log("Initialized booking rotation for user")
+  //       })
+  //       .catch((error) => {
+  //         console.error("Failed to initialize booking rotation:", error)
+  //       })
+  //   }
+  // }, [user, canManageEvents, initializeBooker])
 
   // Loading states
   const isLoadingUser = user === undefined

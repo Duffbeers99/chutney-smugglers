@@ -64,6 +64,7 @@ export function UpcomingCurryCard({ className }: UpcomingCurryCardProps) {
   const nextEvent = useQuery(api.curryEvents.getNextEvent)
   const canManage = useQuery(api.curryEvents.canManageEvents)
   const currentUser = useQuery(api.users.currentUser)
+  const currentBooker = useQuery(api.curryEvents.getCurrentBooker)
   const attendees = useQuery(
     api.curryEvents.getEventAttendees,
     nextEvent ? { eventId: nextEvent._id } : "skip"
@@ -156,11 +157,22 @@ export function UpcomingCurryCard({ className }: UpcomingCurryCardProps) {
     )
   }
 
-  // No event exists - show add prompt for everyone
+  // No event exists - show different views for current booker vs others
   if (!nextEvent) {
+    // Check if current user is the booker
+    const isCurrentBooker = currentBooker && currentUser && currentBooker.user?._id === currentUser._id
+    const bookerName = currentBooker?.user?.nickname || currentBooker?.user?.name || "Someone"
+    const bookerImageUrl = currentBooker?.user?.profileImageId
+      ? `${process.env.NEXT_PUBLIC_CONVEX_URL}/api/storage/${currentBooker.user.profileImageId}`
+      : null
+
     return (
       <>
-        <Card className={cn("card-parchment mx-4 border-2 border-curry/30 relative overflow-hidden", className)}>
+        <Card className={cn(
+          "card-parchment mx-4 relative overflow-hidden",
+          isCurrentBooker ? "border-2 border-saffron-gold/50" : "border-2 border-curry/30",
+          className
+        )}>
           {/* Abstract Indian flag colors background */}
           <div className="absolute inset-0 pointer-events-none opacity-30">
             {/* Saffron orange blobs */}
@@ -222,22 +234,56 @@ export function UpcomingCurryCard({ className }: UpcomingCurryCardProps) {
           </div>
 
           <CardContent className="flex flex-col items-center justify-center text-center gap-4 p-6 relative z-10">
+            {/* Profile Picture */}
+            <Avatar className={cn(
+              "border-4 shadow-lg",
+              isCurrentBooker ? "size-24 border-saffron-gold" : "size-16 border-curry"
+            )}>
+              {bookerImageUrl && (
+                <AvatarImage src={bookerImageUrl} alt={bookerName} />
+              )}
+              <AvatarFallback className="bg-curry text-curry-foreground font-bold text-2xl">
+                {bookerName.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)}
+              </AvatarFallback>
+            </Avatar>
+
+            {/* Message */}
             <div className="space-y-2">
-              <p className="text-lg font-bold text-foreground">
-                No upcoming curry scheduled
-              </p>
-              <p className="text-sm text-muted-foreground max-w-md">
-                If it's your turn to book the next curry, please add it here.
-              </p>
+              {isCurrentBooker ? (
+                <>
+                  <p className="text-lg font-bold text-foreground">
+                    It&apos;s your turn to book the next curry
+                  </p>
+                  <p className="text-sm text-muted-foreground max-w-md">
+                    Select a restaurant and schedule the next Chutney Smugglers curry event
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-lg font-bold text-foreground">
+                    No upcoming curry scheduled
+                  </p>
+                  <p className="text-sm text-muted-foreground max-w-md">
+                    It is <span className="font-semibold text-foreground">{bookerName}&apos;s</span> turn to book the curry
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    You&apos;ll be notified when it&apos;s your turn
+                  </p>
+                </>
+              )}
             </div>
-            <Button
-              size="lg"
-              onClick={() => setIsAddDrawerOpen(true)}
-              className="curry-gradient text-white font-semibold"
-            >
-              <Plus className="size-5 mr-2" />
-              Book Next Curry
-            </Button>
+
+            {/* Button - only show for current booker */}
+            {isCurrentBooker && (
+              <Button
+                size="lg"
+                onClick={() => setIsAddDrawerOpen(true)}
+                className="curry-gradient text-white font-semibold"
+              >
+                <Plus className="size-5 mr-2" />
+                Book Next Curry
+              </Button>
+            )}
           </CardContent>
         </Card>
 

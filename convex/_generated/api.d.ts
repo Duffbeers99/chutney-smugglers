@@ -21,6 +21,7 @@ import type * as emails_votingReminder from "../emails/votingReminder.js";
 import type * as groups from "../groups.js";
 import type * as http from "../http.js";
 import type * as migrations from "../migrations.js";
+import type * as migrations_setRotationOrder from "../migrations/setRotationOrder.js";
 import type * as ratings from "../ratings.js";
 import type * as restaurants from "../restaurants.js";
 import type * as storage from "../storage.js";
@@ -46,6 +47,7 @@ declare const fullApi: ApiFromModules<{
   groups: typeof groups;
   http: typeof http;
   migrations: typeof migrations;
+  "migrations/setRotationOrder": typeof migrations_setRotationOrder;
   ratings: typeof ratings;
   restaurants: typeof restaurants;
   storage: typeof storage;
