@@ -195,9 +195,6 @@ function AuthPage() {
                     minLength={8}
                     className="mt-1 bg-white/80 border-terracotta focus:border-curry"
                   />
-                  <p className="text-xs text-spice/70 mt-1">
-                    At least 8 characters
-                  </p>
                 </div>
                 <Button
                   type="submit"
