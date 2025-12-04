@@ -210,6 +210,9 @@ function AuthPage() {
                     "Create Account"
                   )}
                 </Button>
+                <div className="text-center h-5">
+                  {/* Invisible spacer to match sign-in form height */}
+                </div>
               </form>
             </TabsContent>
           </Tabs>
