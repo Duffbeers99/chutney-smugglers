@@ -82,16 +82,15 @@ function AuthPage() {
           <Image
             src="/chutney-logo-full.png"
             alt="Chutney Smugglers"
-            width={320}
-            height={320}
+            width={400}
+            height={400}
             priority
-            className="w-full max-w-[280px] sm:max-w-[320px] h-auto"
+            className="w-full max-w-[360px] sm:max-w-[400px] h-auto"
           />
         </div>
 
-        {/* Auth Card */}
-        <div className="card-parchment p-8">
-          <Tabs
+        {/* Auth Form */}
+        <Tabs
             value={mode}
             onValueChange={(v) => setMode(v as "signIn" | "signUp")}
             className="w-full"
@@ -144,7 +143,7 @@ function AuthPage() {
                 <Button
                   type="submit"
                   disabled={loading}
-                  className="btn-curry w-full h-12 text-base font-semibold"
+                  className="w-full h-12 text-base font-semibold bg-[#87431D] hover:bg-[#6d3517] text-white transition-colors"
                 >
                   {loading ? (
                     <>
@@ -203,7 +202,7 @@ function AuthPage() {
                 <Button
                   type="submit"
                   disabled={loading}
-                  className="btn-curry w-full h-12 text-base font-semibold"
+                  className="w-full h-12 text-base font-semibold bg-[#87431D] hover:bg-[#6d3517] text-white transition-colors"
                 >
                   {loading ? (
                     <>
@@ -217,7 +216,6 @@ function AuthPage() {
               </form>
             </TabsContent>
           </Tabs>
-        </div>
 
         {/* Footer */}
         <div className="text-center mt-6">
