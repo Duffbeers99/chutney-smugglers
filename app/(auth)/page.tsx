@@ -213,13 +213,6 @@ function AuthPage() {
               </form>
             </TabsContent>
           </Tabs>
-
-        {/* Footer */}
-        <div className="text-center mt-6">
-          <p className="text-sm text-spice/70">
-            Join your friends in rating the best curries
-          </p>
-        </div>
       </div>
     </div>
   );
