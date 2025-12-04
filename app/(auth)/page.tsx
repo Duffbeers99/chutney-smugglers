@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { getNextOnboardingPath } from "@/lib/onboarding-flow";
 import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
-import { WordCarousel } from "@/components/auth/WordCarousel";
+import Image from "next/image";
 
 export default function Home() {
   return (
@@ -77,14 +77,16 @@ function AuthPage() {
   return (
     <div className="flex min-h-screen items-center justify-center mesh-gradient p-4 safe-area-top">
       <div className="w-full max-w-md">
-        {/* Header */}
-        <div className="flex flex-col items-center mb-8">
-          <div className="paper-aged px-6 py-4 rounded-2xl mb-4 w-full max-w-[320px] sm:max-w-sm">
-            <h1 className="text-3xl sm:text-4xl font-bold text-curry mb-2 text-center">
-              Chutney Smugglers
-            </h1>
-            <WordCarousel />
-          </div>
+        {/* Logo */}
+        <div className="flex justify-center mb-8">
+          <Image
+            src="/chutney-logo-full.png"
+            alt="Chutney Smugglers"
+            width={320}
+            height={320}
+            priority
+            className="w-full max-w-[280px] sm:max-w-[320px] h-auto"
+          />
         </div>
 
         {/* Auth Card */}
