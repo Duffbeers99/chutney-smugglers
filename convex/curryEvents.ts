@@ -136,6 +136,39 @@ export const getAllEvents = query({
 });
 
 /**
+ * Get group journey progress towards Mumbai goal (50 completed curries)
+ */
+export const getGroupJourneyProgress = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+
+    const groupId = await getUserActiveGroup(ctx, userId);
+    if (!groupId) return null;
+
+    // Count all completed events with ratings revealed
+    const completedEvents = await ctx.db
+      .query("curryEvents")
+      .withIndex("by_group_and_status", (q) => q.eq("groupId", groupId).eq("status", "completed"))
+      .collect();
+
+    // Filter to only events with ratings revealed (fully completed)
+    const rankedEvents = completedEvents.filter(event => event.ratingsRevealed === true);
+
+    const curriesCompleted = rankedEvents.length;
+    const goal = 50;
+    const percentage = Math.min((curriesCompleted / goal) * 100, 100);
+
+    return {
+      curriesCompleted,
+      goal,
+      percentage,
+    };
+  },
+});
+
+/**
  * Get the current user whose turn it is to book
  */
 export const getCurrentBooker = query({

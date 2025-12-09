@@ -14,6 +14,7 @@ import { UpcomingCurryCard } from "@/components/curry/upcoming-curry-card"
 import { ActiveCurryCard } from "@/components/curry/active-curry-card"
 import { DateVotingCard } from "@/components/curry/date-voting-card"
 import { DatePollResults } from "@/components/curry/date-poll-results"
+import { CurryJourneyTracker } from "@/components/dashboard/curry-journey-tracker"
 import { Calendar, MapPin, Sparkles, Trophy, ChefHat } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
@@ -203,6 +204,8 @@ export default function DashboardPage() {
   const recentRatings = useQuery(api.ratings.getRecentRatings, { limit: 10 })
   const canManageEvents = useQuery(api.curryEvents.canManageEvents)
   const activeEvent = useQuery(api.curryEvents.getActiveEvent)
+  const nextEvent = useQuery(api.curryEvents.getNextEvent)
+  const journeyProgress = useQuery(api.curryEvents.getGroupJourneyProgress)
 
   // Note: Auto-initialization disabled - rotation order is managed via migration script
   // const initializeBooker = useMutation(api.curryEvents.initializeCurrentUserAsBooker)
@@ -239,17 +242,27 @@ export default function DashboardPage() {
         {/* Upcoming Curry Card (shows when there's a future event) */}
         <UpcomingCurryCard />
 
-        {/* Date Voting Section */}
-        <section aria-labelledby="voting-heading" className="px-4 space-y-4">
-          <h2 id="voting-heading" className="sr-only">
-            Vote for next curry date
-          </h2>
-          <DateVotingCard />
-          <DatePollResults />
-        </section>
+        {/* Date Voting Section - Only show when no events are scheduled/active */}
+        {!activeEvent && !nextEvent && activeEvent !== undefined && nextEvent !== undefined && (
+          <section aria-labelledby="voting-heading" className="px-4 space-y-4">
+            <h2 id="voting-heading" className="sr-only">
+              Vote for next curry date
+            </h2>
+            <DateVotingCard />
+            <DatePollResults />
+          </section>
+        )}
 
         {/* Quick Access */}
         <QuickAccessCard />
+
+        {/* Mumbai Journey Tracker */}
+        <CurryJourneyTracker
+          curriesCompleted={journeyProgress?.curriesCompleted}
+          goal={journeyProgress?.goal}
+          percentage={journeyProgress?.percentage}
+          isLoading={journeyProgress === undefined}
+        />
 
         {/* Recent Activity */}
         <section aria-labelledby="activity-heading" className="px-4">
