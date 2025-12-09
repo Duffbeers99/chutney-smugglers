@@ -25,6 +25,8 @@ const schema = defineSchema({
     curriesRated: v.optional(v.number()),
     curriesAdded: v.optional(v.number()),
     averageRating: v.optional(v.number()),
+    venuesRated: v.optional(v.number()), // Generic venue stats
+    venuesAdded: v.optional(v.number()),
 
     // Onboarding completion
     onboardingComplete: v.optional(v.boolean()),
@@ -177,6 +179,15 @@ const schema = defineSchema({
 
     // Optional metadata
     description: v.optional(v.string()),
+    tier: v.optional(v.string()), // Subscription tier (e.g., "pro", "free")
+    venueType: v.optional(v.string()), // Type of venue (e.g., "curry_restaurant")
+    venueTypeConfig: v.optional(
+      v.object({
+        eventName: v.string(), // e.g., "curry night"
+        plural: v.string(), // e.g., "curry houses"
+        singular: v.string(), // e.g., "curry house"
+      })
+    ),
   })
     .index("by_access_code", ["accessCode"])
     .index("by_created_by", ["createdBy"]),
