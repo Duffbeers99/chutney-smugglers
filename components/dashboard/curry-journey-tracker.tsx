@@ -18,6 +18,30 @@ export function CurryJourneyTracker({
   percentage = 0,
   isLoading = false,
 }: CurryJourneyTrackerProps) {
+  // Calculate predicted travel date
+  // Assuming 1 curry per month, starting from next month (January)
+  const calculatePredictedDate = () => {
+    if (!curriesCompleted || curriesCompleted >= goal) {
+      return null
+    }
+
+    const remainingCurries = goal - curriesCompleted
+    const today = new Date()
+
+    // Start from next month (January in this case)
+    const predictedDate = new Date(today.getFullYear(), today.getMonth() + 1, 1)
+
+    // Add remaining months (subtract 1 because the first curry happens next month)
+    predictedDate.setMonth(predictedDate.getMonth() + remainingCurries - 1)
+
+    return predictedDate
+  }
+
+  const predictedDate = calculatePredictedDate()
+  const predictedDateString = predictedDate
+    ? predictedDate.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
+    : null
+
   if (isLoading) {
     return (
       <Card className="card-parchment mx-4">
@@ -34,18 +58,18 @@ export function CurryJourneyTracker({
     <Card className="card-parchment mx-4 overflow-hidden">
       <CardContent className="p-6 space-y-4">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-bold text-foreground font-lora">
-              Journey to Mumbai
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              {curriesCompleted} of {goal} curries completed
+        <div>
+          <h3 className="text-lg font-bold text-foreground font-lora">
+            Road to Mumbai
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            {curriesCompleted} of {goal} curries completed
+          </p>
+          {predictedDateString && (
+            <p className="text-sm font-semibold text-curry mt-1">
+              Predicted travel date: {predictedDateString}
             </p>
-          </div>
-          <div className="flex size-12 items-center justify-center rounded-full curry-gradient">
-            <Plane className="size-6 text-white" aria-hidden="true" />
-          </div>
+          )}
         </div>
 
         {/* Journey Progress Bar */}
@@ -63,24 +87,20 @@ export function CurryJourneyTracker({
           </div>
 
           {/* Progress Bar */}
-          <div className="relative">
-            <Progress
-              value={percentage}
-              className="h-3 bg-muted/50"
-            />
-            {/* Custom gradient for the progress indicator */}
-            <style jsx>{`
-              [data-slot="progress-indicator"] {
-                background: linear-gradient(135deg, hsl(var(--curry)) 0%, hsl(var(--saffron)) 100%);
-              }
-            `}</style>
-          </div>
-
-          {/* Progress Percentage */}
-          <div className="flex justify-center">
-            <span className="text-sm font-semibold text-curry">
-              {percentage.toFixed(0)}% to Mumbai
-            </span>
+          <div className="relative flex items-center gap-2">
+            <Plane className="size-4 text-curry shrink-0" aria-hidden="true" />
+            <div className="relative flex-1">
+              <Progress
+                value={percentage}
+                className="h-3 bg-muted/50"
+              />
+              {/* Custom gradient for the progress indicator */}
+              <style jsx>{`
+                [data-slot="progress-indicator"] {
+                  background: linear-gradient(135deg, hsl(var(--curry)) 0%, hsl(var(--saffron)) 100%);
+                }
+              `}</style>
+            </div>
           </div>
         </div>
 

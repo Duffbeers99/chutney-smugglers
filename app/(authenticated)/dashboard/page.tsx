@@ -148,56 +148,6 @@ function StatusCard({
 }
 
 
-function QuickAccessCard() {
-  const router = useRouter()
-
-  return (
-    <Card className="card-parchment mx-4">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Trophy className="size-5 text-saffron" aria-hidden="true" />
-          Quick Access
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-2 gap-3">
-          <button
-            onClick={() => router.push("/leaderboards")}
-            className={cn(
-              "flex flex-col items-center justify-center gap-2 p-4 rounded-lg",
-              "border-2 border-border bg-background",
-              "hover:border-curry hover:bg-curry/5",
-              "transition-all duration-200 active:scale-95",
-              "focus-curry touch-target"
-            )}
-          >
-            <Trophy className="size-6 text-curry" aria-hidden="true" />
-            <span className="text-sm font-semibold text-foreground">
-              Leaderboards
-            </span>
-          </button>
-
-          <button
-            onClick={() => router.push("/restaurants")}
-            className={cn(
-              "flex flex-col items-center justify-center gap-2 p-4 rounded-lg",
-              "border-2 border-border bg-background",
-              "hover:border-saffron hover:bg-saffron/5",
-              "transition-all duration-200 active:scale-95",
-              "focus-curry touch-target"
-            )}
-          >
-            <MapPin className="size-6 text-saffron" aria-hidden="true" />
-            <span className="text-sm font-semibold text-foreground">
-              Restaurants
-            </span>
-          </button>
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
 export default function DashboardPage() {
   // Fetch data
   const user = useQuery(api.users.currentUser)
@@ -252,9 +202,6 @@ export default function DashboardPage() {
             <DatePollResults />
           </section>
         )}
-
-        {/* Quick Access */}
-        <QuickAccessCard />
 
         {/* Mumbai Journey Tracker */}
         <CurryJourneyTracker
