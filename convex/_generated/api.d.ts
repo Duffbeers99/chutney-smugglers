@@ -13,6 +13,7 @@ import type * as auth from "../auth.js";
 import type * as crons from "../crons.js";
 import type * as curryEvents from "../curryEvents.js";
 import type * as dateVotes from "../dateVotes.js";
+import type * as emails_attendanceReminder from "../emails/attendanceReminder.js";
 import type * as emails_bookerReminder from "../emails/bookerReminder.js";
 import type * as emails_bookingConfirmation from "../emails/bookingConfirmation.js";
 import type * as emails_brevoClient from "../emails/brevoClient.js";
@@ -40,6 +41,7 @@ declare const fullApi: ApiFromModules<{
   crons: typeof crons;
   curryEvents: typeof curryEvents;
   dateVotes: typeof dateVotes;
+  "emails/attendanceReminder": typeof emails_attendanceReminder;
   "emails/bookerReminder": typeof emails_bookerReminder;
   "emails/bookingConfirmation": typeof emails_bookingConfirmation;
   "emails/brevoClient": typeof emails_brevoClient;

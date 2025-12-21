@@ -40,4 +40,21 @@ crons.weekly(
   internal.curryEvents.sendBookerReminders
 );
 
+/**
+ * Send attendance confirmation reminders to users who haven't confirmed
+ * Runs twice a week: Tuesday and Thursday at 15:00 UTC (4:00 PM BST / 3:00 PM GMT)
+ * Only sends for upcoming events, stops when user confirms attendance
+ */
+crons.weekly(
+  "send attendance reminders - Tuesday",
+  { dayOfWeek: "tuesday", hourUTC: 15, minuteUTC: 0 },
+  internal.curryEvents.sendAttendanceReminders
+);
+
+crons.weekly(
+  "send attendance reminders - Thursday",
+  { dayOfWeek: "thursday", hourUTC: 15, minuteUTC: 0 },
+  internal.curryEvents.sendAttendanceReminders
+);
+
 export default crons;

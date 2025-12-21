@@ -313,6 +313,22 @@ export const sendVotingReminders = internalAction({
     console.log(`📧 Starting voting reminder emails for ${groups.length} groups...`);
 
     for (const group of groups) {
+      // Check if there's already an upcoming curry scheduled for this group
+      const upcomingEvents = await ctx.runQuery(
+        internal.curryEvents.getUpcomingEventsForReminders
+      );
+
+      const groupHasUpcomingEvent = upcomingEvents.some(
+        (event) => event.groupId === group._id
+      );
+
+      if (groupHasUpcomingEvent) {
+        console.log(
+          `✓ Group "${group.name}" already has a curry scheduled, skipping voting reminders`
+        );
+        continue;
+      }
+
       // Get users who haven't voted in this group
       const usersWithoutVotes = await ctx.runQuery(
         internal.dateVotes.getUsersWithoutVotes,

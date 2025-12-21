@@ -32,8 +32,7 @@ export async function sendVotingReminder(params: VotingReminderParams): Promise<
     ${heading(`Vote for Next Curry Date! 📅`)}
     ${paragraph(`Hi ${recipientName}! We're planning the next ${groupName} curry and need your input.`)}
     ${paragraph(`Help us find the perfect date by selecting all the days you're available in the calendar. The more people who vote, the easier it is to find a date that works for everyone!`)}
-    ${button(dashboardUrl, 'Vote for Dates')}
-    ${smallText('This reminder is sent twice a week to members who haven\'t voted yet.')}
+    ${smallText('Open the app to vote for dates. This reminder is sent twice a week to members who haven\'t voted yet.')}
   `) + footer("Let's find a date that works for everyone!");
 
   const htmlContent = emailWrapper(content);
@@ -49,9 +48,7 @@ export async function sendVotingReminder(params: VotingReminderParams): Promise<
 
       Help us find the perfect date by selecting all the days you're available in the calendar. The more people who vote, the easier it is to find a date that works for everyone!
 
-      Vote now: ${dashboardUrl}
-
-      This reminder is sent twice a week to members who haven't voted yet.
+      Open the app to vote for dates. This reminder is sent twice a week to members who haven't voted yet.
 
       Let's find a date that works for everyone!
     `,

@@ -33,8 +33,7 @@ export async function sendBookerReminder(params: BookerReminderParams): Promise<
     ${paragraph(`Hi ${recipientName}! You're up next in the ${groupName} booking rotation.`)}
     ${paragraph(`It's your turn to pick our next curry destination and schedule the event. The team is counting on you to keep our curry tradition going!`)}
     ${paragraph(`Choose a restaurant from our list or add a new one, then set a date and time that works for the group.`)}
-    ${button(dashboardUrl, 'Book the Curry Now')}
-    ${smallText('This reminder is sent weekly until the curry is booked.')}
+    ${smallText('Open the app to book the curry. This reminder is sent weekly until the curry is booked.')}
   `) + footer("Let's keep the curry nights rolling!");
 
   const htmlContent = emailWrapper(content);
@@ -52,9 +51,7 @@ export async function sendBookerReminder(params: BookerReminderParams): Promise<
 
       Choose a restaurant from our list or add a new one, then set a date and time that works for the group.
 
-      Book now: ${dashboardUrl}
-
-      This reminder is sent weekly until the curry is booked.
+      Open the app to book the curry. This reminder is sent weekly until the curry is booked.
 
       Let's keep the curry nights rolling!
     `,

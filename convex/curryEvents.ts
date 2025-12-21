@@ -1515,6 +1515,18 @@ export const getAllGroupsInternal = internalQuery({
 });
 
 /**
+ * Internal query to get a group by ID
+ */
+export const getGroupById = internalQuery({
+  args: {
+    groupId: v.id("groups"),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.groupId);
+  },
+});
+
+/**
  * Internal query to get current booker for a specific group
  */
 export const getCurrentBookerForGroup = internalQuery({
@@ -1624,6 +1636,114 @@ export const sendBookerReminders = internalAction({
 
     console.log(
       `📊 Booker reminders complete: ${totalEmailsSent} sent, ${failedEmails.length} failed`
+    );
+
+    return {
+      emailsSent: totalEmailsSent,
+      failedEmails,
+    };
+  },
+});
+
+/**
+ * Internal action to send attendance confirmation reminders
+ * Called by cron job on Tuesdays and Thursdays
+ */
+export const sendAttendanceReminders = internalAction({
+  args: {},
+  handler: async (ctx) => {
+    const { sendAttendanceReminder } = await import("./emails/attendanceReminder");
+
+    // Get all upcoming events
+    const upcomingEvents = await ctx.runQuery(
+      internal.curryEvents.getUpcomingEventsForReminders
+    );
+
+    let totalEmailsSent = 0;
+    const failedEmails: string[] = [];
+
+    console.log(`📧 Starting attendance reminder emails for ${upcomingEvents.length} upcoming events...`);
+
+    for (const event of upcomingEvents) {
+      // Skip events without a group
+      if (!event.groupId) {
+        console.log(`⚠️ Event ${event._id} has no groupId, skipping`);
+        continue;
+      }
+
+      // Get all group members
+      const groupMembers = await ctx.runQuery(
+        internal.curryEvents.getGroupMembers,
+        { groupId: event.groupId }
+      );
+
+      // Get attendees who have already confirmed
+      const confirmedAttendees = new Set(event.attendees || []);
+      const attendeeCount = confirmedAttendees.size;
+
+      // Filter to users who haven't confirmed
+      const unconfirmedMembers = groupMembers.filter(
+        (member) => !confirmedAttendees.has(member._id)
+      );
+
+      console.log(
+        `Event at ${event.restaurantName}: ${unconfirmedMembers.length} users need attendance reminders`
+      );
+
+      // Get the group name
+      const group = await ctx.runQuery(internal.curryEvents.getGroupById, {
+        groupId: event.groupId,
+      });
+
+      if (!group) {
+        console.log(`⚠️ Group not found for event ${event._id}, skipping`);
+        continue;
+      }
+
+      // Format the date
+      const eventDate = new Date(event.scheduledDate);
+      const formattedDate = eventDate.toLocaleDateString("en-GB", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+
+      // Send reminder to each unconfirmed member
+      for (const member of unconfirmedMembers) {
+        if (!member.email) {
+          console.log(`⚠️ User ${member._id} has no email, skipping`);
+          continue;
+        }
+
+        try {
+          await sendAttendanceReminder({
+            recipientEmail: member.email,
+            recipientName: member.nickname || member.name || "Curry Lover",
+            groupName: group.name,
+            venueName: event.restaurantName,
+            address: event.address,
+            date: formattedDate,
+            time: event.scheduledTime,
+            attendeeCount,
+          });
+
+          totalEmailsSent++;
+          console.log(
+            `✅ Sent attendance reminder to ${member.nickname || member.name} (${member.email})`
+          );
+        } catch (error) {
+          console.error(
+            `❌ Failed to send attendance reminder to ${member.email}:`,
+            error
+          );
+          failedEmails.push(member.email);
+        }
+      }
+    }
+
+    console.log(
+      `📊 Attendance reminders complete: ${totalEmailsSent} sent, ${failedEmails.length} failed`
     );
 
     return {
