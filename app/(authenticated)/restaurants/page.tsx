@@ -277,9 +277,9 @@ function RestaurantCard({ restaurant }: { restaurant: any }) {
               {restaurant.ratings && restaurant.ratings.length > 0 && (
                 <div className="pt-3 border-t border-border space-y-3">
                   <h4 className="text-sm font-semibold text-foreground mb-2">Individual Ratings</h4>
-                  {restaurant.ratings
-                    .sort((a, b) => b.createdAt - a.createdAt)
-                    .map((rating) => (
+                  {[...restaurant.ratings]
+                    .sort((a: any, b: any) => b.createdAt - a.createdAt)
+                    .map((rating: any) => (
                     <div key={rating._id} className="bg-muted/30 rounded-lg p-3 space-y-2">
                       {/* User info */}
                       <div className="flex items-center gap-2">
