@@ -851,6 +851,31 @@ export const getEventAttendees = query({
 });
 
 /**
+ * Get a specific curry event by ID (regardless of status)
+ * Used for rating pages where we need the event details even after it's completed
+ */
+export const getEventByIdPublic = query({
+  args: {
+    eventId: v.id("curryEvents"),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+
+    const groupId = await getUserActiveGroup(ctx, userId);
+    if (!groupId) return null;
+
+    const event = await ctx.db.get(args.eventId);
+    if (!event) return null;
+
+    // Verify event belongs to user's group
+    if (event.groupId !== groupId) return null;
+
+    return event;
+  },
+});
+
+/**
  * Get the currently active curry event (started but not completed)
  */
 export const getActiveEvent = query({

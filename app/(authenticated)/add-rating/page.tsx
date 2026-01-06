@@ -29,8 +29,8 @@ export default function AddRatingPage() {
   }, [eventIdParam])
 
   const event = useQuery(
-    api.curryEvents.getActiveEvent,
-    eventId ? undefined : "skip"
+    api.curryEvents.getEventByIdPublic,
+    eventId ? { eventId } : "skip"
   )
   const addRating = useMutation(api.ratings.add)
 
