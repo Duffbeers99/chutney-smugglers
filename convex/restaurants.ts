@@ -18,7 +18,7 @@ export const list = query({
       .withIndex("by_group", (q) => q.eq("groupId", groupId))
       .collect();
 
-    // Enrich each restaurant with booker information from most recent event
+    // Enrich each restaurant with booker information and ratings from most recent event
     const enriched = await Promise.all(
       restaurants.map(async (restaurant) => {
         // Find the most recent curry event for this restaurant
@@ -43,6 +43,7 @@ export const list = query({
         const mostRecentEvent = sortedEvents[0];
 
         let booker = null;
+        let mostRecentVisitDate = 0;
         if (mostRecentEvent) {
           const bookerUser = await ctx.db.get(mostRecentEvent.createdBy);
           if (bookerUser) {
@@ -57,16 +58,60 @@ export const list = query({
               profileImageUrl,
             };
           }
+
+          // Calculate the full date/time for sorting
+          const [hours, minutes] = mostRecentEvent.scheduledTime.split(":").map(Number);
+          const visitDateTime = new Date(mostRecentEvent.scheduledDate);
+          visitDateTime.setHours(hours, minutes, 0, 0);
+          mostRecentVisitDate = visitDateTime.getTime();
         }
+
+        // Fetch all ratings for this restaurant with user info
+        const ratings = await ctx.db
+          .query("ratings")
+          .filter((q) => q.eq(q.field("restaurantId"), restaurant._id))
+          .collect();
+
+        // Enrich ratings with user information
+        const enrichedRatings = await Promise.all(
+          ratings.map(async (rating) => {
+            const user = await ctx.db.get(rating.userId);
+            if (!user) return null;
+
+            let profileImageUrl: string | null = null;
+            if (user.profileImageId) {
+              profileImageUrl = await ctx.storage.getUrl(user.profileImageId);
+            }
+
+            return {
+              _id: rating._id,
+              userId: user._id,
+              userName: user.nickname || user.name,
+              profileImageUrl,
+              food: rating.food,
+              service: rating.service,
+              extras: rating.extras,
+              atmosphere: rating.atmosphere,
+              overallScore: rating.food + rating.service + rating.extras + rating.atmosphere,
+              notes: rating.notes,
+              createdAt: rating._creationTime,
+            };
+          })
+        );
 
         return {
           ...restaurant,
           booker,
+          mostRecentVisitDate,
+          ratings: enrichedRatings.filter((r) => r !== null),
         };
       })
     );
 
-    return enriched;
+    // Sort restaurants by most recent visit date (descending)
+    const sorted = enriched.sort((a, b) => b.mostRecentVisitDate - a.mostRecentVisitDate);
+
+    return sorted;
   },
 });
 

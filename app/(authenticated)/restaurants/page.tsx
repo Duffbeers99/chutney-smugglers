@@ -273,6 +273,74 @@ function RestaurantCard({ restaurant }: { restaurant: any }) {
                 </>
               )}
 
+              {/* Individual Ratings with Notes */}
+              {restaurant.ratings && restaurant.ratings.length > 0 && (
+                <div className="pt-3 border-t border-border space-y-3">
+                  <h4 className="text-sm font-semibold text-foreground mb-2">Individual Ratings</h4>
+                  {restaurant.ratings
+                    .sort((a, b) => b.createdAt - a.createdAt)
+                    .map((rating) => (
+                    <div key={rating._id} className="bg-muted/30 rounded-lg p-3 space-y-2">
+                      {/* User info */}
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-7 w-7 border border-border">
+                          {rating.profileImageUrl && (
+                            <AvatarImage
+                              src={rating.profileImageUrl}
+                              alt={rating.userName}
+                            />
+                          )}
+                          <AvatarFallback className="bg-curry/20 text-curry text-xs">
+                            {rating.userName?.charAt(0)?.toUpperCase() || "?"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-foreground">
+                            {rating.userName}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Star className="h-4 w-4 fill-primary text-primary" />
+                          <span className="text-sm font-bold text-primary">
+                            {rating.overallScore}
+                          </span>
+                          <span className="text-xs text-muted-foreground">/20</span>
+                        </div>
+                      </div>
+
+                      {/* Score breakdown */}
+                      <div className="grid grid-cols-4 gap-1 text-xs">
+                        <div className="flex items-center gap-1">
+                          <span>🍛</span>
+                          <span className="text-muted-foreground">{rating.food}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span>👨‍🍳</span>
+                          <span className="text-muted-foreground">{rating.service}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span>🥘</span>
+                          <span className="text-muted-foreground">{rating.extras}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span>🪔</span>
+                          <span className="text-muted-foreground">{rating.atmosphere}</span>
+                        </div>
+                      </div>
+
+                      {/* Notes */}
+                      {rating.notes && (
+                        <div className="pt-2 border-t border-border/50">
+                          <p className="text-xs text-muted-foreground italic">
+                            "{rating.notes}"
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {/* Cuisine badge if exists */}
               {restaurant.cuisine && (
                 <div className="pt-2">
