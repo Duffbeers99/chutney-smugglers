@@ -1754,6 +1754,40 @@ export const sendAttendanceReminders = internalAction({
 });
 
 /**
+ * Internal query to verify today's event status
+ */
+export const verifyTodaysEvent = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayTimestamp = today.getTime();
+
+    const allEvents = await ctx.db.query("curryEvents").collect();
+
+    const todaysEvents = allEvents.filter((event) => {
+      const eventDate = new Date(event.scheduledDate);
+      eventDate.setHours(0, 0, 0, 0);
+      return eventDate.getTime() === todayTimestamp;
+    });
+
+    if (todaysEvents.length === 0) {
+      return { error: "No events found for today" };
+    }
+
+    const event = todaysEvents[0];
+
+    return {
+      restaurantName: event.restaurantName,
+      status: event.status,
+      ratingsRevealed: event.ratingsRevealed,
+      attendeeCount: event.attendees?.length || 0,
+      votedCount: event.hasVoted?.length || 0,
+    };
+  },
+});
+
+/**
  * Internal mutation to revert rating reveal override for today's event
  */
 export const revertTodaysOverride = internalMutation({
