@@ -67,6 +67,7 @@ const schema = defineSchema({
     averageExtras: v.optional(v.number()),
     averageAtmosphere: v.optional(v.number()),
     overallAverage: v.optional(v.number()),
+    averagePriceRanking: v.optional(v.number()), // Average price (1-5, displayed as £-£££££)
     totalRatings: v.number(),
 
     // Incomplete status for backdated restaurants
@@ -92,6 +93,9 @@ const schema = defineSchema({
     service: v.number(),
     extras: v.number(),
     atmosphere: v.number(),
+
+    // Price ranking (1-5, displayed as £ to £££££)
+    price: v.optional(v.number()),
 
     // Optional notes about the visit
     notes: v.optional(v.string()),
@@ -142,6 +146,9 @@ const schema = defineSchema({
     attendees: v.optional(v.array(v.id("users"))), // Users who confirmed attendance
     hasVoted: v.optional(v.array(v.id("users"))), // Users who submitted ratings
     ratingsRevealed: v.optional(v.boolean()), // Whether ratings are visible (all voted or override)
+
+    // Price ranking (averaged from attendee ratings, 1-5)
+    averagePriceRanking: v.optional(v.number()),
 
     // Group scoping
     groupId: v.optional(v.id("groups")),

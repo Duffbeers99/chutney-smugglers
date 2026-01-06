@@ -15,6 +15,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Loader2, MapPin, Search, Star, UtensilsCrossed, Pencil, AlertCircle, List, Map, ChevronDown } from "lucide-react"
 import { EditRestaurantDrawer } from "@/components/restaurant/edit-restaurant-drawer"
 import { RestaurantMap } from "@/components/restaurant/restaurant-map"
+import { PriceDisplay } from "@/components/ui/price-display"
 import type { Id } from "@/convex/_generated/dataModel"
 
 export default function RestaurantsPage() {
@@ -193,6 +194,11 @@ function RestaurantCard({ restaurant }: { restaurant: any }) {
                       </span>
                       <span className="text-sm text-muted-foreground">/20</span>
                     </div>
+                    {restaurant.averagePriceRanking && (
+                      <div className="flex justify-end mt-1">
+                        <PriceDisplay level={restaurant.averagePriceRanking} size="sm" />
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="flex-shrink-0 text-right">

@@ -1058,6 +1058,14 @@ export const getMostRecentCompletedCurry = query({
     const avgAtmosphere = validRatings.reduce((sum, r) => sum + r.atmosphere, 0) / validRatings.length;
     const avgTotal = avgFood + avgService + avgExtras + avgAtmosphere;
 
+    // Calculate average price from ratings that have price
+    const priceRatings = validRatings.filter((r) => r.price !== undefined && r.price !== null);
+    let avgPrice: number | undefined = undefined;
+    if (priceRatings.length > 0) {
+      const totalPrice = priceRatings.reduce((sum, r) => sum + r.price!, 0);
+      avgPrice = Math.round(totalPrice / priceRatings.length);
+    }
+
     return {
       eventId: mostRecentEvent._id,
       restaurantId: mostRecentEvent.restaurantId,
@@ -1070,6 +1078,7 @@ export const getMostRecentCompletedCurry = query({
         extras: avgExtras,
         atmosphere: avgAtmosphere,
         total: avgTotal,
+        price: avgPrice,
       },
       ratings: validRatings,
       totalRatings: validRatings.length,
@@ -2058,5 +2067,80 @@ export const removeUserFromHasVoted = internalMutation({
       previousCount: hasVoted.length,
       newCount: updatedHasVoted.length,
     };
+  },
+});
+
+/**
+ * Get all events booked by the current user (for retrospective price setting)
+ */
+export const getMyBookedEvents = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+
+    const groupId = await getUserActiveGroup(ctx, userId);
+    if (!groupId) return [];
+
+    // Get all events where the current user was the booker
+    const events = await ctx.db
+      .query("curryEvents")
+      .withIndex("by_created_by", (q) => q.eq("createdBy", userId))
+      .collect();
+
+    // Filter to user's current group and sort by date (most recent first)
+    const groupEvents = events
+      .filter((event) => event.groupId === groupId)
+      .sort((a, b) => {
+        const [aHours, aMinutes] = a.scheduledTime.split(":").map(Number);
+        const aDateTime = new Date(a.scheduledDate);
+        aDateTime.setHours(aHours, aMinutes, 0, 0);
+
+        const [bHours, bMinutes] = b.scheduledTime.split(":").map(Number);
+        const bDateTime = new Date(b.scheduledDate);
+        bDateTime.setHours(bHours, bMinutes, 0, 0);
+
+        return bDateTime.getTime() - aDateTime.getTime();
+      });
+
+    return groupEvents;
+  },
+});
+
+/**
+ * Set price for a past event (booker only, for retrospective price setting)
+ */
+export const setPriceForPastEvent = mutation({
+  args: {
+    eventId: v.id("curryEvents"),
+    priceRanking: v.number(), // 1-5
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    // Validate price ranking
+    if (args.priceRanking < 1 || args.priceRanking > 5) {
+      throw new Error("Price ranking must be between 1 and 5");
+    }
+
+    const event = await ctx.db.get(args.eventId);
+    if (!event) throw new Error("Event not found");
+
+    // Permission check: Only the booker can set price
+    if (event.createdBy !== userId) {
+      throw new Error("Only the event booker can set the price ranking");
+    }
+
+    // Update event with price
+    await ctx.db.patch(args.eventId, {
+      averagePriceRanking: args.priceRanking,
+    });
+
+    // Update restaurant price aggregates
+    const { updateRestaurantAggregates } = await import("./restaurants");
+    await updateRestaurantAggregates(ctx, event.restaurantId);
+
+    return { success: true };
   },
 });

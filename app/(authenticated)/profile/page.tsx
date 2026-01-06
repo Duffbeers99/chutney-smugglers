@@ -30,6 +30,8 @@ import {
 import { useAuthActions } from "@convex-dev/auth/react";
 import { Id } from "@/convex/_generated/dataModel";
 import { validateNickname } from "@/lib/onboarding-flow";
+import { PriceSelector } from "@/components/ui/price-selector";
+import { format } from "date-fns";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -38,13 +40,18 @@ export default function ProfilePage() {
   const userStats = useQuery(api.users.getUserStats);
   const userRatings = useQuery(api.ratings.getUserRatings, {});
   const userGroup = useQuery(api.groups.getUserGroup);
+  const myBookedEvents = useQuery(api.curryEvents.getMyBookedEvents);
   const updateProfile = useMutation(api.users.updateProfile);
   const removeProfileImage = useMutation(api.users.removeProfileImage);
+  const setPriceForEvent = useMutation(api.curryEvents.setPriceForPastEvent);
 
   const [editingNickname, setEditingNickname] = useState(false);
   const [nickname, setNickname] = useState("");
   const [savingNickname, setSavingNickname] = useState(false);
   const [codeCopied, setCodeCopied] = useState(false);
+  const [editingEventId, setEditingEventId] = useState<Id<"curryEvents"> | null>(null);
+  const [selectedPrice, setSelectedPrice] = useState<number>(3);
+  const [savingPrice, setSavingPrice] = useState(false);
 
   const handleEditNickname = () => {
     setNickname(user?.nickname || "");
@@ -109,6 +116,29 @@ export default function ProfilePage() {
     await signOut();
     router.push("/");
     toast.success("Signed out successfully");
+  };
+
+  const handleEditPrice = (eventId: Id<"curryEvents">, currentPrice?: number) => {
+    setEditingEventId(eventId);
+    setSelectedPrice(currentPrice || 3);
+  };
+
+  const handleSavePrice = async (eventId: Id<"curryEvents">) => {
+    setSavingPrice(true);
+    try {
+      await setPriceForEvent({ eventId, priceRanking: selectedPrice });
+      toast.success("Price ranking saved!");
+      setEditingEventId(null);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to save price");
+    } finally {
+      setSavingPrice(false);
+    }
+  };
+
+  const handleCancelPriceEdit = () => {
+    setEditingEventId(null);
+    setSelectedPrice(3);
   };
 
   if (!user) {
@@ -342,6 +372,102 @@ export default function ProfilePage() {
                   )}
                 </div>
               ))}
+            </div>
+          )}
+        </section>
+
+        {/* My Bookings - Set Price for Past Events */}
+        <section className="p-4 bg-card/50 rounded-lg border border-border">
+          <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+            <UtensilsCrossed className="h-5 w-5 text-curry" />
+            My Bookings
+          </h2>
+
+          {myBookedEvents === undefined ? (
+            <div className="flex justify-center py-4">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            </div>
+          ) : myBookedEvents.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <p>You haven't booked any curries yet</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {myBookedEvents.map((event) => {
+                const eventDate = new Date(event.scheduledDate);
+                const formattedDate = format(eventDate, "MMM d, yyyy");
+                const isEditing = editingEventId === event._id;
+
+                return (
+                  <div
+                    key={event._id}
+                    className="p-3 rounded-lg bg-card border border-border"
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <h3 className="font-semibold text-foreground">
+                          {event.restaurantName}
+                        </h3>
+                        <p className="text-xs text-muted-foreground">{formattedDate}</p>
+                      </div>
+                      {event.averagePriceRanking && !isEditing && (
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <span>Price:</span>
+                          <span className="font-bold text-curry">
+                            {"£".repeat(event.averagePriceRanking)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {isEditing ? (
+                      <div className="space-y-3 mt-3">
+                        <PriceSelector
+                          value={selectedPrice}
+                          onChange={setSelectedPrice}
+                        />
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={() => handleSavePrice(event._id)}
+                            disabled={savingPrice}
+                            size="sm"
+                            className="flex-1"
+                          >
+                            {savingPrice ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Saving...
+                              </>
+                            ) : (
+                              <>
+                                <Check className="mr-2 h-4 w-4" />
+                                Save Price
+                              </>
+                            )}
+                          </Button>
+                          <Button
+                            onClick={handleCancelPriceEdit}
+                            disabled={savingPrice}
+                            size="sm"
+                            variant="outline"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <Button
+                        onClick={() => handleEditPrice(event._id, event.averagePriceRanking)}
+                        size="sm"
+                        variant="outline"
+                        className="w-full mt-2"
+                      >
+                        {event.averagePriceRanking ? "Edit Price" : "Set Price"}
+                      </Button>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </section>

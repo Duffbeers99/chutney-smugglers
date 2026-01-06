@@ -39,6 +39,7 @@ export default function AddRatingPage() {
   const [service, setService] = useState(2.5)
   const [extras, setExtras] = useState(2.5)
   const [atmosphere, setAtmosphere] = useState(2.5)
+  const [price, setPrice] = useState(2.5)
   const [notes, setNotes] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -64,6 +65,7 @@ export default function AddRatingPage() {
         service,
         extras,
         atmosphere,
+        price,
         notes: notes.trim() || undefined,
       })
 
@@ -184,6 +186,12 @@ export default function AddRatingPage() {
               value={atmosphere}
               onChange={setAtmosphere}
               emoji="🪔"
+            />
+            <RatingSlider
+              label="Price (£ to £££££)"
+              value={price}
+              onChange={setPrice}
+              emoji="💰"
             />
           </CardContent>
         </Card>

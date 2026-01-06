@@ -343,6 +343,14 @@ export async function updateRestaurantAggregates(
   const avgAtmosphere = ratings.reduce((sum: number, r: any) => sum + r.atmosphere, 0) / ratings.length;
   const overall = avgFood + avgService + avgExtras + avgAtmosphere; // Sum of averages (out of 20)
 
+  // Calculate average price from ratings that have price
+  const priceRatings = ratings.filter((r: any) => r.price !== undefined && r.price !== null);
+  let avgPrice: number | undefined = undefined;
+  if (priceRatings.length > 0) {
+    const totalPrice = priceRatings.reduce((sum: number, r: any) => sum + r.price, 0);
+    avgPrice = Math.round(totalPrice / priceRatings.length); // Round to nearest integer (1-5)
+  }
+
   // Round to nearest 0.5
   const roundToHalf = (num: number) => Math.round(num * 2) / 2;
 
@@ -352,6 +360,7 @@ export async function updateRestaurantAggregates(
     averageExtras: roundToHalf(avgExtras),
     averageAtmosphere: roundToHalf(avgAtmosphere),
     overallAverage: roundToHalf(overall),
+    averagePriceRanking: avgPrice,
     totalRatings: ratings.length,
   });
 }

@@ -13,6 +13,7 @@ import { ArrowLeft, MapPin, Star, Loader2, UserPlus, Pencil } from "lucide-react
 import { format } from "date-fns"
 import { toast } from "sonner"
 import { EditRestaurantDrawer } from "@/components/restaurant/edit-restaurant-drawer"
+import { PriceDisplay } from "@/components/ui/price-display"
 
 export default function RestaurantDetailPage({
   params
@@ -107,6 +108,12 @@ export default function RestaurantDetailPage({
                 </span>
                 <span className="text-sm text-muted-foreground">/20</span>
               </div>
+              {restaurant.averagePriceRanking && (
+                <div className="mt-2">
+                  <p className="text-sm text-muted-foreground mb-1">Price Range</p>
+                  <PriceDisplay level={restaurant.averagePriceRanking} size="md" />
+                </div>
+              )}
             </div>
             <div className="text-right">
               <p className="text-2xl font-bold text-foreground">

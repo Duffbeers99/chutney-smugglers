@@ -13,6 +13,7 @@ export const add = mutation({
     service: v.number(),
     extras: v.number(),
     atmosphere: v.number(),
+    price: v.number(),
     notes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -53,7 +54,7 @@ export const add = mutation({
     }
 
     // Validate ratings are between 0 and 5
-    const ratings = [args.food, args.service, args.extras, args.atmosphere];
+    const ratings = [args.food, args.service, args.extras, args.atmosphere, args.price];
     for (const rating of ratings) {
       if (rating < 0 || rating > 5) {
         throw new Error("Ratings must be between 0 and 5");
@@ -70,6 +71,7 @@ export const add = mutation({
       service: args.service,
       extras: args.extras,
       atmosphere: args.atmosphere,
+      price: args.price,
       notes: args.notes,
       groupId: event.groupId,
       createdAt: Date.now(),
@@ -110,12 +112,44 @@ export const add = mutation({
       }
     }
 
-    // Trigger restaurant aggregate update
+    // Update event price aggregate
+    await updateEventPriceAggregate(ctx, args.eventId);
+
+    // Trigger restaurant aggregate update (includes price)
     await updateRestaurantAggregates(ctx, event.restaurantId);
 
     return ratingId;
   },
 });
+
+// Helper function to update event's average price from all ratings
+async function updateEventPriceAggregate(ctx: any, eventId: any) {
+  // Get all ratings for this event that have a price
+  const eventRatings = await ctx.db
+    .query("ratings")
+    .withIndex("by_event", (q: any) => q.eq("eventId", eventId))
+    .collect();
+
+  const priceRatings = eventRatings
+    .filter((r: any) => r.price !== undefined && r.price !== null)
+    .map((r: any) => r.price);
+
+  if (priceRatings.length === 0) {
+    // No price ratings yet
+    return;
+  }
+
+  // Calculate average price
+  const avgPrice = priceRatings.reduce((sum: number, p: number) => sum + p, 0) / priceRatings.length;
+
+  // Round to nearest integer (1-5)
+  const roundedPrice = Math.round(avgPrice);
+
+  // Update the event
+  await ctx.db.patch(eventId, {
+    averagePriceRanking: roundedPrice,
+  });
+}
 
 // Update an existing rating
 export const update = mutation({

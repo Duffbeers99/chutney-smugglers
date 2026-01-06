@@ -4,6 +4,7 @@ import { useQuery } from "convex/react"
 import { api } from "@/convex/_generated/api"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { PriceDisplay } from "@/components/ui/price-display"
 import { Star } from "lucide-react"
 import { format } from "date-fns"
 import Link from "next/link"
@@ -148,6 +149,15 @@ export function RecentCurrySummary() {
             value={recentCurry.averages.atmosphere}
             emoji="🪔"
           />
+          {recentCurry.averages.price && (
+            <div className="col-span-2 flex items-center gap-2 p-2 bg-muted/30 rounded justify-center">
+              <span className="text-lg">💰</span>
+              <div className="flex items-center gap-2">
+                <p className="text-xs text-muted-foreground">Price:</p>
+                <PriceDisplay level={recentCurry.averages.price} size="sm" />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Note highlights */}
