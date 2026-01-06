@@ -1957,6 +1957,7 @@ export const verifyTodaysEvent = internalQuery({
       ratingsRevealed: event.ratingsRevealed,
       attendeeCount: event.attendees?.length || 0,
       votedCount: event.hasVoted?.length || 0,
+      groupId: event.groupId,
     };
   },
 });
