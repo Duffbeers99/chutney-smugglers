@@ -1752,3 +1752,57 @@ export const sendAttendanceReminders = internalAction({
     };
   },
 });
+
+/**
+ * Internal mutation to revert rating reveal override for today's event
+ */
+export const revertTodaysOverride = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayTimestamp = today.getTime();
+
+    // Find all events
+    const allEvents = await ctx.db.query("curryEvents").collect();
+
+    // Filter to today's events
+    const todaysEvents = allEvents.filter((event) => {
+      const eventDate = new Date(event.scheduledDate);
+      eventDate.setHours(0, 0, 0, 0);
+      return eventDate.getTime() === todayTimestamp;
+    });
+
+    if (todaysEvents.length === 0) {
+      throw new Error("No events found for today");
+    }
+
+    if (todaysEvents.length > 1) {
+      throw new Error(`Multiple events found for today: ${todaysEvents.map(e => e.restaurantName).join(", ")}`);
+    }
+
+    const event = todaysEvents[0];
+
+    console.log(`Found event: ${event.restaurantName}`);
+    console.log(`Current status: ${event.status}`);
+    console.log(`Ratings revealed: ${event.ratingsRevealed}`);
+    console.log(`Attendees: ${event.attendees?.length || 0}`);
+    console.log(`Has voted: ${event.hasVoted?.length || 0}`);
+
+    // Revert the override
+    await ctx.db.patch(event._id, {
+      ratingsRevealed: false,
+      status: "upcoming",
+    });
+
+    console.log("✅ Override reverted successfully!");
+
+    return {
+      success: true,
+      eventId: event._id,
+      restaurantName: event.restaurantName,
+      attendeeCount: event.attendees?.length || 0,
+      votedCount: event.hasVoted?.length || 0,
+    };
+  },
+});
