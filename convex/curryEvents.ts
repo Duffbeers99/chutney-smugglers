@@ -659,6 +659,57 @@ export const advanceRotation = mutation({
 });
 
 /**
+ * Internal mutation to advance rotation (bypasses auth checks)
+ * Called automatically when all attendees rate a curry
+ */
+export const advanceRotationInternal = internalMutation({
+  args: {
+    groupId: v.id("groups"),
+  },
+  handler: async (ctx, args) => {
+    // Get current booker for this group
+    const currentBooker = await ctx.db
+      .query("bookingRotation")
+      .withIndex("by_group_and_current_booker", (q) =>
+        q.eq("groupId", args.groupId).eq("isCurrentBooker", true))
+      .first();
+
+    if (!currentBooker) {
+      console.log("No current booker set for group, skipping rotation advancement");
+      return { success: false, reason: "No current booker" };
+    }
+
+    // Get all rotations for this group sorted by order
+    const allRotations = await ctx.db
+      .query("bookingRotation")
+      .withIndex("by_group", (q) => q.eq("groupId", args.groupId))
+      .collect();
+
+    if (allRotations.length === 0) {
+      console.log("No rotation entries found for group");
+      return { success: false, reason: "No rotation entries" };
+    }
+
+    const sorted = allRotations.sort((a, b) => a.rotationOrder - b.rotationOrder);
+
+    // Find next person in rotation (wrap around to 0 if at end)
+    const currentIndex = sorted.findIndex((r) => r._id === currentBooker._id);
+    const nextIndex = (currentIndex + 1) % sorted.length;
+    const nextBooker = sorted[nextIndex];
+
+    // Update current booker to false
+    await ctx.db.patch(currentBooker._id, { isCurrentBooker: false });
+
+    // Update next booker to true
+    await ctx.db.patch(nextBooker._id, { isCurrentBooker: true });
+
+    console.log(`✅ Advanced booking rotation to next booker: ${nextBooker.userId}`);
+
+    return { success: true, nextBookerId: nextBooker.userId };
+  },
+});
+
+/**
  * Initialize the current user in the booking rotation
  * This sets them as the current booker with override permissions
  */
@@ -925,6 +976,104 @@ export const getActiveEvent = query({
       });
 
     return activeEvents[0] ?? null;
+  },
+});
+
+/**
+ * Get the most recent completed curry with ratings and notes
+ * Used for dashboard summary display
+ */
+export const getMostRecentCompletedCurry = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+
+    const groupId = await getUserActiveGroup(ctx, userId);
+    if (!groupId) return null;
+
+    // Find completed events with revealed ratings
+    const completedEvents = await ctx.db
+      .query("curryEvents")
+      .withIndex("by_group_and_status", (q) =>
+        q.eq("groupId", groupId).eq("status", "completed"))
+      .collect();
+
+    // Filter to only events with revealed ratings and sort by date (most recent first)
+    const recentEvents = completedEvents
+      .filter((event) => event.ratingsRevealed === true)
+      .sort((a, b) => {
+        const [aHours, aMinutes] = a.scheduledTime.split(":").map(Number);
+        const aDateTime = new Date(a.scheduledDate);
+        aDateTime.setHours(aHours, aMinutes, 0, 0);
+
+        const [bHours, bMinutes] = b.scheduledTime.split(":").map(Number);
+        const bDateTime = new Date(b.scheduledDate);
+        bDateTime.setHours(bHours, bMinutes, 0, 0);
+
+        return bDateTime.getTime() - aDateTime.getTime();
+      });
+
+    const mostRecentEvent = recentEvents[0];
+    if (!mostRecentEvent) return null;
+
+    // Fetch all ratings for this event
+    const ratings = await ctx.db
+      .query("ratings")
+      .filter((q) => q.eq(q.field("eventId"), mostRecentEvent._id))
+      .collect();
+
+    // Enrich ratings with user information
+    const enrichedRatings = await Promise.all(
+      ratings.map(async (rating) => {
+        const user = await ctx.db.get(rating.userId);
+        if (!user) return null;
+
+        let profileImageUrl: string | null = null;
+        if (user.profileImageId) {
+          profileImageUrl = await ctx.storage.getUrl(user.profileImageId);
+        }
+
+        return {
+          _id: rating._id,
+          userId: user._id,
+          userName: user.nickname || user.name,
+          profileImageUrl,
+          food: rating.food,
+          service: rating.service,
+          extras: rating.extras,
+          atmosphere: rating.atmosphere,
+          overallScore: rating.food + rating.service + rating.extras + rating.atmosphere,
+          notes: rating.notes,
+        };
+      })
+    );
+
+    const validRatings = enrichedRatings.filter((r) => r !== null);
+
+    // Calculate averages
+    const avgFood = validRatings.reduce((sum, r) => sum + r.food, 0) / validRatings.length;
+    const avgService = validRatings.reduce((sum, r) => sum + r.service, 0) / validRatings.length;
+    const avgExtras = validRatings.reduce((sum, r) => sum + r.extras, 0) / validRatings.length;
+    const avgAtmosphere = validRatings.reduce((sum, r) => sum + r.atmosphere, 0) / validRatings.length;
+    const avgTotal = avgFood + avgService + avgExtras + avgAtmosphere;
+
+    return {
+      eventId: mostRecentEvent._id,
+      restaurantId: mostRecentEvent.restaurantId,
+      restaurantName: mostRecentEvent.restaurantName,
+      scheduledDate: mostRecentEvent.scheduledDate,
+      scheduledTime: mostRecentEvent.scheduledTime,
+      averages: {
+        food: avgFood,
+        service: avgService,
+        extras: avgExtras,
+        atmosphere: avgAtmosphere,
+        total: avgTotal,
+      },
+      ratings: validRatings,
+      totalRatings: validRatings.length,
+    };
   },
 });
 

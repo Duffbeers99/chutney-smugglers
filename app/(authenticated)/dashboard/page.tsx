@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { RecentActivity } from "@/components/dashboard/recent-activity"
+import { RecentCurrySummary } from "@/components/dashboard/recent-curry-summary"
 import { BottomNav } from "@/components/navigation/bottom-nav"
 import { UpcomingCurryCard } from "@/components/curry/upcoming-curry-card"
 import { ActiveCurryCard } from "@/components/curry/active-curry-card"
@@ -202,6 +203,14 @@ export default function DashboardPage() {
             <DatePollResults />
           </section>
         )}
+
+        {/* Recent Curry Summary */}
+        <section aria-labelledby="recent-curry-heading" className="px-4">
+          <h2 id="recent-curry-heading" className="sr-only">
+            Most recent curry review
+          </h2>
+          <RecentCurrySummary />
+        </section>
 
         {/* Mumbai Journey Tracker */}
         <CurryJourneyTracker

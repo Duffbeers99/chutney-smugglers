@@ -3,6 +3,7 @@ import { mutation, query } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { updateRestaurantAggregates } from "./restaurants";
 import { getUserActiveGroup, checkGroupAccess } from "./groups";
+import { internal } from "./_generated/api";
 
 // Add a new rating (event-based)
 export const add = mutation({
@@ -100,6 +101,13 @@ export const add = mutation({
         ratingsRevealed: true,
         status: "completed",
       });
+
+      // Automatically advance the booking rotation to the next person
+      if (event.groupId) {
+        await ctx.scheduler.runAfter(0, internal.curryEvents.advanceRotationInternal, {
+          groupId: event.groupId,
+        });
+      }
     }
 
     // Trigger restaurant aggregate update
