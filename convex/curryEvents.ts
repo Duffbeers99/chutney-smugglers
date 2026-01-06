@@ -1840,3 +1840,48 @@ export const revertTodaysOverride = internalMutation({
     };
   },
 });
+
+/**
+ * Internal mutation to remove a user from the hasVoted array
+ * Useful when a rating is manually deleted and needs to be resubmitted
+ */
+export const removeUserFromHasVoted = internalMutation({
+  args: {
+    eventId: v.id("curryEvents"),
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const event = await ctx.db.get(args.eventId);
+    if (!event) {
+      throw new Error("Event not found");
+    }
+
+    const hasVoted = event.hasVoted || [];
+    const userIndex = hasVoted.indexOf(args.userId);
+
+    if (userIndex === -1) {
+      console.log(`User ${args.userId} not found in hasVoted array`);
+      return {
+        success: false,
+        message: "User not in hasVoted array",
+        currentHasVoted: hasVoted,
+      };
+    }
+
+    const updatedHasVoted = hasVoted.filter((id) => id !== args.userId);
+
+    await ctx.db.patch(args.eventId, {
+      hasVoted: updatedHasVoted,
+    });
+
+    console.log(`✅ Removed user ${args.userId} from hasVoted array`);
+    console.log(`Previous count: ${hasVoted.length}, New count: ${updatedHasVoted.length}`);
+
+    return {
+      success: true,
+      message: "User removed from hasVoted",
+      previousCount: hasVoted.length,
+      newCount: updatedHasVoted.length,
+    };
+  },
+});

@@ -188,6 +188,17 @@ export const remove = mutation({
 
     await ctx.db.delete(args.ratingId);
 
+    // Remove user from hasVoted array if this was an event rating
+    if (rating.eventId) {
+      const event = await ctx.db.get(rating.eventId);
+      if (event && event.hasVoted) {
+        const updatedHasVoted = event.hasVoted.filter((id) => id !== userId);
+        await ctx.db.patch(rating.eventId, {
+          hasVoted: updatedHasVoted,
+        });
+      }
+    }
+
     // Update user's rating count
     const user = await ctx.db.get(userId);
     if (user && user.curriesRated) {
