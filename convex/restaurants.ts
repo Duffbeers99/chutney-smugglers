@@ -343,12 +343,18 @@ export async function updateRestaurantAggregates(
   const avgAtmosphere = ratings.reduce((sum: number, r: any) => sum + r.atmosphere, 0) / ratings.length;
   const overall = avgFood + avgService + avgExtras + avgAtmosphere; // Sum of averages (out of 20)
 
-  // Calculate average price from ratings that have price
-  const priceRatings = ratings.filter((r: any) => r.price !== undefined && r.price !== null);
+  // Calculate average price from events (not ratings)
+  // This includes both prices from user ratings and retrospectively set prices
+  const events = await ctx.db
+    .query("curryEvents")
+    .filter((q: any) => q.eq(q.field("restaurantId"), restaurantId))
+    .collect();
+
+  const eventsWithPrice = events.filter((e: any) => e.averagePriceRanking !== undefined && e.averagePriceRanking !== null);
   let avgPrice: number | undefined = undefined;
-  if (priceRatings.length > 0) {
-    const totalPrice = priceRatings.reduce((sum: number, r: any) => sum + r.price, 0);
-    avgPrice = Math.round(totalPrice / priceRatings.length); // Round to nearest integer (1-5)
+  if (eventsWithPrice.length > 0) {
+    const totalPrice = eventsWithPrice.reduce((sum: number, e: any) => sum + e.averagePriceRanking, 0);
+    avgPrice = Math.round(totalPrice / eventsWithPrice.length); // Round to nearest integer (1-5)
   }
 
   // Round to nearest 0.5
