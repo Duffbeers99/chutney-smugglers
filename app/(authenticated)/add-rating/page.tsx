@@ -36,7 +36,7 @@ export default function AddRatingPage() {
   const addRating = useMutation(api.ratings.add)
 
   // Rating form state
-  const [food, setFood] = useState(2.5)
+  const [food, setFood] = useState(5) // Food is now 0-10 scale, default to middle
   const [service, setService] = useState(2.5)
   const [extras, setExtras] = useState(2.5)
   const [atmosphere, setAtmosphere] = useState(2.5)
@@ -169,6 +169,7 @@ export default function AddRatingPage() {
               value={food}
               onChange={setFood}
               emoji="🍛"
+              max={10}
             />
             <RatingSlider
               label="Service"
@@ -241,11 +242,13 @@ function RatingSlider({
   value,
   onChange,
   emoji,
+  max = 5,
 }: {
   label: string
   value: number
   onChange: (value: number) => void
   emoji: string
+  max?: number
 }) {
   return (
     <div className="space-y-3">
@@ -255,7 +258,7 @@ function RatingSlider({
           {label}
         </Label>
         <span className="text-lg font-bold text-curry">
-          {value.toFixed(1)}/5
+          {value.toFixed(1)}/{max}
         </span>
       </div>
       <div className="px-2">
@@ -263,14 +266,14 @@ function RatingSlider({
           value={[value]}
           onValueChange={(values) => onChange(values[0])}
           min={0}
-          max={5}
+          max={max}
           step={0.5}
           className="cursor-pointer"
         />
         <div className="flex justify-between mt-1 text-xs text-muted-foreground">
           <span>0</span>
-          <span>2.5</span>
-          <span>5</span>
+          <span>{(max / 2).toFixed(1)}</span>
+          <span>{max}</span>
         </div>
       </div>
     </div>

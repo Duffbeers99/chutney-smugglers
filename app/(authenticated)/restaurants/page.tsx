@@ -192,7 +192,7 @@ function RestaurantCard({ restaurant }: { restaurant: any }) {
                       <span className="text-xl font-bold text-primary">
                         {restaurant.overallAverage?.toFixed(1)}
                       </span>
-                      <span className="text-sm text-muted-foreground">/20</span>
+                      <span className="text-sm text-muted-foreground">/25</span>
                     </div>
                     {restaurant.averagePriceRanking && (
                       <div className="flex justify-end mt-1">
@@ -234,7 +234,7 @@ function RestaurantCard({ restaurant }: { restaurant: any }) {
                         alt={restaurant.booker.nickname || "Booker"}
                       />
                     )}
-                    <AvatarFallback className="bg-curry/20 text-curry text-xs">
+                    <AvatarFallback className="bg-curry/25 text-curry text-xs">
                       {restaurant.booker.nickname?.charAt(0)?.toUpperCase() || "?"}
                     </AvatarFallback>
                   </Avatar>
@@ -296,7 +296,7 @@ function RestaurantCard({ restaurant }: { restaurant: any }) {
                               alt={rating.userName}
                             />
                           )}
-                          <AvatarFallback className="bg-curry/20 text-curry text-xs">
+                          <AvatarFallback className="bg-curry/25 text-curry text-xs">
                             {rating.userName?.charAt(0)?.toUpperCase() || "?"}
                           </AvatarFallback>
                         </Avatar>
@@ -310,7 +310,7 @@ function RestaurantCard({ restaurant }: { restaurant: any }) {
                           <span className="text-sm font-bold text-primary">
                             {rating.overallScore}
                           </span>
-                          <span className="text-xs text-muted-foreground">/20</span>
+                          <span className="text-xs text-muted-foreground">/25</span>
                         </div>
                       </div>
 
@@ -350,7 +350,7 @@ function RestaurantCard({ restaurant }: { restaurant: any }) {
               {/* Cuisine badge if exists */}
               {restaurant.cuisine && (
                 <div className="pt-2">
-                  <Badge variant="secondary" className="bg-saffron/20 text-foreground border-0">
+                  <Badge variant="secondary" className="bg-saffron/25 text-foreground border-0">
                     {restaurant.cuisine}
                   </Badge>
                 </div>

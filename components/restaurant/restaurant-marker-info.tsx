@@ -32,14 +32,14 @@ export function RestaurantMarkerInfo({ restaurant }: RestaurantMarkerInfoProps) 
             <span className="text-sm font-bold text-primary">
               {restaurant.overallAverage?.toFixed(1)}
             </span>
-            <span className="text-xs text-muted-foreground">/20</span>
+            <span className="text-xs text-muted-foreground">/25</span>
           </div>
         ) : (
           <span className="text-xs text-muted-foreground">No ratings yet</span>
         )}
 
         {restaurant.cuisine && (
-          <Badge variant="secondary" className="text-xs bg-saffron/20 text-foreground border-0">
+          <Badge variant="secondary" className="text-xs bg-saffron/25 text-foreground border-0">
             {restaurant.cuisine}
           </Badge>
         )}

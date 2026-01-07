@@ -106,7 +106,7 @@ export default function RestaurantDetailPage({
                 <span className="text-3xl font-bold text-primary">
                   {restaurant.overallAverage?.toFixed(1)}
                 </span>
-                <span className="text-sm text-muted-foreground">/20</span>
+                <span className="text-sm text-muted-foreground">/25</span>
               </div>
               {restaurant.averagePriceRanking && (
                 <div className="mt-2">
@@ -205,7 +205,7 @@ function RatingCard({ rating }: { rating: any }) {
                 alt={displayUser.nickname}
               />
             )}
-            <AvatarFallback className="bg-curry/20 text-curry font-semibold">
+            <AvatarFallback className="bg-curry/25 text-curry font-semibold">
               {initials}
             </AvatarFallback>
           </Avatar>
@@ -221,7 +221,7 @@ function RatingCard({ rating }: { rating: any }) {
 
           <Badge variant="secondary" className="shrink-0 gap-1">
             <Star className="size-3 fill-current" />
-            {overallRating.toFixed(1)}/20
+            {overallRating.toFixed(1)}/25
           </Badge>
         </div>
 

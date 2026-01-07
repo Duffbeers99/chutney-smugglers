@@ -62,7 +62,7 @@ export function BookerCurriesDialog({
                     <span className="text-lg font-bold text-primary">
                       {curry.score}
                     </span>
-                    <span className="text-xs text-muted-foreground">/20</span>
+                    <span className="text-xs text-muted-foreground">/25</span>
                   </div>
                 </div>
               ))

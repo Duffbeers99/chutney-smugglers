@@ -103,7 +103,7 @@ function ActivityItem({ rating }: { rating: RatingData }) {
             alt={displayUser.nickname}
           />
         )}
-        <AvatarFallback className="bg-curry/20 text-curry font-semibold text-sm">
+        <AvatarFallback className="bg-curry/25 text-curry font-semibold text-sm">
           {initials}
         </AvatarFallback>
       </Avatar>
@@ -130,7 +130,7 @@ function ActivityItem({ rating }: { rating: RatingData }) {
             )}
           >
             <Star className="size-3 fill-current" aria-hidden="true" />
-            {overallRating.toFixed(1)}/20
+            {overallRating.toFixed(1)}/25
           </Badge>
         </div>
 

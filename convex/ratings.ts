@@ -53,11 +53,15 @@ export const add = mutation({
       throw new Error("You have already rated this event");
     }
 
-    // Validate ratings are between 0 and 5
-    const ratings = [args.food, args.service, args.extras, args.atmosphere, args.price];
-    for (const rating of ratings) {
+    // Validate ratings
+    // Food rating is 0-10, all others are 0-5
+    if (args.food < 0 || args.food > 10) {
+      throw new Error("Food rating must be between 0 and 10");
+    }
+    const otherRatings = [args.service, args.extras, args.atmosphere, args.price];
+    for (const rating of otherRatings) {
       if (rating < 0 || rating > 5) {
-        throw new Error("Ratings must be between 0 and 5");
+        throw new Error("Service, extras, atmosphere, and price ratings must be between 0 and 5");
       }
     }
 
@@ -182,10 +186,14 @@ export const update = mutation({
     }
 
     // Validate ratings if provided
-    const ratings = [args.food, args.service, args.extras, args.atmosphere];
-    for (const rating of ratings) {
+    // Food rating is 0-10, all others are 0-5
+    if (args.food !== undefined && (args.food < 0 || args.food > 10)) {
+      throw new Error("Food rating must be between 0 and 10");
+    }
+    const otherRatings = [args.service, args.extras, args.atmosphere];
+    for (const rating of otherRatings) {
       if (rating !== undefined && (rating < 0 || rating > 5)) {
-        throw new Error("Ratings must be between 0 and 5");
+        throw new Error("Service, extras, and atmosphere ratings must be between 0 and 5");
       }
     }
 

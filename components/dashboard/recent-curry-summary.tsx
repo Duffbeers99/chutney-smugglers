@@ -119,7 +119,7 @@ export function RecentCurrySummary() {
               <span className="text-2xl font-bold text-primary">
                 {recentCurry.averages.total.toFixed(1)}
               </span>
-              <span className="text-sm text-muted-foreground">/20</span>
+              <span className="text-sm text-muted-foreground">/25</span>
             </div>
             <p className="text-xs text-muted-foreground">
               From {recentCurry.totalRatings} {recentCurry.totalRatings === 1 ? "rating" : "ratings"}
@@ -179,7 +179,7 @@ export function RecentCurrySummary() {
                         alt={highlight.userName}
                       />
                     )}
-                    <AvatarFallback className="bg-curry/20 text-curry text-xs">
+                    <AvatarFallback className="bg-curry/25 text-curry text-xs">
                       {highlight.userName?.charAt(0)?.toUpperCase() || "?"}
                     </AvatarFallback>
                   </Avatar>
@@ -210,13 +210,14 @@ function CategoryScore({
   value: number
   emoji: string
 }) {
+  const maxScore = label === "Food" ? 10 : 5;
   return (
     <div className="flex items-center gap-2 p-2 bg-muted/30 rounded">
       <span className="text-lg">{emoji}</span>
       <div className="flex-1 min-w-0">
         <p className="text-xs text-muted-foreground truncate">{label}</p>
         <p className="text-sm font-semibold text-foreground">
-          {value.toFixed(1)}<span className="text-xs text-muted-foreground">/5</span>
+          {value.toFixed(1)}<span className="text-xs text-muted-foreground">/{maxScore}</span>
         </p>
       </div>
     </div>

@@ -361,7 +361,7 @@ export default function ProfilePage() {
                     {rating.restaurant?.name || "Unknown"}
                   </h3>
                   <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
-                    <span>Food: {rating.food}/5</span>
+                    <span>Food: {rating.food}/10</span>
                     <span>Service: {rating.service}/5</span>
                     <span>Extras: {rating.extras}/5</span>
                     <span>Atmosphere: {rating.atmosphere}/5</span>

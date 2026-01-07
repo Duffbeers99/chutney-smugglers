@@ -486,3 +486,95 @@ export const recalculateRestaurantAggregates = mutation({
     };
   },
 });
+
+/**
+ * One-time migration to change food rating scale from 0-5 to 0-10
+ * Multiplies all existing food scores by 2 and recalculates restaurant aggregates
+ * Run this from the Convex dashboard - no arguments needed
+ */
+export const convertFoodScaleTo10 = mutation({
+  args: {},
+  handler: async (ctx) => {
+    // Step 1: Update all ratings - multiply food scores by 2
+    const allRatings = await ctx.db.query("ratings").collect();
+
+    let ratingsUpdated = 0;
+
+    console.log(`🔄 Converting ${allRatings.length} food ratings from /5 to /10...`);
+
+    for (const rating of allRatings) {
+      const newFoodScore = rating.food * 2;
+
+      await ctx.db.patch(rating._id, {
+        food: newFoodScore,
+      });
+
+      ratingsUpdated++;
+
+      if (ratingsUpdated % 10 === 0) {
+        console.log(`  ✅ Updated ${ratingsUpdated}/${allRatings.length} ratings`);
+      }
+    }
+
+    console.log(`✅ Updated all ${ratingsUpdated} food ratings (multiplied by 2)`);
+
+    // Step 2: Recalculate all restaurant aggregates
+    const restaurants = await ctx.db.query("restaurants").collect();
+
+    let restaurantsUpdated = 0;
+
+    console.log(`🔄 Recalculating aggregates for ${restaurants.length} restaurants...`);
+
+    for (const restaurant of restaurants) {
+      const ratings = await ctx.db
+        .query("ratings")
+        .withIndex("by_restaurant", (q) => q.eq("restaurantId", restaurant._id))
+        .collect();
+
+      if (ratings.length === 0) {
+        // No ratings, set everything to undefined
+        await ctx.db.patch(restaurant._id, {
+          averageFood: undefined,
+          averageService: undefined,
+          averageExtras: undefined,
+          averageAtmosphere: undefined,
+          overallAverage: undefined,
+          totalRatings: 0,
+        });
+      } else {
+        // Calculate averages for each category
+        const avgFood = ratings.reduce((sum, r) => sum + r.food, 0) / ratings.length;
+        const avgService = ratings.reduce((sum, r) => sum + r.service, 0) / ratings.length;
+        const avgExtras = ratings.reduce((sum, r) => sum + r.extras, 0) / ratings.length;
+        const avgAtmosphere = ratings.reduce((sum, r) => sum + r.atmosphere, 0) / ratings.length;
+
+        // Calculate overall as SUM (now out of 25 instead of 20)
+        const overall = avgFood + avgService + avgExtras + avgAtmosphere;
+
+        // Round to nearest 0.5
+        const roundToHalf = (num: number) => Math.round(num * 2) / 2;
+
+        await ctx.db.patch(restaurant._id, {
+          averageFood: roundToHalf(avgFood),
+          averageService: roundToHalf(avgService),
+          averageExtras: roundToHalf(avgExtras),
+          averageAtmosphere: roundToHalf(avgAtmosphere),
+          overallAverage: roundToHalf(overall),
+          totalRatings: ratings.length,
+        });
+
+        restaurantsUpdated++;
+      }
+    }
+
+    console.log(`✅ Recalculated aggregates for ${restaurantsUpdated} restaurants`);
+
+    return {
+      success: true,
+      message: `Converted food scale: Updated ${ratingsUpdated} ratings, recalculated ${restaurantsUpdated} restaurant aggregates. Food now rated /10, total now /25`,
+      ratingsUpdated,
+      restaurantsUpdated,
+      totalRestaurants: restaurants.length,
+    };
+  },
+});

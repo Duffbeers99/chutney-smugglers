@@ -281,7 +281,7 @@ function PodiumPosition({
             <span className={cn("text-lg font-bold", textColor)}>
               {booker.averageScore}
             </span>
-            <span className="text-xs text-muted-foreground">/20</span>
+            <span className="text-xs text-muted-foreground">/25</span>
           </div>
 
           {/* Curries Booked - Clickable Button */}
@@ -346,7 +346,7 @@ function BookerCard({ booker, rank }: { booker: any; rank: number }) {
             {booker.profileImageUrl && (
               <AvatarImage src={booker.profileImageUrl} alt={booker.nickname} />
             )}
-            <AvatarFallback className="bg-curry/20 text-curry font-semibold">
+            <AvatarFallback className="bg-curry/25 text-curry font-semibold">
               {initials}
             </AvatarFallback>
           </Avatar>
@@ -374,7 +374,7 @@ function BookerCard({ booker, rank }: { booker: any; rank: number }) {
               <span className="text-lg font-bold text-primary">
                 {booker.averageScore}
               </span>
-              <span className="text-xs text-muted-foreground">/20</span>
+              <span className="text-xs text-muted-foreground">/25</span>
             </div>
           </div>
         </div>
@@ -433,7 +433,7 @@ function RestaurantCard({
                 <span>{format(restaurant.mostRecentVisit.visitDate, "MMM d, yyyy")}</span>
               </div>
               {restaurant.mostRecentVisit.claimedBy ? (
-                <Badge variant="secondary" className="text-xs bg-curry/10 text-curry border-curry/20">
+                <Badge variant="secondary" className="text-xs bg-curry/10 text-curry border-curry/25">
                   Booked by {restaurant.mostRecentVisit.claimedBy}
                 </Badge>
               ) : restaurant.mostRecentVisit.bookerName ? (
@@ -445,7 +445,7 @@ function RestaurantCard({
           )}
 
           {restaurant.cuisine && (
-            <span className="inline-block mt-2 px-2 py-0.5 text-xs rounded-full bg-saffron/20 text-foreground">
+            <span className="inline-block mt-2 px-2 py-0.5 text-xs rounded-full bg-saffron/25 text-foreground">
               {restaurant.cuisine}
             </span>
           )}
@@ -458,7 +458,7 @@ function RestaurantCard({
             <span className="text-lg font-bold text-primary">
               {restaurant.overallAverage?.toFixed(1) || "0.0"}
             </span>
-            <span className="text-xs text-muted-foreground">/20</span>
+            <span className="text-xs text-muted-foreground">/25</span>
           </div>
           <p className="text-xs text-muted-foreground">{restaurant.totalRatings} ratings</p>
         </div>
