@@ -9,12 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Copy, CheckCircle, Loader2, RefreshCw } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 export default function ArticlePage() {
   const params = useParams();
   const router = useRouter();
-  const { toast } = useToast();
   const eventId = params.id as Id<"curryEvents">;
 
   const generateArticle = useAction(api.substackArticle.generateSubstackArticle);
@@ -49,11 +48,7 @@ export default function ArticlePage() {
       }
     } catch (err: any) {
       setError(err.message || "Failed to generate article");
-      toast({
-        title: "Error",
-        description: err.message || "Failed to generate article",
-        variant: "destructive",
-      });
+      toast.error(err.message || "Failed to generate article");
     } finally {
       setIsGenerating(false);
     }
@@ -72,20 +67,13 @@ export default function ArticlePage() {
       }
 
       setCopiedType(type);
-      toast({
-        title: "Copied!",
-        description: `Article copied as ${type.toUpperCase()} to clipboard`,
-      });
+      toast.success(`Article copied as ${type.toUpperCase()} to clipboard`);
 
       setTimeout(() => {
         setCopiedType(null);
       }, 2000);
     } catch (err) {
-      toast({
-        title: "Copy failed",
-        description: "Failed to copy to clipboard",
-        variant: "destructive",
-      });
+      toast.error("Failed to copy to clipboard");
     }
   };
 
