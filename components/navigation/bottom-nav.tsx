@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Trophy, User, UtensilsCrossed, ScrollText } from "lucide-react"
+import { Home, Trophy, User, UtensilsCrossed } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface NavItem {
@@ -19,9 +19,9 @@ const navItems: NavItem[] = [
     label: "Home",
   },
   {
-    href: "/history",
-    icon: ScrollText,
-    label: "History",
+    href: "/restaurants",
+    icon: UtensilsCrossed,
+    label: "Restaurants",
   },
   {
     href: "/leaderboards",

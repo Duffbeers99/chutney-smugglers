@@ -12,16 +12,18 @@ import { Button } from "@/components/ui/button"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { Loader2, MapPin, Search, Star, UtensilsCrossed, Pencil, AlertCircle, List, Map, ChevronDown } from "lucide-react"
+import { Loader2, MapPin, Search, Star, UtensilsCrossed, Pencil, AlertCircle, List, Map, ChevronDown, ScrollText, FileText, Calendar, Users } from "lucide-react"
 import { EditRestaurantDrawer } from "@/components/restaurant/edit-restaurant-drawer"
 import { RestaurantMap } from "@/components/restaurant/restaurant-map"
 import { PriceDisplay } from "@/components/ui/price-display"
 import type { Id } from "@/convex/_generated/dataModel"
+import { format } from "date-fns"
 
 export default function RestaurantsPage() {
   const restaurants = useQuery(api.restaurants.list)
+  const allEvents = useQuery(api.curryEvents.getAllEvents)
   const [searchTerm, setSearchTerm] = useState("")
-  const [view, setView] = useState<"list" | "map">("list")
+  const [view, setView] = useState<"list" | "map" | "history">("list")
 
   // Filter restaurants based on search term
   const filteredRestaurants = restaurants?.filter(
@@ -36,6 +38,13 @@ export default function RestaurantsPage() {
     (restaurant): restaurant is typeof restaurant & { location: { lat: number; lng: number } } =>
       restaurant.location !== undefined
   )
+
+  // Filter for completed events with revealed ratings (for history view)
+  const completedEvents = allEvents
+    ? allEvents
+        .filter((event) => event.status === "completed" && event.ratingsRevealed)
+        .sort((a, b) => b.scheduledDate - a.scheduledDate)
+    : []
 
   return (
     <div className="h-screen overflow-y-auto overflow-x-hidden bg-background">
@@ -59,7 +68,7 @@ export default function RestaurantsPage() {
             type="single"
             value={view}
             onValueChange={(value) => {
-              if (value) setView(value as "list" | "map")
+              if (value) setView(value as "list" | "map" | "history")
             }}
           >
             <ToggleGroupItem value="list" aria-label="List view" className="gap-2">
@@ -69,6 +78,10 @@ export default function RestaurantsPage() {
             <ToggleGroupItem value="map" aria-label="Map view" className="gap-2">
               <Map className="h-4 w-4" />
               Map
+            </ToggleGroupItem>
+            <ToggleGroupItem value="history" aria-label="History view" className="gap-2">
+              <ScrollText className="h-4 w-4" />
+              History
             </ToggleGroupItem>
           </ToggleGroup>
         </div>
@@ -118,9 +131,12 @@ export default function RestaurantsPage() {
               </div>
             )}
           </>
-        ) : (
+        ) : view === "map" ? (
           // Map View
           <RestaurantMap restaurants={restaurantsWithLocation || []} />
+        ) : (
+          // History View
+          <HistoryView events={completedEvents} />
         )}
       </main>
 
@@ -393,5 +409,97 @@ function CategoryRating({
         </p>
       </div>
     </div>
+  )
+}
+
+function HistoryView({ events }: { events: any[] }) {
+  const router = useRouter()
+
+  if (events.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12">
+        <ScrollText className="h-12 w-12 text-muted-foreground mb-4" />
+        <p className="text-foreground font-semibold mb-2">No completed curries yet</p>
+        <p className="text-sm text-muted-foreground text-center">
+          Complete your first curry event to see it here
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-muted-foreground text-center">
+        Generate Substack articles for past curries
+      </p>
+      {events.map((event, index) => (
+        <EventCard
+          key={event._id}
+          event={event}
+          weekNumber={events.length - index}
+          onGenerateArticle={() => router.push(`/events/${event._id}/article`)}
+        />
+      ))}
+    </div>
+  )
+}
+
+function EventCard({
+  event,
+  weekNumber,
+  onGenerateArticle,
+}: {
+  event: any
+  weekNumber: number
+  onGenerateArticle: () => void
+}) {
+  const eventDate = new Date(event.scheduledDate)
+  const formattedDate = format(eventDate, "MMM d, yyyy")
+
+  return (
+    <Card className="card-parchment">
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <Badge variant="outline" className="text-xs">
+                Week {weekNumber}
+              </Badge>
+              {event.hasVoted && event.hasVoted.length > 0 && (
+                <Badge variant="secondary" className="text-xs">
+                  <Star className="h-3 w-3 mr-1 fill-current" />
+                  {event.hasVoted.length} {event.hasVoted.length === 1 ? "rating" : "ratings"}
+                </Badge>
+              )}
+            </div>
+            <h3 className="font-semibold text-lg text-foreground">{event.restaurantName}</h3>
+            <div className="flex flex-col gap-1 mt-2 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <MapPin className="h-3 w-3 shrink-0" />
+                <span className="truncate">{event.address}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Calendar className="h-3 w-3 shrink-0" />
+                <span>{formattedDate}</span>
+              </div>
+              {event.attendees && event.attendees.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <Users className="h-3 w-3 shrink-0" />
+                  <span>{event.attendees.length} attendees</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        <Button
+          onClick={onGenerateArticle}
+          className="w-full"
+          variant="outline"
+        >
+          <FileText className="mr-2 h-4 w-4" />
+          Generate Substack Article
+        </Button>
+      </CardContent>
+    </Card>
   )
 }
