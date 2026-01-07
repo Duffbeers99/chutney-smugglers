@@ -293,7 +293,20 @@ Write an engaging, humorous, and personable article about this curry night. The 
 - Celebrate the camaraderie of the group
 - No corporate-speak or overly formal language
 
-Return ONLY the article text in paragraph form. Do not include headers, titles, or section labels - just flowing prose. The article should be 400-600 words.`;
+**Target Audience:**
+- Young people in London interested in curry
+- Friends and mates who enjoy good food and good times
+- People looking for honest, entertaining restaurant reviews
+
+**Format Requirements:**
+Return your response in this EXACT format:
+
+TITLE: [Create a catchy, entertaining title that captures attention. Make it fun, punchy, and click-worthy. Reference the restaurant name and hint at the verdict. Keep it under 60 characters.]
+
+SUBTITLE: [Write a compelling subtitle that adds context or intrigue. This could reference the score, location, a standout moment, or create anticipation. Keep it under 100 characters.]
+
+ARTICLE:
+[The article text in paragraph form. Do not include headers, titles, or section labels - just flowing prose. The article should be 400-600 words.]`;
 }
 
 /**
@@ -336,17 +349,56 @@ function buildHTMLArticle(narrative: string, data: any): string {
       )
     : '';
 
-  // Build member ratings table
+  // Helper function to extract snappy quotes from notes
+  const extractSnappyQuotes = (notes: string, maxQuotes: number = 3): string[] => {
+    if (!notes || notes.trim().length === 0) return [];
+
+    // Split by sentences (periods, exclamation marks, question marks)
+    const sentences = notes.split(/[.!?]+/).filter((s) => s.trim().length > 0);
+
+    const quotes: string[] = [];
+
+    // Find interesting/emotional sentences
+    const interestingSentences = sentences.filter((s) => {
+      const trimmed = s.trim();
+      return (
+        trimmed.length > 15 &&
+        trimmed.length < 120 &&
+        (/delicious|amazing|incredible|fantastic|excellent|great|good|wonderful|lovely|perfect|terrible|awful|poor|bad|disappointing|bland|mediocre|average|ok|decent/i.test(trimmed) ||
+         /loved|enjoyed|recommend|impressed|surprised|disappointed|expected|worth/i.test(trimmed))
+      );
+    });
+
+    // Add interesting sentences first
+    for (const sentence of interestingSentences.slice(0, maxQuotes)) {
+      quotes.push(sentence.trim());
+    }
+
+    // If we don't have enough, add regular sentences
+    if (quotes.length < maxQuotes) {
+      for (const sentence of sentences) {
+        if (quotes.length >= maxQuotes) break;
+        const trimmed = sentence.trim();
+        if (trimmed.length > 15 && trimmed.length < 120 && !quotes.includes(trimmed)) {
+          quotes.push(trimmed);
+        }
+      }
+    }
+
+    return quotes.slice(0, maxQuotes);
+  };
+
+  // Build member ratings in a div-based layout (Substack-friendly)
   const memberRatingsHTML = data.ratings
     .map((r: any) => `
-      <tr>
-        <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>${r.userName}</strong></td>
-        <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">${r.food.toFixed(1)}</td>
-        <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">${r.service.toFixed(1)}</td>
-        <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">${r.extras.toFixed(1)}</td>
-        <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">${r.atmosphere.toFixed(1)}</td>
-        <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;"><strong>${r.overallScore.toFixed(1)}</strong></td>
-      </tr>
+      <div style="display: flex; gap: 10px; padding: 12px; background: ${data.ratings.indexOf(r) % 2 === 0 ? '#f9f9f9' : '#fff'}; border-bottom: 1px solid #eee;">
+        <div style="flex: 0 0 100px;"><strong>${r.userName}</strong></div>
+        <div style="flex: 0 0 60px; text-align: center;">${r.food.toFixed(1)}/10</div>
+        <div style="flex: 0 0 60px; text-align: center;">${r.service.toFixed(1)}/5</div>
+        <div style="flex: 0 0 60px; text-align: center;">${r.extras.toFixed(1)}/5</div>
+        <div style="flex: 0 0 80px; text-align: center;">${r.atmosphere.toFixed(1)}/5</div>
+        <div style="flex: 0 0 60px; text-align: center;"><strong>${r.overallScore.toFixed(1)}/25</strong></div>
+      </div>
     `)
     .join('');
 
@@ -414,32 +466,39 @@ ${comparisonChart ? `
 
 <h3 style="margin: 30px 0 15px 0;">Individual Ratings</h3>
 
-<table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
-  <thead>
-    <tr style="background: #f5f5f5;">
-      <th style="padding: 10px; text-align: left; border-bottom: 2px solid #ddd;">Smuggler</th>
-      <th style="padding: 10px; text-align: center; border-bottom: 2px solid #ddd;">Food<br/><span style="font-weight: normal; font-size: 12px;">/10</span></th>
-      <th style="padding: 10px; text-align: center; border-bottom: 2px solid #ddd;">Service<br/><span style="font-weight: normal; font-size: 12px;">/5</span></th>
-      <th style="padding: 10px; text-align: center; border-bottom: 2px solid #ddd;">Extras<br/><span style="font-weight: normal; font-size: 12px;">/5</span></th>
-      <th style="padding: 10px; text-align: center; border-bottom: 2px solid #ddd;">Atmosphere<br/><span style="font-weight: normal; font-size: 12px;">/5</span></th>
-      <th style="padding: 10px; text-align: center; border-bottom: 2px solid #ddd;">Total<br/><span style="font-weight: normal; font-size: 12px;">/25</span></th>
-    </tr>
-  </thead>
-  <tbody>
-    ${memberRatingsHTML}
-  </tbody>
-</table>
+<div style="border: 1px solid #ddd; border-radius: 8px; overflow: hidden; margin: 20px 0;">
+  <!-- Header row -->
+  <div style="display: flex; gap: 10px; padding: 12px; background: #f5f5f5; font-weight: bold; border-bottom: 2px solid #ddd;">
+    <div style="flex: 0 0 100px;">Smuggler</div>
+    <div style="flex: 0 0 60px; text-align: center;">Food</div>
+    <div style="flex: 0 0 60px; text-align: center;">Service</div>
+    <div style="flex: 0 0 60px; text-align: center;">Extras</div>
+    <div style="flex: 0 0 80px; text-align: center;">Atmosphere</div>
+    <div style="flex: 0 0 60px; text-align: center;">Total</div>
+  </div>
+  <!-- Data rows -->
+  ${memberRatingsHTML}
+</div>
 
 ${data.ratings.some((r: any) => r.notes && r.notes.trim().length > 0) ? `
 <h3 style="margin: 30px 0 15px 0;">💭 What The Team Said</h3>
 <div style="background: #f9f9f9; padding: 20px; border-radius: 8px; border-left: 4px solid #FF6B6B;">
   ${data.ratings
     .filter((r: any) => r.notes && r.notes.trim().length > 0)
-    .map((r: any) => `
-      <p style="margin: 15px 0; font-size: 16px; line-height: 1.6;">
-        <strong>${r.userName}:</strong> "${r.notes}"
-      </p>
-    `)
+    .map((r: any) => {
+      const quotes = extractSnappyQuotes(r.notes, 3);
+      if (quotes.length === 0) return '';
+      return `
+        <div style="margin: 20px 0;">
+          <p style="margin: 0 0 8px 0; font-weight: bold; color: #333;">${r.userName}</p>
+          ${quotes.map(quote => `
+            <p style="margin: 5px 0 5px 20px; font-size: 15px; line-height: 1.5; color: #555; font-style: italic;">
+              "${quote}."
+            </p>
+          `).join('')}
+        </div>
+      `;
+    })
     .join('')}
 </div>
 ` : ''}
@@ -478,6 +537,8 @@ export const generateSubstackArticle = action({
     success: boolean;
     html: string;
     narrative: string;
+    title: string;
+    subtitle: string;
     data: any;
   }> => {
     // Get the user's active group
@@ -516,10 +577,19 @@ export const generateSubstackArticle = action({
       ],
     });
 
-    // Extract the narrative text from Claude's response
-    const narrative = message.content[0].type === "text"
+    // Extract the response text from Claude
+    const fullResponse = message.content[0].type === "text"
       ? message.content[0].text
       : "";
+
+    // Parse the structured response (TITLE, SUBTITLE, ARTICLE)
+    const titleMatch = fullResponse.match(/TITLE:\s*(.+?)(?:\n|$)/);
+    const subtitleMatch = fullResponse.match(/SUBTITLE:\s*(.+?)(?:\n|$)/);
+    const articleMatch = fullResponse.match(/ARTICLE:\s*\n([\s\S]+)/);
+
+    const title = titleMatch ? titleMatch[1].trim() : `Week Review: ${data.event.restaurantName}`;
+    const subtitle = subtitleMatch ? subtitleMatch[1].trim() : `Our latest curry adventure in London`;
+    const narrative = articleMatch ? articleMatch[1].trim() : fullResponse;
 
     // Build the complete HTML article
     const htmlArticle = buildHTMLArticle(narrative, data);
@@ -528,6 +598,8 @@ export const generateSubstackArticle = action({
       success: true,
       html: htmlArticle,
       narrative,
+      title,
+      subtitle,
       data,
     };
   },

@@ -22,10 +22,12 @@ export default function ArticlePage() {
   const [article, setArticle] = React.useState<{
     html: string;
     narrative: string;
+    title: string;
+    subtitle: string;
     data: any;
   } | null>(null);
   const [error, setError] = React.useState<string | null>(null);
-  const [copiedType, setCopiedType] = React.useState<"html" | "markdown" | null>(null);
+  const [copiedType, setCopiedType] = React.useState<"html" | "markdown" | "title" | null>(null);
 
   // Generate article on mount
   React.useEffect(() => {
@@ -43,6 +45,8 @@ export default function ArticlePage() {
         setArticle({
           html: result.html!,
           narrative: result.narrative!,
+          title: result.title!,
+          subtitle: result.subtitle!,
           data: result.data,
         });
       }
@@ -54,11 +58,15 @@ export default function ArticlePage() {
     }
   };
 
-  const handleCopy = async (type: "html" | "markdown") => {
+  const handleCopy = async (type: "html" | "markdown" | "title") => {
     if (!article) return;
 
     try {
-      if (type === "html") {
+      if (type === "title") {
+        // Copy title and subtitle as plain text
+        const titleText = `${article.title}\n${article.subtitle}`;
+        await navigator.clipboard.writeText(titleText);
+      } else if (type === "html") {
         // Copy as rich HTML content (not plain text) so it renders in rich text editors
         const htmlBlob = new Blob([article.html], { type: "text/html" });
         const textBlob = new Blob([article.html], { type: "text/plain" });
@@ -76,7 +84,8 @@ export default function ArticlePage() {
       }
 
       setCopiedType(type);
-      toast.success(`Article copied as ${type.toUpperCase()} to clipboard`);
+      const label = type === "title" ? "Title & Subtitle" : type.toUpperCase();
+      toast.success(`${label} copied to clipboard`);
 
       setTimeout(() => {
         setCopiedType(null);
@@ -197,6 +206,52 @@ export default function ArticlePage() {
         {/* Article Preview */}
         {article && !isGenerating && (
           <>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  Title & Subtitle
+                  <Button
+                    onClick={() => handleCopy("title")}
+                    variant="ghost"
+                    size="sm"
+                  >
+                    {copiedType === "title" ? (
+                      <>
+                        <CheckCircle className="mr-2 h-4 w-4" />
+                        Copied!
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="mr-2 h-4 w-4" />
+                        Copy
+                      </>
+                    )}
+                  </Button>
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Use these for your Substack post title and subtitle
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">
+                    Title
+                  </p>
+                  <p className="text-xl font-bold text-foreground">
+                    {article.title}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">
+                    Subtitle
+                  </p>
+                  <p className="text-base text-muted-foreground">
+                    {article.subtitle}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader>
                 <CardTitle>Preview</CardTitle>
