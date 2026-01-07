@@ -421,50 +421,55 @@ export default function ProfilePage() {
                       )}
                     </div>
 
-                    {isEditing ? (
-                      <div className="space-y-3 mt-3">
-                        <PriceSelector
-                          value={selectedPrice}
-                          onChange={setSelectedPrice}
-                        />
-                        <div className="flex gap-2">
+                    {/* Only allow setting price if not already set */}
+                    {!event.averagePriceRanking && (
+                      <>
+                        {isEditing ? (
+                          <div className="space-y-3 mt-3">
+                            <PriceSelector
+                              value={selectedPrice}
+                              onChange={setSelectedPrice}
+                            />
+                            <div className="flex gap-2">
+                              <Button
+                                onClick={() => handleSavePrice(event._id)}
+                                disabled={savingPrice}
+                                size="sm"
+                                className="flex-1"
+                              >
+                                {savingPrice ? (
+                                  <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Saving...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Check className="mr-2 h-4 w-4" />
+                                    Save Price
+                                  </>
+                                )}
+                              </Button>
+                              <Button
+                                onClick={handleCancelPriceEdit}
+                                disabled={savingPrice}
+                                size="sm"
+                                variant="outline"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
                           <Button
-                            onClick={() => handleSavePrice(event._id)}
-                            disabled={savingPrice}
-                            size="sm"
-                            className="flex-1"
-                          >
-                            {savingPrice ? (
-                              <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Saving...
-                              </>
-                            ) : (
-                              <>
-                                <Check className="mr-2 h-4 w-4" />
-                                Save Price
-                              </>
-                            )}
-                          </Button>
-                          <Button
-                            onClick={handleCancelPriceEdit}
-                            disabled={savingPrice}
+                            onClick={() => handleEditPrice(event._id, event.averagePriceRanking)}
                             size="sm"
                             variant="outline"
+                            className="w-full mt-2"
                           >
-                            <X className="h-4 w-4" />
+                            Set Price
                           </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <Button
-                        onClick={() => handleEditPrice(event._id, event.averagePriceRanking)}
-                        size="sm"
-                        variant="outline"
-                        className="w-full mt-2"
-                      >
-                        {event.averagePriceRanking ? "Edit Price" : "Set Price"}
-                      </Button>
+                        )}
+                      </>
                     )}
                   </div>
                 );

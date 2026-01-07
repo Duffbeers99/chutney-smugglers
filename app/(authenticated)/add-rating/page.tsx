@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Slider } from "@/components/ui/slider"
+import { PriceSelector } from "@/components/ui/price-selector"
 import { toast } from "sonner"
 import { ArrowLeft, ChefHat, Loader2, MapPin, Star, Calendar } from "lucide-react"
 import { Id } from "@/convex/_generated/dataModel"
@@ -39,7 +40,7 @@ export default function AddRatingPage() {
   const [service, setService] = useState(2.5)
   const [extras, setExtras] = useState(2.5)
   const [atmosphere, setAtmosphere] = useState(2.5)
-  const [price, setPrice] = useState(2.5)
+  const [price, setPrice] = useState(3) // Price is 1-5 whole numbers
   const [notes, setNotes] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -187,12 +188,16 @@ export default function AddRatingPage() {
               onChange={setAtmosphere}
               emoji="🪔"
             />
-            <RatingSlider
-              label="Price (£ to £££££)"
-              value={price}
-              onChange={setPrice}
-              emoji="💰"
-            />
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <span className="text-lg">💰</span>
+                <span>Price (£ to £££££)</span>
+              </Label>
+              <PriceSelector
+                value={price}
+                onChange={setPrice}
+              />
+            </div>
           </CardContent>
         </Card>
 
