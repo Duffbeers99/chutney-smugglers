@@ -26,6 +26,7 @@ import {
   Users,
   Copy,
   CheckCircle2,
+  UtensilsCrossed,
 } from "lucide-react";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { Id } from "@/convex/_generated/dataModel";

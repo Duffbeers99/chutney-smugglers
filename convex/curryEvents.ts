@@ -1043,6 +1043,7 @@ export const getMostRecentCompletedCurry = query({
           service: rating.service,
           extras: rating.extras,
           atmosphere: rating.atmosphere,
+          price: rating.price,
           overallScore: rating.food + rating.service + rating.extras + rating.atmosphere,
           notes: rating.notes,
         };
