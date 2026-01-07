@@ -227,7 +227,7 @@ export const getEventDataForArticle = internalQuery({
 /**
  * Build the prompt for Claude to generate article content
  */
-function buildArticlePrompt(data: any): string {
+function buildArticlePrompt(data: any, isRetrospective: boolean = false, restaurantInfo: string = ""): string {
   const eventDate = new Date(data.event.scheduledDate);
   const formattedDate = eventDate.toLocaleDateString('en-GB', {
     weekday: 'long',
@@ -245,7 +245,10 @@ function buildArticlePrompt(data: any): string {
     .map((r: any) => `${r.userName}: "${r.notes}"`)
     .join('\n');
 
+  const hasNotes = memberNotes.length > 0;
+
   return `You are writing an engaging curry review article for "The Chutney Smugglers" - a group of friends who visit curry restaurants together and rate them.
+${isRetrospective ? '\n**IMPORTANT:** This is a retrospective review. The team visited this restaurant but did not record detailed notes. You must base your narrative on the ratings data and restaurant research provided below. Use general observations (e.g., "The team found...", "Smugglers felt...") rather than direct quotes.' : ''}
 
 **Event Details:**
 - Restaurant: ${data.event.restaurantName}
@@ -269,8 +272,13 @@ ${data.averages.price ? `- Price Level: £${'£'.repeat(data.averages.price - 1)
 **Historical Context:**
 ${historicalContext}
 
-**What the team said:**
-${memberNotes || 'No detailed notes were provided.'}
+${isRetrospective && restaurantInfo ? `**Restaurant Research:**
+${restaurantInfo}
+` : ''}
+
+${hasNotes ? `**What the team said:**
+${memberNotes}` : `**Team Notes:**
+No detailed notes were recorded for this visit. Base your narrative on the ratings and ${isRetrospective ? 'restaurant research' : 'general curry dining experience'}.`}
 
 ---
 
@@ -278,9 +286,9 @@ Write an engaging, humorous, and personable article about this curry night. The 
 
 1. **Opening**: Write a catchy, entertaining opening paragraph (2-3 sentences) that sets the scene. Reference who booked it and create anticipation.
 
-2. **The Experience**: Write 2-3 paragraphs describing the curry experience. Draw from the team's notes to create a narrative. Be specific and vivid - mention particular dishes if noted, describe the atmosphere, talk about service quality. Use the scores to inform your writing but don't just list them.
+2. **The Experience**: Write 2-3 paragraphs describing the curry experience. ${hasNotes ? 'Draw from the team\'s notes to create a narrative.' : 'Use the ratings to infer the experience - high food scores suggest good dishes, low atmosphere scores suggest lacking ambiance, etc.'} ${isRetrospective && restaurantInfo ? 'Use the restaurant research to add authentic details about the venue, popular dishes, and general vibe.' : ''} Be specific and vivid, describe the atmosphere, talk about service quality. Use the scores to inform your writing but don't just list them.
 
-3. **Highlights & Quotes**: Pull out 2-3 memorable quotes or observations from the team notes and weave them naturally into the narrative. Make it feel like you're telling a story about friends having dinner together.
+3. ${hasNotes ? '**Highlights & Quotes**: Pull out 2-3 memorable quotes or observations from the team notes and weave them naturally into the narrative. Make it feel like you\'re telling a story about friends having dinner together.' : '**General Observations**: Based on the scores, describe the team\'s experience using general observations. For example: "The Smugglers found the food impressive, with scores averaging 7.2/10" or "The atmosphere left something to be desired, reflected in the low 0.9/5 rating." DO NOT create fake direct quotes.'}
 
 4. **Historical Perspective**: ${data.historicalContext ? `Compare this visit to the previous visit(s). Has it improved? Gotten worse? Make this comparison interesting and specific.` : `Note this is the first visit. Build anticipation for whether the team will return.`}
 
@@ -312,7 +320,7 @@ ARTICLE:
 /**
  * Build the complete HTML article with charts and formatting
  */
-function buildHTMLArticle(narrative: string, data: any): string {
+function buildHTMLArticle(narrative: string, data: any, isRetrospective: boolean = false): string {
   const eventDate = new Date(data.event.scheduledDate);
   const weekNumber = getWeekNumber(eventDate);
   const formattedDate = eventDate.toLocaleDateString('en-GB', {
@@ -553,6 +561,19 @@ export const generateSubstackArticle = action({
       groupId,
     });
 
+    // Check if this is a retrospective article (no notes from ratings)
+    const hasNotes = data.ratings.some((r: any) => r.notes && r.notes.trim().length > 0);
+    const isRetrospective = !hasNotes;
+
+    // For retrospective articles, we rely on AI inference from ratings
+    // TODO: Future enhancement - integrate web search API (Serper, SerpAPI, etc.)
+    // to fetch restaurant details and reviews for more authentic retrospective articles
+    let restaurantInfo = "";
+    if (isRetrospective) {
+      // Use cuisine type and location to provide context
+      restaurantInfo = `${data.event.restaurantName} is located at ${data.event.address}. Use the ratings to infer the dining experience - high scores suggest positive aspects, low scores suggest areas for improvement.`;
+    }
+
     // Initialize Anthropic client
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
@@ -564,7 +585,7 @@ export const generateSubstackArticle = action({
     });
 
     // Generate the article narrative using Claude
-    const prompt = buildArticlePrompt(data);
+    const prompt = buildArticlePrompt(data, isRetrospective, restaurantInfo);
 
     const message = await anthropic.messages.create({
       model: "claude-sonnet-4-20250514",
@@ -592,7 +613,7 @@ export const generateSubstackArticle = action({
     const narrative = articleMatch ? articleMatch[1].trim() : fullResponse;
 
     // Build the complete HTML article
-    const htmlArticle = buildHTMLArticle(narrative, data);
+    const htmlArticle = buildHTMLArticle(narrative, data, isRetrospective);
 
     return {
       success: true,
