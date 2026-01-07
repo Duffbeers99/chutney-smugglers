@@ -59,7 +59,16 @@ export default function ArticlePage() {
 
     try {
       if (type === "html") {
-        await navigator.clipboard.writeText(article.html);
+        // Copy as rich HTML content (not plain text) so it renders in rich text editors
+        const htmlBlob = new Blob([article.html], { type: "text/html" });
+        const textBlob = new Blob([article.html], { type: "text/plain" });
+
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            "text/html": htmlBlob,
+            "text/plain": textBlob,
+          }),
+        ]);
       } else {
         // For markdown, we'll strip HTML tags and convert to basic markdown
         const markdown = htmlToMarkdown(article.html);

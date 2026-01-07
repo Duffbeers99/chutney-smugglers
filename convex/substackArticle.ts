@@ -350,24 +350,18 @@ function buildHTMLArticle(narrative: string, data: any): string {
     `)
     .join('');
 
-  // Google Maps embed
+  // Google Maps link (no API key required)
   const mapHTML = data.event.googlePlaceId
     ? `
-      <div style="margin: 30px 0;">
-        <iframe
-          width="100%"
-          height="350"
-          frameborder="0"
-          style="border:0; border-radius: 8px;"
-          src="https://www.google.com/maps/embed/v1/place?key=YOUR_API_KEY&q=place_id:${data.event.googlePlaceId}"
-          allowfullscreen>
-        </iframe>
+      <div style="margin: 20px 0; padding: 15px; background: #f5f5f5; border-radius: 8px;">
+        <p style="margin: 0;"><strong>📍 Location:</strong> ${data.event.address}</p>
+        <p style="margin: 5px 0 0 0;"><a href="https://www.google.com/maps/search/?api=1&query=place_id:${data.event.googlePlaceId}" target="_blank" style="color: #0066cc; text-decoration: none;">View on Google Maps →</a></p>
       </div>
     `
     : `
       <div style="margin: 20px 0; padding: 15px; background: #f5f5f5; border-radius: 8px;">
         <p style="margin: 0;"><strong>📍 Location:</strong> ${data.event.address}</p>
-        <p style="margin: 5px 0 0 0;"><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(data.event.address)}" target="_blank">View on Google Maps →</a></p>
+        <p style="margin: 5px 0 0 0;"><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(data.event.address)}" target="_blank" style="color: #0066cc; text-decoration: none;">View on Google Maps →</a></p>
       </div>
     `;
 
