@@ -565,13 +565,10 @@ export const generateSubstackArticle = action({
     const hasNotes = data.ratings.some((r: any) => r.notes && r.notes.trim().length > 0);
     const isRetrospective = !hasNotes;
 
-    // For retrospective articles, we rely on AI inference from ratings
-    // TODO: Future enhancement - integrate web search API (Serper, SerpAPI, etc.)
-    // to fetch restaurant details and reviews for more authentic retrospective articles
+    // For retrospective articles, rely on Claude's training data about London restaurants
     let restaurantInfo = "";
     if (isRetrospective) {
-      // Use cuisine type and location to provide context
-      restaurantInfo = `${data.event.restaurantName} is located at ${data.event.address}. Use the ratings to infer the dining experience - high scores suggest positive aspects, low scores suggest areas for improvement.`;
+      restaurantInfo = `${data.event.restaurantName} is located at ${data.event.address}. Use your knowledge of London curry restaurants and the team's ratings to create an authentic narrative. High scores suggest positive aspects, low scores suggest areas for improvement. Feel free to mention typical dishes, atmosphere elements, and service styles common to this type of establishment.`;
     }
 
     // Initialize Anthropic client
