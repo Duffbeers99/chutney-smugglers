@@ -5,12 +5,6 @@ import { getUserActiveGroup } from "./groups";
 import { internal } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
 import Anthropic from "@anthropic-ai/sdk";
-import {
-  generateRatingChart,
-  generatePriceIndicator,
-  generateComparisonChart,
-  generateScoreBadge,
-} from "./chartGenerator";
 
 /**
  * Helper query to get user's active group (for use in actions)
@@ -330,33 +324,6 @@ function buildHTMLArticle(narrative: string, data: any, isRetrospective: boolean
     year: 'numeric'
   });
 
-  // Generate charts
-  const ratingChart = generateRatingChart({
-    food: data.averages.food,
-    service: data.averages.service,
-    extras: data.averages.extras,
-    atmosphere: data.averages.atmosphere,
-    price: data.averages.price,
-  });
-
-  const scoreBadge = generateScoreBadge(data.averages.total, 25);
-
-  const priceIndicator = data.averages.price
-    ? generatePriceIndicator(data.averages.price)
-    : '';
-
-  const comparisonChart = data.historicalContext && data.historicalContext.previousVisits.length > 0
-    ? generateComparisonChart(
-        {
-          food: data.averages.food,
-          service: data.averages.service,
-          extras: data.averages.extras,
-          atmosphere: data.averages.atmosphere,
-        },
-        data.historicalContext.previousVisits[0]
-      )
-    : '';
-
   // Helper function to extract snappy quotes from notes
   const extractSnappyQuotes = (notes: string, maxQuotes: number = 3): string[] => {
     if (!notes || notes.trim().length === 0) return [];
@@ -396,129 +363,59 @@ function buildHTMLArticle(narrative: string, data: any, isRetrospective: boolean
     return quotes.slice(0, maxQuotes);
   };
 
-  // Build member ratings in a div-based layout (Substack-friendly)
-  const memberRatingsHTML = data.ratings
-    .map((r: any) => `
-      <div style="display: flex; gap: 10px; padding: 12px; background: ${data.ratings.indexOf(r) % 2 === 0 ? '#f9f9f9' : '#fff'}; border-bottom: 1px solid #eee;">
-        <div style="flex: 0 0 100px;"><strong>${r.userName}</strong></div>
-        <div style="flex: 0 0 60px; text-align: center;">${r.food.toFixed(1)}/10</div>
-        <div style="flex: 0 0 60px; text-align: center;">${r.service.toFixed(1)}/5</div>
-        <div style="flex: 0 0 60px; text-align: center;">${r.extras.toFixed(1)}/5</div>
-        <div style="flex: 0 0 80px; text-align: center;">${r.atmosphere.toFixed(1)}/5</div>
-        <div style="flex: 0 0 60px; text-align: center;"><strong>${r.overallScore.toFixed(1)}/25</strong></div>
-      </div>
-    `)
-    .join('');
-
-  // Google Maps link (no API key required)
-  const mapHTML = data.event.googlePlaceId
-    ? `
-      <div style="margin: 20px 0; padding: 15px; background: #f5f5f5; border-radius: 8px;">
-        <p style="margin: 0;"><strong>📍 Location:</strong> ${data.event.address}</p>
-        <p style="margin: 5px 0 0 0;"><a href="https://www.google.com/maps/search/?api=1&query=place_id:${data.event.googlePlaceId}" target="_blank" style="color: #0066cc; text-decoration: none;">View on Google Maps →</a></p>
-      </div>
-    `
-    : `
-      <div style="margin: 20px 0; padding: 15px; background: #f5f5f5; border-radius: 8px;">
-        <p style="margin: 0;"><strong>📍 Location:</strong> ${data.event.address}</p>
-        <p style="margin: 5px 0 0 0;"><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(data.event.address)}" target="_blank" style="color: #0066cc; text-decoration: none;">View on Google Maps →</a></p>
-      </div>
-    `;
-
   return `
-<h1>Week ${weekNumber}: ${data.event.restaurantName}</h1>
+<h1>${data.event.restaurantName}</h1>
 
-<p style="color: #666; font-size: 16px; font-style: italic;">
+<p style="color: #666; font-size: 16px; font-style: italic; margin: 10px 0 30px 0;">
   ${formattedDate} • Booked by ${data.event.bookerName} • ${data.event.attendeeCount} Smugglers in attendance
 </p>
 
 <hr style="border: none; border-top: 2px solid #f0f0f0; margin: 30px 0;" />
 
-<div style="display: flex; align-items: center; gap: 30px; margin: 30px 0; padding: 20px; background: #f9f9f9; border-radius: 8px;">
-  <div>
-    ${scoreBadge}
-  </div>
-  <div style="flex: 1;">
-    <h2 style="margin: 0 0 10px 0; color: #333;">The Verdict</h2>
-    <p style="margin: 0; font-size: 18px; color: #666;">
-      Ranked <strong>#${data.rankings.totalRank}</strong> out of ${data.rankings.totalEvents} curries
-      ${data.historicalContext ? ` • Visit #${data.historicalContext.visitCount + 1} to this restaurant` : ' • First visit'}
-    </p>
-  </div>
-</div>
+<h2 style="margin: 30px 0 15px 0;">Smugglers Thoughts…</h2>
+
+<p style="font-size: 14px; color: #666; margin: 0 0 10px 0;">
+  Ranked <strong>#${data.rankings.totalRank} of ${data.rankings.totalEvents}</strong> curries reviewed
+</p>
+
+<p style="font-size: 14px; color: #888; margin: 0 0 30px 0; font-style: italic;">
+  Food ${data.averages.food.toFixed(1)}/10 • Service ${data.averages.service.toFixed(1)}/5 • Extras ${data.averages.extras.toFixed(1)}/5 • Atmosphere ${data.averages.atmosphere.toFixed(1)}/5 • <strong>Overall ${data.averages.total.toFixed(1)}/25</strong>${data.averages.price ? ` • Price ${'£'.repeat(Math.round(data.averages.price))}` : ''}
+</p>
 
 ${narrative.split('\n\n').map(para => `<p style="font-size: 18px; line-height: 1.6; margin: 20px 0;">${para}</p>`).join('\n')}
 
 <hr style="border: none; border-top: 2px solid #f0f0f0; margin: 40px 0;" />
 
-<h2>📊 The Numbers</h2>
-
-<div style="margin: 30px 0;">
-  ${ratingChart}
-</div>
-
-${data.averages.price ? `
-<div style="margin: 30px 0;">
-  <h3 style="margin: 0 0 10px 0;">Price Point</h3>
-  ${priceIndicator}
-</div>
-` : ''}
-
-${comparisonChart ? `
-<div style="margin: 40px 0;">
-  <h3 style="margin: 0 0 15px 0;">📈 How Does It Compare?</h3>
-  <p style="color: #666; font-size: 14px; margin: 0 0 15px 0;">Current visit vs. previous visit</p>
-  ${comparisonChart}
-</div>
-` : ''}
-
-<h3 style="margin: 30px 0 15px 0;">Individual Ratings</h3>
-
-<div style="border: 1px solid #ddd; border-radius: 8px; overflow: hidden; margin: 20px 0;">
-  <!-- Header row -->
-  <div style="display: flex; gap: 10px; padding: 12px; background: #f5f5f5; font-weight: bold; border-bottom: 2px solid #ddd;">
-    <div style="flex: 0 0 100px;">Smuggler</div>
-    <div style="flex: 0 0 60px; text-align: center;">Food</div>
-    <div style="flex: 0 0 60px; text-align: center;">Service</div>
-    <div style="flex: 0 0 60px; text-align: center;">Extras</div>
-    <div style="flex: 0 0 80px; text-align: center;">Atmosphere</div>
-    <div style="flex: 0 0 60px; text-align: center;">Total</div>
-  </div>
-  <!-- Data rows -->
-  ${memberRatingsHTML}
-</div>
-
 ${data.ratings.some((r: any) => r.notes && r.notes.trim().length > 0) ? `
-<h3 style="margin: 30px 0 15px 0;">💭 What The Team Said</h3>
-<div style="background: #f9f9f9; padding: 20px; border-radius: 8px; border-left: 4px solid #FF6B6B;">
-  ${data.ratings
-    .filter((r: any) => r.notes && r.notes.trim().length > 0)
-    .map((r: any) => {
-      const quotes = extractSnappyQuotes(r.notes, 3);
-      if (quotes.length === 0) return '';
-      return `
-        <div style="margin: 20px 0;">
-          <p style="margin: 0 0 8px 0; font-weight: bold; color: #333;">${r.userName}</p>
-          ${quotes.map(quote => `
-            <p style="margin: 5px 0 5px 20px; font-size: 15px; line-height: 1.5; color: #555; font-style: italic;">
-              "${quote}."
-            </p>
-          `).join('')}
-        </div>
-      `;
-    })
-    .join('')}
-</div>
+<h2 style="margin: 30px 0 20px 0;">💭 What The Smugglers Said</h2>
+
+${data.ratings
+  .filter((r: any) => r.notes && r.notes.trim().length > 0)
+  .map((r: any) => {
+    const quotes = extractSnappyQuotes(r.notes, 3);
+    if (quotes.length === 0) return '';
+    return `
+<p style="margin: 20px 0 5px 0; font-size: 18px; font-weight: bold; color: #333;">${r.userName}</p>
+
+${quotes.map(quote => `<p style="margin: 5px 0; font-size: 16px; line-height: 1.6; color: #555; font-style: italic;">"${quote}."</p>`).join('\n')}
+    `;
+  })
+  .join('\n\n')}
+
+<hr style="border: none; border-top: 2px solid #f0f0f0; margin: 40px 0;" />
 ` : ''}
 
-<h3 style="margin: 40px 0 15px 0;">📍 Location</h3>
+<p style="margin: 30px 0 5px 0; font-size: 16px; color: #333;"><strong>📍 Location:</strong> ${data.event.address}</p>
 
-${mapHTML}
+${data.event.googlePlaceId
+  ? `<p style="margin: 5px 0 30px 0;"><a href="https://www.google.com/maps/search/?api=1&query=place_id:${data.event.googlePlaceId}" target="_blank" style="color: #0066cc; text-decoration: none;">View on Google Maps →</a></p>`
+  : `<p style="margin: 5px 0 30px 0;"><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(data.event.address)}" target="_blank" style="color: #0066cc; text-decoration: none;">View on Google Maps →</a></p>`
+}
 
 <hr style="border: none; border-top: 2px solid #f0f0f0; margin: 40px 0;" />
 
-<p style="text-align: center; color: #999; font-size: 14px;">
-  <em>Article generated by The Chutney Smugglers • Follow along for more curry adventures</em>
+<p style="text-align: center; color: #999; font-size: 14px; font-style: italic;">
+  Article written by The Chutney Smugglers • Follow along for more curry adventures
 </p>
   `.trim();
 }
