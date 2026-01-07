@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { action, internalQuery } from "./_generated/server";
+import { action, internalQuery, query } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { getUserActiveGroup } from "./groups";
 import { internal } from "./_generated/api";
@@ -11,6 +11,19 @@ import {
   generateComparisonChart,
   generateScoreBadge,
 } from "./chartGenerator";
+
+/**
+ * Helper query to get user's active group (for use in actions)
+ */
+export const getUserGroup = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+
+    return await getUserActiveGroup(ctx, userId);
+  },
+});
 
 /**
  * Internal query to fetch all data needed for article generation
@@ -473,14 +486,10 @@ export const generateSubstackArticle = action({
     narrative: string;
     data: any;
   }> => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      throw new Error("Not authenticated");
-    }
-
-    const groupId = await getUserActiveGroup(ctx, userId);
+    // Get the user's active group
+    const groupId = await ctx.runQuery(internal.substackArticle.getUserGroup);
     if (!groupId) {
-      throw new Error("No active group");
+      throw new Error("Not authenticated or no active group");
     }
 
     // Fetch all the data we need
