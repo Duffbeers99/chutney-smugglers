@@ -21,6 +21,7 @@ import type * as emails_brevoClient from "../emails/brevoClient.js";
 import type * as emails_eventReminder from "../emails/eventReminder.js";
 import type * as emails_templates from "../emails/templates.js";
 import type * as emails_votingReminder from "../emails/votingReminder.js";
+import type * as fixBackdatedCurries from "../fixBackdatedCurries.js";
 import type * as groups from "../groups.js";
 import type * as http from "../http.js";
 import type * as migrations from "../migrations.js";
@@ -51,6 +52,7 @@ declare const fullApi: ApiFromModules<{
   "emails/eventReminder": typeof emails_eventReminder;
   "emails/templates": typeof emails_templates;
   "emails/votingReminder": typeof emails_votingReminder;
+  fixBackdatedCurries: typeof fixBackdatedCurries;
   groups: typeof groups;
   http: typeof http;
   migrations: typeof migrations;
