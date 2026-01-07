@@ -2139,7 +2139,6 @@ export const setPriceForPastEvent = mutation({
     });
 
     // Update restaurant price aggregates
-    const { updateRestaurantAggregates } = await import("./restaurants");
     await updateRestaurantAggregates(ctx, event.restaurantId);
 
     return { success: true };
