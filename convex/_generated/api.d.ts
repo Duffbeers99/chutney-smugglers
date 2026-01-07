@@ -10,6 +10,7 @@
 
 import type * as BrevoPasswordReset from "../BrevoPasswordReset.js";
 import type * as auth from "../auth.js";
+import type * as chartGenerator from "../chartGenerator.js";
 import type * as crons from "../crons.js";
 import type * as curryEvents from "../curryEvents.js";
 import type * as dateVotes from "../dateVotes.js";
@@ -27,6 +28,7 @@ import type * as migrations_setRotationOrder from "../migrations/setRotationOrde
 import type * as ratings from "../ratings.js";
 import type * as restaurants from "../restaurants.js";
 import type * as storage from "../storage.js";
+import type * as substackArticle from "../substackArticle.js";
 import type * as users from "../users.js";
 
 import type {
@@ -38,6 +40,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   BrevoPasswordReset: typeof BrevoPasswordReset;
   auth: typeof auth;
+  chartGenerator: typeof chartGenerator;
   crons: typeof crons;
   curryEvents: typeof curryEvents;
   dateVotes: typeof dateVotes;
@@ -55,6 +58,7 @@ declare const fullApi: ApiFromModules<{
   ratings: typeof ratings;
   restaurants: typeof restaurants;
   storage: typeof storage;
+  substackArticle: typeof substackArticle;
   users: typeof users;
 }>;
 

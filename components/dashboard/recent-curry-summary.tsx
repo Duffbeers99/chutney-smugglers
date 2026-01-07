@@ -5,13 +5,16 @@ import { api } from "@/convex/_generated/api"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { PriceDisplay } from "@/components/ui/price-display"
-import { Star } from "lucide-react"
+import { Star, FileText } from "lucide-react"
 import { format } from "date-fns"
 import Link from "next/link"
 import { Id } from "@/convex/_generated/dataModel"
+import { Button } from "@/components/ui/button"
+import { useRouter } from "next/navigation"
 
 export function RecentCurrySummary() {
   const recentCurry = useQuery(api.curryEvents.getMostRecentCompletedCurry)
+  const router = useRouter()
 
   if (!recentCurry) {
     return null
@@ -196,6 +199,18 @@ export function RecentCurrySummary() {
             </div>
           </div>
         )}
+
+        {/* Generate Substack Article Button */}
+        <div className="pt-3 border-t border-border">
+          <Button
+            onClick={() => router.push(`/events/${recentCurry.eventId}/article`)}
+            className="w-full"
+            variant="outline"
+          >
+            <FileText className="mr-2 h-4 w-4" />
+            Generate Substack Article
+          </Button>
+        </div>
       </CardContent>
     </Card>
   )

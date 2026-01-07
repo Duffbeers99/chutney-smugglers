@@ -157,7 +157,8 @@ const schema = defineSchema({
     .index("by_status", ["status"])
     .index("by_created_by", ["createdBy"])
     .index("by_group", ["groupId"])
-    .index("by_group_and_status", ["groupId", "status"]),
+    .index("by_group_and_status", ["groupId", "status"])
+    .index("by_restaurant", ["restaurantId"]),
 
   // Booking rotation tracking - who's turn it is to book the next curry
   bookingRotation: defineTable({
