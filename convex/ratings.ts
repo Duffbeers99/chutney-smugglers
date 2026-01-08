@@ -126,6 +126,92 @@ export const add = mutation({
   },
 });
 
+// Add a solo mission rating (ad-hoc, not tied to an event)
+export const addSoloMission = mutation({
+  args: {
+    restaurantId: v.id("restaurants"),
+    visitDate: v.number(),
+    food: v.number(),
+    service: v.number(),
+    extras: v.number(),
+    atmosphere: v.number(),
+    price: v.number(),
+    notes: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const groupId = await getUserActiveGroup(ctx, userId);
+    if (!groupId) throw new Error("You must be in a group");
+
+    // Verify restaurant exists
+    const restaurant = await ctx.db.get(args.restaurantId);
+    if (!restaurant) {
+      throw new Error("Restaurant not found");
+    }
+
+    // Check if user already rated this restaurant on this date as a solo mission
+    const existingSoloRating = await ctx.db
+      .query("ratings")
+      .withIndex("by_user_and_restaurant", (q) =>
+        q.eq("userId", userId).eq("restaurantId", args.restaurantId)
+      )
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("visitDate"), args.visitDate),
+          q.eq(q.field("isSoloMission"), true)
+        )
+      )
+      .first();
+
+    if (existingSoloRating) {
+      throw new Error("You have already rated this restaurant on this date as a solo mission");
+    }
+
+    // Validate ratings
+    // Food rating is 0-10, all others are 0-5
+    if (args.food < 0 || args.food > 10) {
+      throw new Error("Food rating must be between 0 and 10");
+    }
+    const otherRatings = [args.service, args.extras, args.atmosphere, args.price];
+    for (const rating of otherRatings) {
+      if (rating < 0 || rating > 5) {
+        throw new Error("Service, extras, atmosphere, and price ratings must be between 0 and 5");
+      }
+    }
+
+    // Create the solo mission rating
+    const ratingId = await ctx.db.insert("ratings", {
+      userId,
+      restaurantId: args.restaurantId,
+      visitDate: args.visitDate,
+      food: args.food,
+      service: args.service,
+      extras: args.extras,
+      atmosphere: args.atmosphere,
+      price: args.price,
+      notes: args.notes,
+      isSoloMission: true,
+      groupId,
+      createdAt: Date.now(),
+    });
+
+    // Update user's solo mission count
+    const user = await ctx.db.get(userId);
+    if (user) {
+      await ctx.db.patch(userId, {
+        soloMissionsCompleted: (user.soloMissionsCompleted || 0) + 1,
+      });
+    }
+
+    // NOTE: Solo missions do NOT update restaurant aggregates
+    // They are excluded from leaderboards
+
+    return ratingId;
+  },
+});
+
 // Helper function to update event's average price from all ratings
 async function updateEventPriceAggregate(ctx: any, eventId: any) {
   // Get all ratings for this event that have a price
@@ -634,6 +720,9 @@ export const getTopBookers = query({
     }>();
 
     for (const rating of allRatings) {
+      // Skip solo missions (they don't count toward leaderboards)
+      if (rating.isSoloMission) continue;
+
       // Skip ratings where we can't determine the booker
       let bookerId: string | null = null;
       let visitKey: string;

@@ -27,6 +27,7 @@ const schema = defineSchema({
     averageRating: v.optional(v.number()),
     venuesRated: v.optional(v.number()), // Generic venue stats
     venuesAdded: v.optional(v.number()),
+    soloMissionsCompleted: v.optional(v.number()),
 
     // Onboarding completion
     onboardingComplete: v.optional(v.boolean()),
@@ -106,6 +107,9 @@ const schema = defineSchema({
 
     // Link to curry event (new event-based rating system)
     eventId: v.optional(v.id("curryEvents")),
+
+    // Solo mission flag (ad-hoc ratings outside group events)
+    isSoloMission: v.optional(v.boolean()),
 
     // Group scoping
     groupId: v.optional(v.id("groups")),

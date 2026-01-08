@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { Loader2, MapPin, Search, Star, UtensilsCrossed, Pencil, AlertCircle, List, Map, ChevronDown, ScrollText, FileText, Calendar, Users } from "lucide-react"
+import { Loader2, MapPin, Search, Star, UtensilsCrossed, Pencil, AlertCircle, List, Map, ChevronDown, ScrollText, FileText, Calendar, Users, Newspaper } from "lucide-react"
 import { EditRestaurantDrawer } from "@/components/restaurant/edit-restaurant-drawer"
 import { RestaurantMap } from "@/components/restaurant/restaurant-map"
 import { PriceDisplay } from "@/components/ui/price-display"
@@ -183,6 +183,11 @@ function RestaurantCard({ restaurant }: { restaurant: any }) {
                       Incomplete
                     </Badge>
                   )}
+                  {restaurant.hasSoloMissions && (
+                    <Badge variant="outline" className="shrink-0 border-[oklch(0.75_0.15_85)] text-[oklch(0.55_0.12_85)] bg-[oklch(0.75_0.15_85)]/10">
+                      Solo Mission
+                    </Badge>
+                  )}
                   <Button
                     size="icon"
                     variant="ghost"
@@ -302,7 +307,14 @@ function RestaurantCard({ restaurant }: { restaurant: any }) {
                   {[...restaurant.ratings]
                     .sort((a: any, b: any) => b.createdAt - a.createdAt)
                     .map((rating: any) => (
-                    <div key={rating._id} className="bg-muted/30 rounded-lg p-3 space-y-2">
+                    <div
+                      key={rating._id}
+                      className={`rounded-lg p-3 space-y-2 ${
+                        rating.isSoloMission
+                          ? "bg-[oklch(0.75_0.15_85)]/10 border-2 border-[oklch(0.75_0.15_85)]/30"
+                          : "bg-muted/30"
+                      }`}
+                    >
                       {/* User info */}
                       <div className="flex items-center gap-2">
                         <Avatar className="h-7 w-7 border border-border">
@@ -316,10 +328,15 @@ function RestaurantCard({ restaurant }: { restaurant: any }) {
                             {rating.userName?.charAt(0)?.toUpperCase() || "?"}
                           </AvatarFallback>
                         </Avatar>
-                        <div className="flex-1">
+                        <div className="flex-1 flex items-center gap-2">
                           <p className="text-sm font-medium text-foreground">
                             {rating.userName}
                           </p>
+                          {rating.isSoloMission && (
+                            <Badge variant="outline" className="text-xs border-[oklch(0.75_0.15_85)] text-[oklch(0.55_0.12_85)]">
+                              Solo
+                            </Badge>
+                          )}
                         </div>
                         <div className="flex items-center gap-1">
                           <Star className="h-4 w-4 fill-primary text-primary" />
@@ -356,6 +373,21 @@ function RestaurantCard({ restaurant }: { restaurant: any }) {
                           <p className="text-xs text-muted-foreground italic">
                             "{rating.notes}"
                           </p>
+                        </div>
+                      )}
+
+                      {/* Generate Article Button for Solo Missions */}
+                      {rating.isSoloMission && (
+                        <div className="pt-2 border-t border-border/50">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full text-[oklch(0.55_0.12_85)] border-[oklch(0.75_0.15_85)]"
+                            onClick={() => router.push(`/solo-missions/${rating._id}/article`)}
+                          >
+                            <Newspaper className="h-3.5 w-3.5 mr-2" />
+                            Generate Substack Article
+                          </Button>
                         </div>
                       )}
                     </div>

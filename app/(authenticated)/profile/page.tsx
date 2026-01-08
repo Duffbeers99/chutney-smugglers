@@ -331,6 +331,12 @@ export default function ProfilePage() {
                 value={userStats.curriesAdded}
                 color="turmeric"
               />
+              <StatCard
+                icon={<span className="text-xl">⭐</span>}
+                label="Solo Missions"
+                value={userStats.soloMissionsCompleted}
+                color="gold"
+              />
             </div>
           )}
         </section>
@@ -510,6 +516,7 @@ function StatCard({
     saffron: "bg-saffron/10 text-saffron",
     terracotta: "bg-terracotta/10 text-terracotta",
     turmeric: "bg-turmeric/10 text-turmeric",
+    gold: "bg-[oklch(0.75_0.15_85)]/10 text-[oklch(0.55_0.12_85)]",
   };
 
   return (

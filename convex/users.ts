@@ -149,6 +149,7 @@ export const getUserStats = query({
       totalRatings,
       averageRating: Math.round(averageRating * 10) / 10,
       curriesAdded: user.curriesAdded || 0,
+      soloMissionsCompleted: user.soloMissionsCompleted || 0,
     };
   },
 });

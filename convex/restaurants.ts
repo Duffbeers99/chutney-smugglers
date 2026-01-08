@@ -95,15 +95,20 @@ export const list = query({
               overallScore: rating.food + rating.service + rating.extras + rating.atmosphere,
               notes: rating.notes,
               createdAt: rating._creationTime,
+              isSoloMission: rating.isSoloMission || false,
             };
           })
         );
+
+        // Check if this restaurant has any solo missions
+        const hasSoloMissions = ratings.some((r) => r.isSoloMission);
 
         return {
           ...restaurant,
           booker,
           mostRecentVisitDate,
           ratings: enrichedRatings.filter((r) => r !== null),
+          hasSoloMissions,
         };
       })
     );
@@ -320,10 +325,13 @@ export async function updateRestaurantAggregates(
   ctx: any,
   restaurantId: any
 ) {
-  const ratings = await ctx.db
+  const allRatings = await ctx.db
     .query("ratings")
     .withIndex("by_restaurant", (q: any) => q.eq("restaurantId", restaurantId))
     .collect();
+
+  // Filter out solo missions - they don't count toward leaderboard aggregates
+  const ratings = allRatings.filter((r: any) => !r.isSoloMission);
 
   if (ratings.length === 0) {
     await ctx.db.patch(restaurantId, {

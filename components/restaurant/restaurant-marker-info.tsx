@@ -11,6 +11,7 @@ interface RestaurantMarkerInfoProps {
     cuisine?: string
     totalRatings: number
     overallAverage?: number
+    hasSoloMissions?: boolean
   }
 }
 
@@ -41,6 +42,12 @@ export function RestaurantMarkerInfo({ restaurant }: RestaurantMarkerInfoProps) 
         {restaurant.cuisine && (
           <Badge variant="secondary" className="text-xs bg-saffron/25 text-foreground border-0">
             {restaurant.cuisine}
+          </Badge>
+        )}
+
+        {restaurant.hasSoloMissions && (
+          <Badge variant="outline" className="text-xs border-[oklch(0.75_0.15_85)] text-[oklch(0.55_0.12_85)] bg-[oklch(0.75_0.15_85)]/10">
+            Solo Mission
           </Badge>
         )}
       </div>

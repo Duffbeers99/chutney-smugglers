@@ -227,6 +227,123 @@ export const getEventDataForArticle = internalQuery({
 });
 
 /**
+ * Internal query to fetch data for a solo mission article
+ */
+export const getSoloMissionDataForArticle = internalQuery({
+  args: {
+    ratingId: v.id("ratings"),
+    groupId: v.id("groups"),
+  },
+  handler: async (ctx, args) => {
+    // Fetch the rating
+    const rating = await ctx.db.get(args.ratingId);
+    if (!rating || !rating.isSoloMission) {
+      throw new Error("Rating not found or is not a solo mission");
+    }
+
+    // Fetch restaurant details
+    const restaurant = await ctx.db.get(rating.restaurantId);
+    if (!restaurant) {
+      throw new Error("Restaurant not found");
+    }
+
+    // Fetch user information
+    const user = await ctx.db.get(rating.userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    let profileImageUrl: string | null = null;
+    if (user.profileImageId) {
+      profileImageUrl = await ctx.storage.getUrl(user.profileImageId);
+    }
+
+    const enrichedRating = {
+      _id: rating._id,
+      userId: user._id,
+      userName: user.nickname || user.name,
+      profileImageUrl,
+      food: rating.food,
+      service: rating.service,
+      extras: rating.extras,
+      atmosphere: rating.atmosphere,
+      price: rating.price,
+      overallScore: rating.food + rating.service + rating.extras + rating.atmosphere,
+      notes: rating.notes,
+      isSoloMission: true,
+    };
+
+    // Get historical data for this restaurant (past solo missions only)
+    const pastSoloRatings = await ctx.db
+      .query("ratings")
+      .filter((q) => q.and(
+        q.eq(q.field("restaurantId"), rating.restaurantId),
+        q.eq(q.field("isSoloMission"), true),
+        q.neq(q.field("_id"), args.ratingId) // Exclude current rating
+      ))
+      .collect();
+
+    const historicalContext = pastSoloRatings.length > 0 ? {
+      visitCount: pastSoloRatings.length,
+      previousVisits: pastSoloRatings
+        .sort((a, b) => b.visitDate - a.visitDate)
+        .slice(0, 3) // Last 3 visits
+        .map((pastRating) => ({
+          date: pastRating.visitDate,
+          avgFood: pastRating.food,
+          avgService: pastRating.service,
+          avgExtras: pastRating.extras,
+          avgAtmosphere: pastRating.atmosphere,
+          avgTotal: pastRating.food + pastRating.service + pastRating.extras + pastRating.atmosphere,
+        })),
+    } : null;
+
+    // Create a pseudo-event structure for solo missions
+    const pseudoEvent = {
+      _id: rating._id as any, // Use rating ID as pseudo-event ID
+      restaurantId: rating.restaurantId,
+      restaurantName: restaurant.name,
+      address: restaurant.address,
+      googlePlaceId: restaurant.googlePlaceId,
+      location: restaurant.location,
+      scheduledDate: rating.visitDate,
+      scheduledTime: "N/A", // Solo missions don't have a specific time
+      bookerName: enrichedRating.userName, // The user themselves
+      attendeeCount: 1, // Solo mission - just one person
+    };
+
+    return {
+      event: pseudoEvent,
+      restaurant: {
+        _id: restaurant._id,
+        name: restaurant.name,
+        address: restaurant.address,
+        cuisine: restaurant.cuisine,
+        googlePlaceId: restaurant.googlePlaceId,
+        location: restaurant.location,
+        overallAverage: restaurant.overallAverage,
+        totalRatings: restaurant.totalRatings,
+      },
+      ratings: [enrichedRating],
+      averages: {
+        food: rating.food,
+        service: rating.service,
+        extras: rating.extras,
+        atmosphere: rating.atmosphere,
+        total: rating.food + rating.service + rating.extras + rating.atmosphere,
+        price: rating.price,
+      },
+      historicalContext,
+      rankings: {
+        totalRank: 0, // Solo missions don't have rankings
+        foodRank: 0,
+        totalEvents: 0,
+      },
+    };
+  },
+});
+
+/**
  * Build the prompt for Claude to generate article content
  */
 function buildArticlePrompt(data: any, isRetrospective: boolean = false, restaurantInfo: string = ""): string {
@@ -238,16 +355,87 @@ function buildArticlePrompt(data: any, isRetrospective: boolean = false, restaur
     day: 'numeric'
   });
 
+  // Detect if this is a solo mission
+  const isSoloMission = data.event.attendeeCount === 1 || data.ratings.some((r: any) => r.isSoloMission);
+
   const historicalContext = data.historicalContext
     ? `This is visit #${data.historicalContext.visitCount + 1} to ${data.event.restaurantName}. Previous visit scores: ${JSON.stringify(data.historicalContext.previousVisits)}`
     : `This is the first visit to ${data.event.restaurantName}.`;
 
   const memberNotes = data.ratings
     .filter((r: any) => r.notes && r.notes.trim().length > 0)
-    .map((r: any) => `${r.userName}: "${r.notes}"`)
+    .map((r: any) => isSoloMission ? `"${r.notes}"` : `${r.userName}: "${r.notes}"`)
     .join('\n');
 
   const hasNotes = memberNotes.length > 0;
+
+  if (isSoloMission) {
+    return `You are writing an engaging curry review article for "The Chutney Smugglers" - a group of friends who visit curry restaurants together and rate them. This is a SOLO MISSION - a lone smuggler ventured out to explore this restaurant independently.
+${isRetrospective ? '\n**IMPORTANT:** This is a retrospective review. You did not record detailed notes at the time. You must base your narrative on the ratings data and restaurant research provided below. Use first-person observations (e.g., "I found...", "The food was...") rather than direct quotes.' : ''}
+
+**Solo Mission Details:**
+- Restaurant: ${data.event.restaurantName}
+- Location: ${data.event.address}
+- Date: ${formattedDate}
+
+**Scores (out of 25 total):**
+- Food: ${data.averages.food.toFixed(1)}/10
+- Service: ${data.averages.service.toFixed(1)}/5
+- Extras: ${data.averages.extras.toFixed(1)}/5
+- Atmosphere: ${data.averages.atmosphere.toFixed(1)}/5
+- **Overall: ${data.averages.total.toFixed(1)}/25**
+${data.averages.price ? `- Price Level: £${'£'.repeat(data.averages.price - 1)} (${data.averages.price}/5)` : ''}
+
+**Note:** This is a solo mission rating and does NOT count toward the official Chutney Smugglers leaderboard.
+
+**Historical Context:**
+${historicalContext}
+
+${isRetrospective && restaurantInfo ? `**Restaurant Research:**
+${restaurantInfo}
+` : ''}
+
+${hasNotes ? `**Notes from the mission:**
+${memberNotes}` : `**Mission Notes:**
+No detailed notes were recorded for this solo visit. Base your narrative on the ratings and ${isRetrospective ? 'restaurant research' : 'general curry dining experience'}.`}
+
+---
+
+Write an engaging, humorous, and personable article about this solo curry mission. The article should:
+
+1. **Opening**: Write a catchy, entertaining opening paragraph (2-3 sentences) that sets the scene for a SOLO MISSION. Make it clear this was a lone adventure, not a group outing.
+
+2. **The Experience**: Write 2-3 paragraphs describing the curry experience in FIRST PERSON. ${hasNotes ? 'Draw from the notes to create a narrative.' : 'Use the ratings to infer the experience - high food scores suggest good dishes, low atmosphere scores suggest lacking ambiance, etc.'} ${isRetrospective && restaurantInfo ? 'Use the restaurant research to add authentic details about the venue, popular dishes, and general vibe.' : ''} Be specific and vivid, describe the atmosphere, talk about service quality. Use "I" throughout - NO group references.
+
+3. ${hasNotes ? '**Personal Observations**: Pull out 2-3 memorable observations from the notes and weave them naturally into the narrative. Make it feel like a personal diary entry or story about a solo dining experience.' : '**Personal Reflections**: Based on the scores, describe the experience using first-person observations. For example: "I found the food impressive" or "The atmosphere left something to be desired." DO NOT create fake quotes.'}
+
+4. **Solo Mission Context**: ${data.historicalContext ? `Compare this visit to previous visits. Has it improved? Gotten worse?` : `Note this is the first solo visit to this restaurant.`} Reflect on the experience of dining alone vs. with the group.
+
+5. **The Verdict**: Write a concluding paragraph (2-3 sentences) that sums up the experience and provides a clear personal recommendation. Reference the overall score. Make it clear this is a solo mission rating.
+
+**Tone Guidelines:**
+- Conversational and fun, like you're telling a mate about a solo adventure
+- British humor and slang welcome
+- First-person throughout - use "I", not "we" or "the team"
+- Enthusiastic about good food but honest about shortcomings
+- Reflect on the solo dining experience
+- No corporate-speak or overly formal language
+
+**Target Audience:**
+- Young people in London interested in curry
+- Friends and mates who enjoy good food
+- People looking for honest, entertaining restaurant reviews
+
+**Format Requirements:**
+Return your response in this EXACT format:
+
+TITLE: [Create a catchy, entertaining title that includes "SOLO MISSION" and captures attention. Make it fun, punchy, and click-worthy. Reference the restaurant name. Keep it under 60 characters.]
+
+SUBTITLE: [Write a compelling subtitle that clarifies this is an individual adventure, not a group review. Keep it under 100 characters.]
+
+ARTICLE:
+[The article text in paragraph form using FIRST PERSON. Do not include headers, titles, or section labels - just flowing prose. The article should be 400-600 words.]`;
+  }
 
   return `You are writing an engaging curry review article for "The Chutney Smugglers" - a group of friends who visit curry restaurants together and rate them.
 ${isRetrospective ? '\n**IMPORTANT:** This is a retrospective review. The team visited this restaurant but did not record detailed notes. You must base your narrative on the ratings data and restaurant research provided below. Use general observations (e.g., "The team found...", "Smugglers felt...") rather than direct quotes.' : ''}
@@ -512,6 +700,95 @@ export const generateSubstackArticle = action({
 
     const title = titleMatch ? titleMatch[1].trim() : `Week Review: ${data.event.restaurantName}`;
     const subtitle = subtitleMatch ? subtitleMatch[1].trim() : `Our latest curry adventure in London`;
+    const narrative = articleMatch ? articleMatch[1].trim() : fullResponse;
+
+    // Build the complete HTML article
+    const htmlArticle = buildHTMLArticle(narrative, data, isRetrospective);
+
+    return {
+      success: true,
+      html: htmlArticle,
+      narrative,
+      title,
+      subtitle,
+      data,
+    };
+  },
+});
+
+/**
+ * Generate a Substack article for a solo mission rating
+ */
+export const generateSoloMissionArticle = action({
+  args: {
+    ratingId: v.id("ratings"),
+  },
+  handler: async (ctx, args): Promise<{
+    success: boolean;
+    html: string;
+    narrative: string;
+    title: string;
+    subtitle: string;
+    data: any;
+  }> => {
+    // Get the user's active group
+    const groupId = await ctx.runQuery(internal.substackArticle.getUserGroup);
+    if (!groupId) {
+      throw new Error("Not authenticated or no active group");
+    }
+
+    // Fetch all the data we need for the solo mission
+    const data: any = await ctx.runQuery(internal.substackArticle.getSoloMissionDataForArticle, {
+      ratingId: args.ratingId,
+      groupId,
+    });
+
+    // Check if this is a retrospective article (no notes from rating)
+    const hasNotes = data.ratings[0].notes && data.ratings[0].notes.trim().length > 0;
+    const isRetrospective = !hasNotes;
+
+    // For retrospective articles, rely on Claude's training data about London restaurants
+    let restaurantInfo = "";
+    if (isRetrospective) {
+      restaurantInfo = `${data.event.restaurantName} is located at ${data.event.address}. Use your knowledge of London curry restaurants and the ratings to create an authentic narrative. High scores suggest positive aspects, low scores suggest areas for improvement. Feel free to mention typical dishes, atmosphere elements, and service styles common to this type of establishment.`;
+    }
+
+    // Initialize Anthropic client
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) {
+      throw new Error("ANTHROPIC_API_KEY not configured");
+    }
+
+    const anthropic = new Anthropic({
+      apiKey,
+    });
+
+    // Generate the article narrative using Claude
+    const prompt = buildArticlePrompt(data, isRetrospective, restaurantInfo);
+
+    const message = await anthropic.messages.create({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 2000,
+      messages: [
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+    });
+
+    // Extract the response text from Claude
+    const fullResponse = message.content[0].type === "text"
+      ? message.content[0].text
+      : "";
+
+    // Parse the structured response (TITLE, SUBTITLE, ARTICLE)
+    const titleMatch = fullResponse.match(/TITLE:\s*(.+?)(?:\n|$)/);
+    const subtitleMatch = fullResponse.match(/SUBTITLE:\s*(.+?)(?:\n|$)/);
+    const articleMatch = fullResponse.match(/ARTICLE:\s*\n([\s\S]+)/);
+
+    const title = titleMatch ? titleMatch[1].trim() : `Solo Mission: ${data.event.restaurantName}`;
+    const subtitle = subtitleMatch ? subtitleMatch[1].trim() : `A lone smuggler's adventure`;
     const narrative = articleMatch ? articleMatch[1].trim() : fullResponse;
 
     // Build the complete HTML article

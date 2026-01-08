@@ -1,3 +1,5 @@
+import { FloatingActionButton } from "@/components/ui/floating-action-button"
+
 export const dynamic = 'force-dynamic'
 export const dynamicParams = true
 
@@ -6,5 +8,10 @@ export default function AuthenticatedLayout({
 }: {
   children: React.ReactNode
 }) {
-  return <>{children}</>
+  return (
+    <>
+      {children}
+      <FloatingActionButton />
+    </>
+  )
 }

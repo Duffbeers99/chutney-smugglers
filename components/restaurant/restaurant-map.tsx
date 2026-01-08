@@ -18,6 +18,7 @@ interface Restaurant {
   }
   totalRatings: number
   overallAverage?: number
+  hasSoloMissions?: boolean
 }
 
 interface RestaurantMapProps {
@@ -68,13 +69,20 @@ export function RestaurantMap({ restaurants }: RestaurantMapProps) {
         lng: restaurant.location.lng,
       }
 
-      // Create custom marker content with curry color
+      // Create custom marker content - gold for solo missions, orange for group events
+      const markerColor = restaurant.hasSoloMissions
+        ? "oklch(0.75 0.15 85)" // Gold for solo missions
+        : "oklch(0.72 0.18 35)" // Orange for group events
+      const strokeColor = restaurant.hasSoloMissions
+        ? "oklch(0.45 0.10 85)" // Darker gold stroke
+        : "oklch(0.25 0.05 35)" // Darker orange stroke
+
       const markerContent = document.createElement("div")
       markerContent.className = "relative"
       markerContent.innerHTML = `
         <div class="relative">
           <svg width="32" height="40" viewBox="0 0 32 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M16 0C7.163 0 0 7.163 0 16c0 12 16 24 16 24s16-12 16-24c0-8.837-7.163-16-16-16z" fill="oklch(0.72 0.18 35)" stroke="oklch(0.25 0.05 35)" stroke-width="2"/>
+            <path d="M16 0C7.163 0 0 7.163 0 16c0 12 16 24 16 24s16-12 16-24c0-8.837-7.163-16-16-16z" fill="${markerColor}" stroke="${strokeColor}" stroke-width="2"/>
             <circle cx="16" cy="16" r="6" fill="white"/>
           </svg>
         </div>
