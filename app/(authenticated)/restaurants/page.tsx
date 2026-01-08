@@ -148,6 +148,10 @@ export default function RestaurantsPage() {
 function RestaurantCard({ restaurant }: { restaurant: any }) {
   const router = useRouter()
   const hasRatings = restaurant.totalRatings > 0
+  const hasSoloMissionOnly = !hasRatings && restaurant.soloMissionAverage !== null
+  const displayRating = hasRatings ? restaurant.overallAverage : restaurant.soloMissionAverage
+  const displayPrice = hasRatings ? restaurant.averagePriceRanking : restaurant.soloMissionPrice
+  const hasAnyRating = hasRatings || hasSoloMissionOnly
   const isIncomplete = restaurant.isIncomplete === true
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
@@ -206,18 +210,18 @@ function RestaurantCard({ restaurant }: { restaurant: any }) {
 
               {/* Rating and Expand Button */}
               <div className="flex items-center gap-2">
-                {hasRatings ? (
+                {hasAnyRating ? (
                   <div className="flex-shrink-0 text-right">
                     <div className="flex items-center gap-1 mb-1">
-                      <Star className="h-5 w-5 fill-primary text-primary" />
-                      <span className="text-xl font-bold text-primary">
-                        {restaurant.overallAverage?.toFixed(1)}
+                      <Star className={hasSoloMissionOnly ? "h-5 w-5 fill-[oklch(0.75_0.15_85)] text-[oklch(0.75_0.15_85)]" : "h-5 w-5 fill-primary text-primary"} />
+                      <span className={hasSoloMissionOnly ? "text-xl font-bold text-[oklch(0.55_0.12_85)]" : "text-xl font-bold text-primary"}>
+                        {displayRating?.toFixed(1)}
                       </span>
                       <span className="text-sm text-muted-foreground">/25</span>
                     </div>
-                    {restaurant.averagePriceRanking && (
+                    {displayPrice && (
                       <div className="flex justify-end mt-1">
-                        <PriceDisplay level={restaurant.averagePriceRanking} size="sm" />
+                        <PriceDisplay level={displayPrice} size="sm" />
                       </div>
                     )}
                   </div>

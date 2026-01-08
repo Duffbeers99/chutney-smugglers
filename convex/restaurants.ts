@@ -95,6 +95,8 @@ export const list = query({
               overallScore: rating.food + rating.service + rating.extras + rating.atmosphere,
               notes: rating.notes,
               createdAt: rating._creationTime,
+              visitDate: rating.visitDate,
+              price: rating.price,
               isSoloMission: rating.isSoloMission || false,
             };
           })
@@ -103,12 +105,34 @@ export const list = query({
         // Check if this restaurant has any solo missions
         const hasSoloMissions = ratings.some((r) => r.isSoloMission);
 
+        // Calculate solo mission averages (if any)
+        const soloMissionRatings = ratings.filter((r) => r.isSoloMission);
+        let soloMissionAverage = null;
+        let soloMissionPrice = null;
+        let mostRecentSoloMissionDate = 0;
+
+        if (soloMissionRatings.length > 0) {
+          // Find most recent solo mission
+          const sortedSoloMissions = soloMissionRatings.sort((a, b) => b.visitDate - a.visitDate);
+          mostRecentSoloMissionDate = sortedSoloMissions[0].visitDate;
+
+          // Calculate average from most recent solo mission
+          const recentSolo = sortedSoloMissions[0];
+          soloMissionAverage = recentSolo.food + recentSolo.service + recentSolo.extras + recentSolo.atmosphere;
+          soloMissionPrice = recentSolo.price;
+        }
+
+        // Use solo mission date if more recent than event date
+        const finalMostRecentVisitDate = Math.max(mostRecentVisitDate, mostRecentSoloMissionDate);
+
         return {
           ...restaurant,
           booker,
-          mostRecentVisitDate,
+          mostRecentVisitDate: finalMostRecentVisitDate,
           ratings: enrichedRatings.filter((r) => r !== null),
           hasSoloMissions,
+          soloMissionAverage,
+          soloMissionPrice,
         };
       })
     );
