@@ -129,7 +129,7 @@ export function AddSoloMissionDrawer({ open, onOpenChange }: AddSoloMissionDrawe
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto overflow-x-hidden">
         <DialogHeader>
           <DialogTitle className="text-[oklch(0.55_0.12_85)]">Log Solo Mission</DialogTitle>
           <DialogDescription>
@@ -137,7 +137,7 @@ export function AddSoloMissionDrawer({ open, onOpenChange }: AddSoloMissionDrawe
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6 mt-4">
+        <form onSubmit={handleSubmit} className="space-y-6 mt-4 overflow-x-hidden">
           {/* Restaurant Selection */}
           <div className="space-y-2">
             <Label htmlFor="restaurant">Restaurant *</Label>
