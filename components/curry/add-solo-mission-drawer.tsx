@@ -5,12 +5,12 @@ import { useMutation, useQuery } from "convex/react"
 import { api } from "@/convex/_generated/api"
 import { Id } from "@/convex/_generated/dataModel"
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet"
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -21,7 +21,6 @@ import { Calendar as CalendarIcon, Loader2 } from "lucide-react"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 import { RestaurantAutocomplete, type PlaceResult } from "./restaurant-autocomplete"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface AddSoloMissionDrawerProps {
   open: boolean
@@ -129,16 +128,16 @@ export function AddSoloMissionDrawer({ open, onOpenChange }: AddSoloMissionDrawe
   }
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="h-[90vh] overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle className="text-[oklch(0.55_0.12_85)]">Log Solo Mission</SheetTitle>
-          <SheetDescription>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-[oklch(0.55_0.12_85)]">Log Solo Mission</DialogTitle>
+          <DialogDescription>
             Rate a curry you've tried on your own
-          </SheetDescription>
-        </SheetHeader>
+          </DialogDescription>
+        </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6 mt-6">
+        <form onSubmit={handleSubmit} className="space-y-6 mt-4">
           {/* Restaurant Selection */}
           <div className="space-y-2">
             <Label htmlFor="restaurant">Restaurant *</Label>
@@ -194,7 +193,10 @@ export function AddSoloMissionDrawer({ open, onOpenChange }: AddSoloMissionDrawe
                 step="0.5"
                 value={food}
                 onChange={(e) => setFood(parseFloat(e.target.value))}
-                className="w-full"
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:border-0 [&::-webkit-slider-runnable-track]:bg-gradient-to-r [&::-webkit-slider-runnable-track]:from-primary [&::-webkit-slider-runnable-track]:to-gray-200"
+                style={{
+                  background: `linear-gradient(to right, oklch(0.72 0.18 35) 0%, oklch(0.72 0.18 35) ${(food / 10) * 100}%, #e5e7eb ${(food / 10) * 100}%, #e5e7eb 100%)`
+                }}
               />
             </div>
 
@@ -212,7 +214,10 @@ export function AddSoloMissionDrawer({ open, onOpenChange }: AddSoloMissionDrawe
                 step="0.5"
                 value={service}
                 onChange={(e) => setService(parseFloat(e.target.value))}
-                className="w-full"
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:border-0"
+                style={{
+                  background: `linear-gradient(to right, oklch(0.72 0.18 35) 0%, oklch(0.72 0.18 35) ${(service / 5) * 100}%, #e5e7eb ${(service / 5) * 100}%, #e5e7eb 100%)`
+                }}
               />
             </div>
 
@@ -230,7 +235,10 @@ export function AddSoloMissionDrawer({ open, onOpenChange }: AddSoloMissionDrawe
                 step="0.5"
                 value={extras}
                 onChange={(e) => setExtras(parseFloat(e.target.value))}
-                className="w-full"
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:border-0"
+                style={{
+                  background: `linear-gradient(to right, oklch(0.72 0.18 35) 0%, oklch(0.72 0.18 35) ${(extras / 5) * 100}%, #e5e7eb ${(extras / 5) * 100}%, #e5e7eb 100%)`
+                }}
               />
             </div>
 
@@ -248,25 +256,31 @@ export function AddSoloMissionDrawer({ open, onOpenChange }: AddSoloMissionDrawe
                 step="0.5"
                 value={atmosphere}
                 onChange={(e) => setAtmosphere(parseFloat(e.target.value))}
-                className="w-full"
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:border-0"
+                style={{
+                  background: `linear-gradient(to right, oklch(0.72 0.18 35) 0%, oklch(0.72 0.18 35) ${(atmosphere / 5) * 100}%, #e5e7eb ${(atmosphere / 5) * 100}%, #e5e7eb 100%)`
+                }}
               />
             </div>
 
-            {/* Price - 1-5 */}
+            {/* Price - 1-5 (Pound Sign Selector) */}
             <div className="space-y-2">
               <Label htmlFor="price">💰 Price</Label>
-              <Select value={price.toString()} onValueChange={(value) => setPrice(parseInt(value))}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">£ - Budget</SelectItem>
-                  <SelectItem value="2">££ - Moderate</SelectItem>
-                  <SelectItem value="3">£££ - Mid-range</SelectItem>
-                  <SelectItem value="4">££££ - Upscale</SelectItem>
-                  <SelectItem value="5">£££££ - Premium</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex gap-2 justify-center py-2">
+                {[1, 2, 3, 4, 5].map((level) => (
+                  <button
+                    key={level}
+                    type="button"
+                    onClick={() => setPrice(level)}
+                    className={cn(
+                      "text-2xl transition-all duration-200 hover:scale-110",
+                      level <= price ? "text-primary" : "text-gray-300"
+                    )}
+                  >
+                    £
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -293,23 +307,25 @@ export function AddSoloMissionDrawer({ open, onOpenChange }: AddSoloMissionDrawe
           </div>
 
           {/* Submit Button */}
-          <Button
-            type="submit"
-            className="w-full bg-[oklch(0.75_0.15_85)] hover:bg-[oklch(0.70_0.15_85)] text-white"
-            size="lg"
-            disabled={loading}
-          >
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Submitting...
-              </>
-            ) : (
-              "Submit Solo Mission"
-            )}
-          </Button>
+          <div className="flex justify-center pt-4">
+            <Button
+              type="submit"
+              className="bg-[oklch(0.75_0.15_85)] hover:bg-[oklch(0.70_0.15_85)] text-white px-8"
+              size="lg"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                "Submit Solo Mission"
+              )}
+            </Button>
+          </div>
         </form>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   )
 }
