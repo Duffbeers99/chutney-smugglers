@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useQuery } from "convex/react"
 import { api } from "@/convex/_generated/api"
+import { useRouter } from "next/navigation"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -10,17 +11,14 @@ import { Button } from "@/components/ui/button"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { Loader2, MapPin, Search, Star, UtensilsCrossed, AlertCircle, List, Map, ChevronDown, ScrollText, Calendar, Users, TrophyIcon } from "lucide-react"
+import { Loader2, MapPin, Search, Star, UtensilsCrossed, AlertCircle, List, Map, ChevronDown } from "lucide-react"
 import { RestaurantMap } from "@/components/restaurant/restaurant-map"
 import { PriceDisplay } from "@/components/ui/price-display"
-import { format } from "date-fns"
-import Link from "next/link"
 
 export default function PublicRestaurantsPage() {
   const restaurants = useQuery(api.publicRestaurants.listPublic)
-  const allEvents = useQuery(api.publicCurryEvents.getAllEventsPublic)
   const [searchTerm, setSearchTerm] = useState("")
-  const [view, setView] = useState<"list" | "map" | "history">("list")
+  const [view, setView] = useState<"list" | "map">("list")
 
   // Filter restaurants based on search term
   const filteredRestaurants = restaurants?.filter(
@@ -36,33 +34,20 @@ export default function PublicRestaurantsPage() {
       restaurant.location !== undefined
   )
 
-  // Filter for completed events with revealed ratings (for history view)
-  const completedEvents = allEvents
-    ? allEvents
-        .filter((event) => event.status === "completed" && event.ratingsRevealed)
-        .sort((a, b) => b.scheduledDate - a.scheduledDate)
-    : []
-
   return (
     <div className="min-h-screen overflow-y-auto overflow-x-hidden bg-background">
       {/* Header */}
-      <header className="sticky top-[104px] z-10 bg-background/95 backdrop-blur-sm border-b border-border px-4 py-4">
+      <header className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border px-4 py-4">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-full bg-primary/10">
             <UtensilsCrossed className="h-6 w-6 text-primary" />
           </div>
-          <div className="flex-1">
+          <div>
             <h1 className="text-2xl font-bold text-foreground">Restaurants</h1>
             <p className="text-sm text-muted-foreground">
               {restaurants?.length || 0} curry houses
             </p>
           </div>
-          <Link href="/view/leaderboard">
-            <Button variant="outline" size="sm" className="gap-2">
-              <TrophyIcon className="h-4 w-4" />
-              Leaderboard
-            </Button>
-          </Link>
         </div>
 
         {/* View Toggle */}
@@ -71,7 +56,7 @@ export default function PublicRestaurantsPage() {
             type="single"
             value={view}
             onValueChange={(value) => {
-              if (value) setView(value as "list" | "map" | "history")
+              if (value) setView(value as "list" | "map")
             }}
           >
             <ToggleGroupItem value="list" aria-label="List view" className="gap-2">
@@ -81,10 +66,6 @@ export default function PublicRestaurantsPage() {
             <ToggleGroupItem value="map" aria-label="Map view" className="gap-2">
               <Map className="h-4 w-4" />
               Map
-            </ToggleGroupItem>
-            <ToggleGroupItem value="history" aria-label="History view" className="gap-2">
-              <ScrollText className="h-4 w-4" />
-              History
             </ToggleGroupItem>
           </ToggleGroup>
         </div>
@@ -134,12 +115,9 @@ export default function PublicRestaurantsPage() {
               </div>
             )}
           </>
-        ) : view === "map" ? (
+        ) : (
           // Map View
           <RestaurantMap restaurants={restaurantsWithLocation || []} />
-        ) : (
-          // History View
-          <HistoryView events={completedEvents} />
         )}
       </main>
     </div>
@@ -147,6 +125,7 @@ export default function PublicRestaurantsPage() {
 }
 
 function RestaurantCard({ restaurant }: { restaurant: any }) {
+  const router = useRouter()
   const hasRatings = restaurant.totalRatings > 0
   const hasSoloMissionOnly = !hasRatings && restaurant.soloMissionAverage !== null
   const displayRating = hasRatings ? restaurant.overallAverage : restaurant.soloMissionAverage
@@ -154,6 +133,10 @@ function RestaurantCard({ restaurant }: { restaurant: any }) {
   const hasAnyRating = hasRatings || hasSoloMissionOnly
   const isIncomplete = restaurant.isIncomplete === true
   const [isOpen, setIsOpen] = useState(false)
+
+  const handleNameClick = () => {
+    router.push(`/view/restaurants/${restaurant._id}`)
+  }
 
   return (
     <Card className="card-parchment">
@@ -164,7 +147,10 @@ function RestaurantCard({ restaurant }: { restaurant: any }) {
             {/* Restaurant Info */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
-                <h3 className="font-semibold text-foreground text-lg truncate">
+                <h3
+                  className="font-semibold text-foreground text-lg truncate cursor-pointer hover:text-curry transition-colors"
+                  onClick={handleNameClick}
+                >
                   {restaurant.name}
                 </h3>
                 {isIncomplete && (
@@ -396,84 +382,5 @@ function CategoryRating({
         </p>
       </div>
     </div>
-  )
-}
-
-function HistoryView({ events }: { events: any[] }) {
-  if (events.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12">
-        <ScrollText className="h-12 w-12 text-muted-foreground mb-4" />
-        <p className="text-foreground font-semibold mb-2">No completed curries yet</p>
-        <p className="text-sm text-muted-foreground text-center">
-          The smugglers haven&apos;t completed any curry events yet
-        </p>
-      </div>
-    )
-  }
-
-  return (
-    <div className="space-y-4">
-      <p className="text-sm text-muted-foreground text-center">
-        Past curry adventures
-      </p>
-      {events.map((event, index) => (
-        <EventCard
-          key={event._id}
-          event={event}
-          weekNumber={events.length - index}
-        />
-      ))}
-    </div>
-  )
-}
-
-function EventCard({
-  event,
-  weekNumber,
-}: {
-  event: any
-  weekNumber: number
-}) {
-  const eventDate = new Date(event.scheduledDate)
-  const formattedDate = format(eventDate, "MMM d, yyyy")
-
-  return (
-    <Card className="card-parchment">
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <Badge variant="outline" className="text-xs">
-                Week {weekNumber}
-              </Badge>
-              {event.hasVoted && event.hasVoted.length > 0 && (
-                <Badge variant="secondary" className="text-xs">
-                  <Star className="h-3 w-3 mr-1 fill-current" />
-                  {event.hasVoted.length} {event.hasVoted.length === 1 ? "rating" : "ratings"}
-                </Badge>
-              )}
-            </div>
-            <h3 className="font-semibold text-lg text-foreground">{event.restaurantName}</h3>
-            <div className="flex flex-col gap-1 mt-2 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <MapPin className="h-3 w-3 shrink-0" />
-                <span className="truncate">{event.address}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Calendar className="h-3 w-3 shrink-0" />
-                <span>{formattedDate}</span>
-              </div>
-              {event.attendees && event.attendees.length > 0 && (
-                <div className="flex items-center gap-2">
-                  <Users className="h-3 w-3 shrink-0" />
-                  <span>{event.attendees.length} attendees</span>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
   )
 }

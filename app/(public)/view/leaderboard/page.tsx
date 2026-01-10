@@ -9,11 +9,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Loader2, Star, Trophy, Award, Calendar, Crown, ChevronRight, List } from "lucide-react";
+import { Loader2, Star, Trophy, Award, Calendar, Crown, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { BookerCurriesDialog } from "@/components/leaderboard/booker-curries-dialog";
-import Link from "next/link";
 
 export default function PublicLeaderboardPage() {
   const [view, setView] = React.useState<"curries" | "smugglers">("curries");
@@ -40,23 +39,17 @@ export default function PublicLeaderboardPage() {
   return (
     <div className="min-h-screen overflow-y-auto overflow-x-hidden bg-background paper-texture">
       {/* Header */}
-      <header className="sticky top-[104px] z-10 bg-background/95 backdrop-blur-sm border-b border-border px-4 py-4 space-y-4">
+      <header className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border px-4 py-4 space-y-4">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-full bg-primary/10">
             <Trophy className="h-6 w-6 text-primary" />
           </div>
-          <div className="flex-1">
+          <div>
             <h1 className="text-2xl font-bold text-foreground">Leaderboards</h1>
             <p className="text-sm text-muted-foreground">
               {view === "curries" ? "Top Rated Restaurants" : "Top Bookers"}
             </p>
           </div>
-          <Link href="/view/restaurants">
-            <Button variant="outline" size="sm" className="gap-2">
-              <List className="h-4 w-4" />
-              Restaurants
-            </Button>
-          </Link>
         </div>
 
         {/* View Toggle */}
