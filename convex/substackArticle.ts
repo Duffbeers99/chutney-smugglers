@@ -405,9 +405,9 @@ Write an engaging, humorous, and personable article about this solo curry missio
 
 1. **Opening**: Write a catchy, entertaining opening paragraph (2-3 sentences) that sets the scene for a SOLO MISSION. Make it clear this was a lone adventure, not a group outing.
 
-2. **The Experience**: Write 2-3 paragraphs describing the curry experience in FIRST PERSON. ${hasNotes ? 'Draw from the notes to create a narrative.' : 'Use the ratings to infer the experience - high food scores suggest good dishes, low atmosphere scores suggest lacking ambiance, etc.'} ${isRetrospective && restaurantInfo ? 'Use the restaurant research to add authentic details about the venue, popular dishes, and general vibe.' : ''} Be specific and vivid, describe the atmosphere, talk about service quality. Use "I" throughout - NO group references.
+2. **The Experience**: Write 2-3 paragraphs describing the curry experience in FIRST PERSON. ${hasNotes ? 'Draw from the notes to create a narrative.' : 'Use the ratings to infer the experience - high food scores suggest standout dishes worth celebrating, moderate scores suggest solid execution, lower scores suggest room for improvement but frame these diplomatically.'} ${isRetrospective && restaurantInfo ? 'Use the restaurant research to add authentic details about the venue, popular dishes, and general vibe.' : ''} Be specific and vivid, describe the atmosphere, talk about service quality. Lead with positives before mentioning areas that could be improved. Use "I" throughout - NO group references.
 
-3. ${hasNotes ? '**Personal Observations**: Pull out 2-3 memorable observations from the notes and weave them naturally into the narrative. Make it feel like a personal diary entry or story about a solo dining experience.' : '**Personal Reflections**: Based on the scores, describe the experience using first-person observations. For example: "I found the food impressive" or "The atmosphere left something to be desired." DO NOT create fake quotes.'}
+3. ${hasNotes ? '**Personal Observations**: Pull out 2-3 memorable observations from the notes and weave them naturally into the narrative. Make it feel like a personal diary entry or story about a solo dining experience.' : '**Personal Reflections**: Based on the scores, describe the experience using first-person observations. For example: "I was impressed by the food" or "While the atmosphere could be enhanced, the quality of the dishes made up for it." Frame lower scores constructively. DO NOT create fake quotes.'}
 
 4. **Solo Mission Context**: ${data.historicalContext ? `Compare this visit to previous visits. Has it improved? Gotten worse?` : `Note this is the first solo visit to this restaurant.`} Reflect on the experience of dining alone vs. with the group.
 
@@ -417,9 +417,13 @@ Write an engaging, humorous, and personable article about this solo curry missio
 - Conversational and fun, like you're telling a mate about a solo adventure
 - British humor and slang welcome
 - First-person throughout - use "I", not "we" or "the team"
-- Enthusiastic about good food but honest about shortcomings
-- Reflect on the solo dining experience
+- Balanced and constructive - celebrate what works well and gently note areas for improvement
+- For lower scores, be diplomatic and fair rather than harsh or overly critical
+- Focus on what the restaurant does right before mentioning shortcomings
+- Frame criticisms constructively (e.g., "could be improved" rather than "was terrible")
+- Reflect on the solo dining experience with an open mind
 - No corporate-speak or overly formal language
+- Remember: we want to build relationships with restaurants, not burn bridges
 
 **Target Audience:**
 - Young people in London interested in curry
@@ -476,9 +480,9 @@ Write an engaging, humorous, and personable article about this curry night. The 
 
 1. **Opening**: Write a catchy, entertaining opening paragraph (2-3 sentences) that sets the scene. Reference who booked it and create anticipation.
 
-2. **The Experience**: Write 2-3 paragraphs describing the curry experience. ${hasNotes ? 'Draw from the team\'s notes to create a narrative.' : 'Use the ratings to infer the experience - high food scores suggest good dishes, low atmosphere scores suggest lacking ambiance, etc.'} ${isRetrospective && restaurantInfo ? 'Use the restaurant research to add authentic details about the venue, popular dishes, and general vibe.' : ''} Be specific and vivid, describe the atmosphere, talk about service quality. Use the scores to inform your writing but don't just list them.
+2. **The Experience**: Write 2-3 paragraphs describing the curry experience. ${hasNotes ? 'Draw from the team\'s notes to create a narrative.' : 'Use the ratings to infer the experience - high food scores suggest standout dishes worth celebrating, moderate scores suggest solid execution, lower scores suggest room for improvement but frame these diplomatically.'} ${isRetrospective && restaurantInfo ? 'Use the restaurant research to add authentic details about the venue, popular dishes, and general vibe.' : ''} Be specific and vivid, describe the atmosphere, talk about service quality. Lead with positives before mentioning areas that could be improved. Use the scores to inform your writing but don't just list them.
 
-3. ${hasNotes ? '**Highlights & Quotes**: Pull out 2-3 memorable quotes or observations from the team notes and weave them naturally into the narrative. Make it feel like you\'re telling a story about friends having dinner together.' : '**General Observations**: Based on the scores, describe the team\'s experience using general observations. For example: "The Smugglers found the food impressive, with scores averaging 7.2/10" or "The atmosphere left something to be desired, reflected in the low 0.9/5 rating." DO NOT create fake direct quotes.'}
+3. ${hasNotes ? '**Highlights & Quotes**: Pull out 2-3 memorable quotes or observations from the team notes and weave them naturally into the narrative. Make it feel like you\'re telling a story about friends having dinner together.' : '**General Observations**: Based on the scores, describe the team\'s experience using general observations. For example: "The Smugglers were impressed by the food, with scores averaging 7.2/10" or "While the atmosphere has room to grow, the solid food and friendly service made for an enjoyable evening." Frame lower scores constructively. DO NOT create fake direct quotes.'}
 
 4. **Historical Perspective**: ${data.historicalContext ? `Compare this visit to the previous visit(s). Has it improved? Gotten worse? Make this comparison interesting and specific.` : `Note this is the first visit. Build anticipation for whether the team will return.`}
 
@@ -487,9 +491,13 @@ Write an engaging, humorous, and personable article about this curry night. The 
 **Tone Guidelines:**
 - Conversational and fun, like you're telling a mate about a good night out
 - British humor and slang welcome
-- Enthusiastic about good food but honest about shortcomings
-- Celebrate the camaraderie of the group
+- Balanced and constructive - celebrate what works well and gently note areas for improvement
+- For lower scores, be diplomatic and fair rather than harsh or overly critical
+- Focus on what the restaurant does right before mentioning shortcomings
+- Frame criticisms constructively (e.g., "could be improved" rather than "was terrible")
+- Celebrate the camaraderie of the group and the overall experience
 - No corporate-speak or overly formal language
+- Remember: we want to build relationships with restaurants, not burn bridges
 
 **Target Audience:**
 - Young people in London interested in curry
