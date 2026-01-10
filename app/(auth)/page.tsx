@@ -32,9 +32,16 @@ function AuthenticatedRedirect() {
   const user = useQuery(api.users.currentUser);
 
   useEffect(() => {
-    if (user) {
-      const nextPath = getNextOnboardingPath(user);
-      router.push(nextPath);
+    if (user !== undefined) {
+      if (user) {
+        // User exists, redirect to appropriate page
+        const nextPath = getNextOnboardingPath(user);
+        router.push(nextPath);
+      } else {
+        // User is null - authenticated but no user record
+        // This shouldn't happen, but redirect to onboarding to create profile
+        router.push("/onboarding/nickname");
+      }
     }
   }, [user, router]);
 
