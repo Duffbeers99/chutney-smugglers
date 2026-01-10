@@ -16,22 +16,39 @@ import Image from "next/image";
 export default function Home() {
   const router = useRouter();
   const user = useQuery(api.users.currentUser);
+  const [isSigningIn, setIsSigningIn] = useState(false);
 
   useEffect(() => {
     // Only redirect if we have a definitive answer (not undefined, which means loading)
     if (user !== undefined && user !== null) {
       const nextPath = getNextOnboardingPath(user);
       router.push(nextPath);
+    } else if (user === null && isSigningIn) {
+      // User is null but we're signing in - keep waiting
+      // This shouldn't happen, but just in case
+      setIsSigningIn(false);
     }
-  }, [user, router]);
+  }, [user, router, isSigningIn]);
+
+  // Show loading state after sign-in while waiting for user query to update
+  if (isSigningIn) {
+    return (
+      <div className="flex min-h-screen items-center justify-center mesh-gradient">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-curry" />
+          <p className="text-spice">Redirecting...</p>
+        </div>
+      </div>
+    );
+  }
 
   // If user is loading (undefined), show the auth page anyway
   // If user is null (not authenticated), show the auth page
   // If user exists, the useEffect will redirect them
-  return <AuthPage />;
+  return <AuthPage onSignInSuccess={() => setIsSigningIn(true)} />;
 }
 
-function AuthPage() {
+function AuthPage({ onSignInSuccess }: { onSignInSuccess?: () => void }) {
   const { signIn } = useAuthActions();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -45,8 +62,8 @@ function AuthPage() {
     try {
       await signIn("password", { email, password, flow: "signIn" });
       toast.success("Welcome back!");
-      // Let the AuthenticatedRedirect component handle routing
-      // It will check onboarding status and redirect appropriately
+      onSignInSuccess?.();
+      // The parent component will handle redirect via useEffect watching user query
     } catch (error: any) {
       console.error("Auth error:", error);
       toast.error(error.message || "Authentication failed. Please try again.");
