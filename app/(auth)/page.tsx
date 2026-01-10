@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
@@ -17,15 +17,17 @@ export default function Home() {
   const router = useRouter();
   const user = useQuery(api.users.currentUser);
   const [isSigningIn, setIsSigningIn] = useState(false);
+  const hasRedirectedRef = useRef(false);
 
   useEffect(() => {
     // Only redirect if we have a definitive answer (not undefined, which means loading)
-    if (user !== undefined && user !== null) {
+    // And we haven't already redirected
+    if (user !== undefined && user !== null && !hasRedirectedRef.current) {
+      hasRedirectedRef.current = true;
       const nextPath = getNextOnboardingPath(user);
       router.push(nextPath);
     } else if (user === null && isSigningIn) {
-      // User is null but we're signing in - keep waiting
-      // This shouldn't happen, but just in case
+      // User is null but we're signing in - auth failed, stop loading
       setIsSigningIn(false);
     }
   }, [user, router, isSigningIn]);
