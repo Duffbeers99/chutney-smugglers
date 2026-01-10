@@ -19,13 +19,15 @@ interface Restaurant {
   totalRatings: number
   overallAverage?: number
   hasSoloMissions?: boolean
+  soloMissionAverage?: number | null
 }
 
 interface RestaurantMapProps {
   restaurants: Restaurant[]
+  isPublicView?: boolean
 }
 
-export function RestaurantMap({ restaurants }: RestaurantMapProps) {
+export function RestaurantMap({ restaurants, isPublicView = false }: RestaurantMapProps) {
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstanceRef = useRef<google.maps.Map | null>(null)
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([])
@@ -112,7 +114,10 @@ export function RestaurantMap({ restaurants }: RestaurantMapProps) {
           if (infoWindowElement) {
             infoWindowElement.style.cursor = "pointer"
             infoWindowElement.addEventListener("click", () => {
-              router.push(`/restaurants/${restaurant._id}`)
+              const detailPath = isPublicView
+                ? `/view/restaurants/${restaurant._id}`
+                : `/restaurants/${restaurant._id}`
+              router.push(detailPath)
             })
           }
         })

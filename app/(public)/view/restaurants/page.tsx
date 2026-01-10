@@ -117,7 +117,7 @@ export default function PublicRestaurantsPage() {
           </>
         ) : (
           // Map View
-          <RestaurantMap restaurants={restaurantsWithLocation || []} />
+          <RestaurantMap restaurants={restaurantsWithLocation || []} isPublicView={true} />
         )}
       </main>
     </div>

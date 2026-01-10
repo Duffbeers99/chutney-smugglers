@@ -12,11 +12,15 @@ interface RestaurantMarkerInfoProps {
     totalRatings: number
     overallAverage?: number
     hasSoloMissions?: boolean
+    soloMissionAverage?: number | null
   }
 }
 
 export function RestaurantMarkerInfo({ restaurant }: RestaurantMarkerInfoProps) {
   const hasRatings = restaurant.totalRatings > 0
+  const hasSoloMissionOnly = !hasRatings && restaurant.soloMissionAverage !== null && restaurant.soloMissionAverage !== undefined
+  const displayRating = hasRatings ? restaurant.overallAverage : restaurant.soloMissionAverage
+  const hasAnyRating = hasRatings || hasSoloMissionOnly
 
   return (
     <div className="max-w-[280px] p-3 bg-parchment rounded-lg shadow-lg border border-border">
@@ -27,11 +31,11 @@ export function RestaurantMarkerInfo({ restaurant }: RestaurantMarkerInfoProps) 
 
       {/* Rating and Cuisine */}
       <div className="flex items-center gap-2 mb-2 flex-wrap">
-        {hasRatings ? (
+        {hasAnyRating ? (
           <div className="flex items-center gap-1">
-            <Star className="h-3 w-3 fill-primary text-primary" />
-            <span className="text-sm font-bold text-primary">
-              {restaurant.overallAverage?.toFixed(1)}
+            <Star className={hasSoloMissionOnly ? "h-3 w-3 fill-[oklch(0.75_0.15_85)] text-[oklch(0.75_0.15_85)]" : "h-3 w-3 fill-primary text-primary"} />
+            <span className={hasSoloMissionOnly ? "text-sm font-bold text-[oklch(0.55_0.12_85)]" : "text-sm font-bold text-primary"}>
+              {displayRating?.toFixed(1)}
             </span>
             <span className="text-xs text-muted-foreground">/25</span>
           </div>
