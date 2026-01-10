@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useQuery } from "convex/react";
+import { useRouter } from "next/navigation";
 import { api } from "@/convex/_generated/api";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,9 +10,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { BottomNav } from "@/components/navigation/bottom-nav";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
-import { Loader2, Star, Trophy, Award, Calendar, Crown, ChevronRight, ChevronDown } from "lucide-react";
+import { Loader2, Star, Trophy, Award, Calendar, Crown, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { BookerCurriesDialog } from "@/components/leaderboard/booker-curries-dialog";
@@ -399,7 +399,7 @@ function RestaurantCard({
   restaurant: any;
   rank: number;
 }) {
-  const [isOpen, setIsOpen] = React.useState(false);
+  const router = useRouter();
 
   const getMedalColor = (rank: number) => {
     if (rank === 1) return "text-yellow-500";
@@ -408,213 +408,71 @@ function RestaurantCard({
     return "text-spice/50";
   };
 
+  const handleClick = () => {
+    router.push(`/restaurants/${restaurant._id}`);
+  };
+
   return (
-    <Card className="card-parchment">
-      <CardContent className="p-4">
-        <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-          {/* Main visible content */}
-          <div className="flex items-start gap-4">
-            {/* Rank */}
-            <div className="flex-shrink-0">
-              {rank <= 3 ? (
-                <Award className={`h-8 w-8 ${getMedalColor(rank)}`} />
-              ) : (
-                <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
-                  <span className="text-sm font-bold text-foreground">{rank}</span>
-                </div>
-              )}
+    <div
+      className="card-parchment p-4 card-hover cursor-pointer"
+      onClick={handleClick}
+    >
+      <div className="flex items-start gap-4">
+        {/* Rank */}
+        <div className="flex-shrink-0">
+          {rank <= 3 ? (
+            <Award className={`h-8 w-8 ${getMedalColor(rank)}`} />
+          ) : (
+            <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
+              <span className="text-sm font-bold text-foreground">{rank}</span>
             </div>
+          )}
+        </div>
 
-            {/* Restaurant Info */}
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-foreground truncate">
-                {restaurant.name}
-              </h3>
-              <p className="text-xs text-muted-foreground truncate">{restaurant.address}</p>
+        {/* Restaurant Info */}
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-foreground truncate">
+            {restaurant.name}
+          </h3>
+          <p className="text-xs text-muted-foreground truncate">{restaurant.address}</p>
 
-              {/* Visit Date and Booker */}
-              {restaurant.mostRecentVisit && (
-                <div className="flex flex-wrap items-center gap-2 mt-2">
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Calendar className="h-3 w-3" />
-                    <span>{format(restaurant.mostRecentVisit.visitDate, "MMM d, yyyy")}</span>
-                  </div>
-                  {restaurant.mostRecentVisit.claimedBy ? (
-                    <Badge variant="secondary" className="text-xs bg-curry/10 text-curry border-curry/25">
-                      Booked by {restaurant.mostRecentVisit.claimedBy}
-                    </Badge>
-                  ) : restaurant.mostRecentVisit.bookerName ? (
-                    <Badge variant="outline" className="text-xs">
-                      Booked by {restaurant.mostRecentVisit.bookerName}
-                    </Badge>
-                  ) : null}
-                </div>
-              )}
-
-              {restaurant.cuisine && (
-                <span className="inline-block mt-2 px-2 py-0.5 text-xs rounded-full bg-saffron/25 text-foreground">
-                  {restaurant.cuisine}
-                </span>
-              )}
-            </div>
-
-            {/* Rating and Expand Button */}
-            <div className="flex items-center gap-2">
-              <div className="flex-shrink-0 text-right">
-                <div className="flex items-center gap-1">
-                  <Star className="h-5 w-5 fill-primary text-primary" />
-                  <span className="text-lg font-bold text-primary">
-                    {restaurant.overallAverage?.toFixed(1) || "0.0"}
-                  </span>
-                  <span className="text-xs text-muted-foreground">/25</span>
-                </div>
-                <p className="text-xs text-muted-foreground">{restaurant.totalRatings} ratings</p>
+          {/* Visit Date and Booker */}
+          {restaurant.mostRecentVisit && (
+            <div className="flex flex-wrap items-center gap-2 mt-2">
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Calendar className="h-3 w-3" />
+                <span>{format(restaurant.mostRecentVisit.visitDate, "MMM d, yyyy")}</span>
               </div>
-
-              <CollapsibleTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-9 w-9 p-0">
-                  <ChevronDown
-                    className={`h-4 w-4 transition-transform duration-200 ${
-                      isOpen ? "transform rotate-180" : ""
-                    }`}
-                  />
-                  <span className="sr-only">Toggle details</span>
-                </Button>
-              </CollapsibleTrigger>
+              {restaurant.mostRecentVisit.claimedBy ? (
+                <Badge variant="secondary" className="text-xs bg-curry/10 text-curry border-curry/25">
+                  Booked by {restaurant.mostRecentVisit.claimedBy}
+                </Badge>
+              ) : restaurant.mostRecentVisit.bookerName ? (
+                <Badge variant="outline" className="text-xs">
+                  Booked by {restaurant.mostRecentVisit.bookerName}
+                </Badge>
+              ) : null}
             </div>
+          )}
+
+          {restaurant.cuisine && (
+            <span className="inline-block mt-2 px-2 py-0.5 text-xs rounded-full bg-saffron/25 text-foreground">
+              {restaurant.cuisine}
+            </span>
+          )}
+        </div>
+
+        {/* Rating */}
+        <div className="flex-shrink-0 text-right">
+          <div className="flex items-center gap-1">
+            <Star className="h-5 w-5 fill-primary text-primary" />
+            <span className="text-lg font-bold text-primary">
+              {restaurant.overallAverage?.toFixed(1) || "0.0"}
+            </span>
+            <span className="text-xs text-muted-foreground">/25</span>
           </div>
-
-          {/* Expandable Content */}
-          <CollapsibleContent className="space-y-3 pt-4">
-            {/* Category Ratings */}
-            {restaurant.averageFood !== undefined && (
-              <>
-                <div className="grid grid-cols-2 gap-2">
-                  <CategoryRating
-                    label="Food"
-                    value={restaurant.averageFood}
-                    emoji="🍛"
-                  />
-                  <CategoryRating
-                    label="Service"
-                    value={restaurant.averageService}
-                    emoji="👨‍🍳"
-                  />
-                  <CategoryRating
-                    label="Extras"
-                    value={restaurant.averageExtras}
-                    emoji="🥘"
-                  />
-                  <CategoryRating
-                    label="Atmosphere"
-                    value={restaurant.averageAtmosphere}
-                    emoji="🪔"
-                  />
-                </div>
-
-                {/* Number of ratings */}
-                <div className="pt-2 border-t border-border">
-                  <p className="text-sm text-muted-foreground text-center">
-                    {restaurant.totalRatings} {restaurant.totalRatings === 1 ? "rating" : "ratings"}
-                  </p>
-                </div>
-              </>
-            )}
-
-            {/* Individual Ratings with Notes */}
-            {restaurant.ratings && restaurant.ratings.length > 0 && (
-              <div className="pt-3 border-t border-border space-y-3">
-                <h4 className="text-sm font-semibold text-foreground mb-2">Individual Ratings</h4>
-                {[...restaurant.ratings]
-                  .sort((a: any, b: any) => b.createdAt - a.createdAt)
-                  .map((rating: any) => (
-                  <div
-                    key={rating._id}
-                    className="rounded-lg p-3 space-y-2 bg-muted/30"
-                  >
-                    {/* User info */}
-                    <div className="flex items-center gap-2">
-                      <Avatar className="h-7 w-7 border border-border">
-                        {rating.profileImageUrl && (
-                          <AvatarImage
-                            src={rating.profileImageUrl}
-                            alt={rating.userName}
-                          />
-                        )}
-                        <AvatarFallback className="bg-curry/25 text-curry text-xs">
-                          {rating.userName?.charAt(0)?.toUpperCase() || "?"}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-foreground">
-                          {rating.userName}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Star className="h-4 w-4 fill-primary text-primary" />
-                        <span className="text-sm font-bold text-primary">
-                          {rating.overallScore}
-                        </span>
-                        <span className="text-xs text-muted-foreground">/25</span>
-                      </div>
-                    </div>
-
-                    {/* Score breakdown */}
-                    <div className="grid grid-cols-4 gap-1 text-xs">
-                      <div className="flex items-center gap-1">
-                        <span>🍛</span>
-                        <span className="text-muted-foreground">{rating.food}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <span>👨‍🍳</span>
-                        <span className="text-muted-foreground">{rating.service}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <span>🥘</span>
-                        <span className="text-muted-foreground">{rating.extras}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <span>🪔</span>
-                        <span className="text-muted-foreground">{rating.atmosphere}</span>
-                      </div>
-                    </div>
-
-                    {/* Notes */}
-                    {rating.notes && (
-                      <div className="pt-2 border-t border-border/50">
-                        <p className="text-xs text-muted-foreground italic">
-                          "{rating.notes}"
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </CollapsibleContent>
-        </Collapsible>
-      </CardContent>
-    </Card>
-  );
-}
-
-function CategoryRating({
-  label,
-  value,
-  emoji,
-}: {
-  label: string;
-  value?: number;
-  emoji: string;
-}) {
-  return (
-    <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50">
-      <span className="text-sm">{emoji}</span>
-      <div className="flex-1 min-w-0">
-        <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="text-sm font-semibold text-foreground">
-          {value?.toFixed(1) || "N/A"}
-        </p>
+          <p className="text-xs text-muted-foreground">{restaurant.totalRatings} ratings</p>
+        </div>
       </div>
     </div>
   );

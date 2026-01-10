@@ -211,7 +211,7 @@ export const getTopRated = query({
       .sort((a, b) => (b.overallAverage || 0) - (a.overallAverage || 0))
       .slice(0, limit);
 
-    // Enrich with most recent rating info and detailed ratings
+    // Enrich with most recent rating info
     const enriched = await Promise.all(
       sorted.map(async (restaurant) => {
         // Get most recent rating for this restaurant
@@ -234,46 +234,9 @@ export const getTopRated = query({
           };
         }
 
-        // Fetch all ratings for this restaurant with user info
-        const ratings = await ctx.db
-          .query("ratings")
-          .filter((q) => q.eq(q.field("restaurantId"), restaurant._id))
-          .collect();
-
-        // Enrich ratings with user information
-        const enrichedRatings = await Promise.all(
-          ratings.map(async (rating) => {
-            const user = await ctx.db.get(rating.userId);
-            if (!user) return null;
-
-            let profileImageUrl: string | null = null;
-            if (user.profileImageId) {
-              profileImageUrl = await ctx.storage.getUrl(user.profileImageId);
-            }
-
-            return {
-              _id: rating._id,
-              userId: user._id,
-              userName: user.nickname || user.name,
-              profileImageUrl,
-              food: rating.food,
-              service: rating.service,
-              extras: rating.extras,
-              atmosphere: rating.atmosphere,
-              overallScore: rating.food + rating.service + rating.extras + rating.atmosphere,
-              notes: rating.notes,
-              createdAt: rating._creationTime,
-              visitDate: rating.visitDate,
-              price: rating.price,
-              isSoloMission: rating.isSoloMission || false,
-            };
-          })
-        );
-
         return {
           ...restaurant,
           mostRecentVisit,
-          ratings: enrichedRatings.filter((r) => r !== null),
         };
       })
     );
