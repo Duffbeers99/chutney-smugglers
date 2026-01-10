@@ -8,7 +8,6 @@ import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { getNextOnboardingPath } from "@/lib/onboarding-flow";
 import { Loader2 } from "lucide-react";
@@ -51,7 +50,6 @@ function AuthenticatedRedirect() {
 
 function AuthPage() {
   const { signIn } = useAuthActions();
-  const [mode, setMode] = useState<"signIn" | "signUp">("signIn");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -62,8 +60,8 @@ function AuthPage() {
     setLoading(true);
 
     try {
-      await signIn("password", { email, password, flow: mode });
-      toast.success(mode === "signIn" ? "Welcome back!" : "Account created!");
+      await signIn("password", { email, password, flow: "signIn" });
+      toast.success("Welcome back!");
       // Let the AuthenticatedRedirect component handle routing
       // It will check onboarding status and redirect appropriately
     } catch (error: any) {
@@ -90,132 +88,79 @@ function AuthPage() {
         </div>
 
         {/* Auth Form */}
-        <Tabs
-            value={mode}
-            onValueChange={(v) => setMode(v as "signIn" | "signUp")}
-            className="w-full"
+        <div className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4 bg-white/90 p-6 rounded-lg shadow-lg">
+            <h2 className="text-2xl font-bold text-center text-spice mb-4">Sign In</h2>
+            <div>
+              <Label htmlFor="email-signin" className="text-spice">
+                Email
+              </Label>
+              <Input
+                id="email-signin"
+                type="email"
+                placeholder="your@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="mt-1 bg-white/80 border-terracotta focus:border-curry"
+              />
+            </div>
+            <div>
+              <Label htmlFor="password-signin" className="text-spice">
+                Password
+              </Label>
+              <Input
+                id="password-signin"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="mt-1 bg-white/80 border-terracotta focus:border-curry"
+              />
+            </div>
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full h-12 text-base font-semibold bg-[#87431D] hover:bg-[#6d3517] text-white transition-colors"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Signing in...
+                </>
+              ) : (
+                "Sign In"
+              )}
+            </Button>
+            <div className="text-center">
+              <a
+                href="/reset-password"
+                className="text-sm text-terracotta hover:text-curry transition-colors"
+              >
+                Forgot password?
+              </a>
+            </div>
+          </form>
+
+          {/* Public View Button */}
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-spice/20" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-transparent px-2 text-spice">Or</span>
+            </div>
+          </div>
+
+          <Button
+            onClick={() => router.push("/view/restaurants")}
+            variant="outline"
+            className="w-full h-12 text-base font-semibold bg-white/90 hover:bg-white border-2 border-terracotta text-spice hover:text-curry transition-colors"
           >
-            <TabsList className="grid w-full grid-cols-2 mb-6 bg-old-paper-dark/50">
-              <TabsTrigger
-                value="signIn"
-                className="data-[state=active]:bg-curry data-[state=active]:text-white"
-              >
-                Sign In
-              </TabsTrigger>
-              <TabsTrigger
-                value="signUp"
-                className="data-[state=active]:bg-curry data-[state=active]:text-white"
-              >
-                Sign Up
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="signIn">
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <Label htmlFor="email-signin" className="text-spice">
-                    Email
-                  </Label>
-                  <Input
-                    id="email-signin"
-                    type="email"
-                    placeholder="your@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    className="mt-1 bg-white/80 border-terracotta focus:border-curry"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="password-signin" className="text-spice">
-                    Password
-                  </Label>
-                  <Input
-                    id="password-signin"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    className="mt-1 bg-white/80 border-terracotta focus:border-curry"
-                  />
-                </div>
-                <Button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full h-12 text-base font-semibold bg-[#87431D] hover:bg-[#6d3517] text-white transition-colors"
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Signing in...
-                    </>
-                  ) : (
-                    "Sign In"
-                  )}
-                </Button>
-                <div className="text-center">
-                  <a
-                    href="/reset-password"
-                    className="text-sm text-terracotta hover:text-curry transition-colors"
-                  >
-                    Forgot password?
-                  </a>
-                </div>
-              </form>
-            </TabsContent>
-
-            <TabsContent value="signUp">
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <Label htmlFor="email-signup" className="text-spice">
-                    Email
-                  </Label>
-                  <Input
-                    id="email-signup"
-                    type="email"
-                    placeholder="your@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    className="mt-1 bg-white/80 border-terracotta focus:border-curry"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="password-signup" className="text-spice">
-                    Password
-                  </Label>
-                  <Input
-                    id="password-signup"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    minLength={8}
-                    className="mt-1 bg-white/80 border-terracotta focus:border-curry"
-                  />
-                </div>
-                <Button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full h-12 text-base font-semibold bg-[#87431D] hover:bg-[#6d3517] text-white transition-colors"
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Creating account...
-                    </>
-                  ) : (
-                    "Create Account"
-                  )}
-                </Button>
-                <div className="text-center h-5">
-                  {/* Invisible spacer to match sign-in form height */}
-                </div>
-              </form>
-            </TabsContent>
-          </Tabs>
+            See the Smuggler&apos;s Ratings
+          </Button>
+        </div>
       </div>
     </div>
   );
