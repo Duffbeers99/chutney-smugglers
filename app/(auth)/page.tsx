@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuthActions } from "@convex-dev/auth/react";
-import { Authenticated, Unauthenticated, useQuery } from "convex/react";
+import { useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
@@ -11,48 +11,24 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { getNextOnboardingPath } from "@/lib/onboarding-flow";
 import { Loader2 } from "lucide-react";
-import { useEffect } from "react";
 import Image from "next/image";
 
 export default function Home() {
-  return (
-    <>
-      <Unauthenticated>
-        <AuthPage />
-      </Unauthenticated>
-      <Authenticated>
-        <AuthenticatedRedirect />
-      </Authenticated>
-    </>
-  );
-}
-
-function AuthenticatedRedirect() {
   const router = useRouter();
   const user = useQuery(api.users.currentUser);
 
   useEffect(() => {
-    if (user !== undefined) {
-      if (user) {
-        // User exists, redirect to appropriate page
-        const nextPath = getNextOnboardingPath(user);
-        router.push(nextPath);
-      } else {
-        // User is null - authenticated but no user record
-        // This shouldn't happen, but redirect to onboarding to create profile
-        router.push("/onboarding/nickname");
-      }
+    // Only redirect if we have a definitive answer (not undefined, which means loading)
+    if (user !== undefined && user !== null) {
+      const nextPath = getNextOnboardingPath(user);
+      router.push(nextPath);
     }
   }, [user, router]);
 
-  return (
-    <div className="flex min-h-screen items-center justify-center mesh-gradient">
-      <div className="flex flex-col items-center gap-4">
-        <Loader2 className="h-8 w-8 animate-spin text-curry" />
-        <p className="text-spice">Loading...</p>
-      </div>
-    </div>
-  );
+  // If user is loading (undefined), show the auth page anyway
+  // If user is null (not authenticated), show the auth page
+  // If user exists, the useEffect will redirect them
+  return <AuthPage />;
 }
 
 function AuthPage() {
