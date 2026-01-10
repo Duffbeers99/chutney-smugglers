@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { BottomNav } from "@/components/navigation/bottom-nav";
 import { ImageUpload } from "@/components/profile/image-upload";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
 import {
   Loader2,
@@ -27,6 +28,7 @@ import {
   Copy,
   CheckCircle2,
   UtensilsCrossed,
+  ChevronDown,
 } from "lucide-react";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { Id } from "@/convex/_generated/dataModel";
@@ -53,6 +55,7 @@ export default function ProfilePage() {
   const [editingEventId, setEditingEventId] = useState<Id<"curryEvents"> | null>(null);
   const [selectedPrice, setSelectedPrice] = useState<number>(3);
   const [savingPrice, setSavingPrice] = useState(false);
+  const [expandedEventId, setExpandedEventId] = useState<Id<"curryEvents"> | null>(null);
 
   const handleEditNickname = () => {
     setNickname(user?.nickname || "");
@@ -404,80 +407,220 @@ export default function ProfilePage() {
                 const eventDate = new Date(event.scheduledDate);
                 const formattedDate = format(eventDate, "MMM d, yyyy");
                 const isEditing = editingEventId === event._id;
+                const isExpanded = expandedEventId === event._id;
+                const hasRatings = event.totalRatings && event.totalRatings > 0;
 
                 return (
-                  <div
+                  <Collapsible
                     key={event._id}
-                    className="p-3 rounded-lg bg-card border border-border"
+                    open={isExpanded}
+                    onOpenChange={(open) => setExpandedEventId(open ? event._id : null)}
                   >
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <h3 className="font-semibold text-foreground">
-                          {event.restaurantName}
-                        </h3>
-                        <p className="text-xs text-muted-foreground">{formattedDate}</p>
-                      </div>
-                      {event.averagePriceRanking && !isEditing && (
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <span>Price:</span>
-                          <span className="font-bold text-curry">
-                            {"£".repeat(event.averagePriceRanking)}
-                          </span>
+                    <div className="p-3 rounded-lg bg-card border border-border">
+                      {/* Main visible content */}
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-semibold text-foreground">
+                              {event.restaurantName}
+                            </h3>
+                            {hasRatings && (
+                              <CollapsibleTrigger asChild>
+                                <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                                  <ChevronDown
+                                    className={`h-4 w-4 transition-transform duration-200 ${
+                                      isExpanded ? "transform rotate-180" : ""
+                                    }`}
+                                  />
+                                  <span className="sr-only">Toggle details</span>
+                                </Button>
+                              </CollapsibleTrigger>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground">{formattedDate}</p>
                         </div>
-                      )}
-                    </div>
+                        <div className="flex flex-col items-end gap-1">
+                          {hasRatings && event.overallAverage !== undefined && (
+                            <div className="flex items-center gap-1">
+                              <Star className="h-4 w-4 fill-primary text-primary" />
+                              <span className="text-sm font-bold text-primary">
+                                {event.overallAverage.toFixed(1)}
+                              </span>
+                              <span className="text-xs text-muted-foreground">/25</span>
+                            </div>
+                          )}
+                          {event.averagePriceRanking && !isEditing && (
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <span>Price:</span>
+                              <span className="font-bold text-curry">
+                                {"£".repeat(event.averagePriceRanking)}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
 
-                    {/* Only allow setting price if not already set */}
-                    {!event.averagePriceRanking && (
-                      <>
-                        {isEditing ? (
-                          <div className="space-y-3 mt-3">
-                            <PriceSelector
-                              value={selectedPrice}
-                              onChange={setSelectedPrice}
-                            />
-                            <div className="flex gap-2">
-                              <Button
-                                onClick={() => handleSavePrice(event._id)}
-                                disabled={savingPrice}
-                                size="sm"
-                                className="flex-1"
-                              >
-                                {savingPrice ? (
-                                  <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Saving...
-                                  </>
-                                ) : (
-                                  <>
-                                    <Check className="mr-2 h-4 w-4" />
-                                    Save Price
-                                  </>
-                                )}
-                              </Button>
-                              <Button
-                                onClick={handleCancelPriceEdit}
-                                disabled={savingPrice}
-                                size="sm"
-                                variant="outline"
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
+                      {/* Expandable Content */}
+                      {hasRatings && (
+                        <CollapsibleContent className="space-y-3 pt-3">
+                          {/* Category Ratings */}
+                          <div className="border-t border-border pt-3">
+                            <div className="grid grid-cols-2 gap-2">
+                              <CategoryRating
+                                label="Food"
+                                value={event.averageFood}
+                                emoji="🍛"
+                              />
+                              <CategoryRating
+                                label="Service"
+                                value={event.averageService}
+                                emoji="👨‍🍳"
+                              />
+                              <CategoryRating
+                                label="Extras"
+                                value={event.averageExtras}
+                                emoji="🥘"
+                              />
+                              <CategoryRating
+                                label="Atmosphere"
+                                value={event.averageAtmosphere}
+                                emoji="🪔"
+                              />
+                            </div>
+
+                            {/* Number of ratings */}
+                            <div className="pt-2 border-t border-border mt-3">
+                              <p className="text-sm text-muted-foreground text-center">
+                                {event.totalRatings} {event.totalRatings === 1 ? "rating" : "ratings"}
+                              </p>
                             </div>
                           </div>
-                        ) : (
-                          <Button
-                            onClick={() => handleEditPrice(event._id, event.averagePriceRanking)}
-                            size="sm"
-                            variant="outline"
-                            className="w-full mt-2"
-                          >
-                            Set Price
-                          </Button>
-                        )}
-                      </>
-                    )}
-                  </div>
+
+                          {/* Individual Ratings with Notes */}
+                          {event.ratings && event.ratings.length > 0 && (
+                            <div className="pt-3 border-t border-border space-y-3">
+                              <h4 className="text-sm font-semibold text-foreground mb-2">Individual Ratings</h4>
+                              {[...event.ratings]
+                                .sort((a: any, b: any) => b.createdAt - a.createdAt)
+                                .map((rating: any) => (
+                                <div
+                                  key={rating._id}
+                                  className="rounded-lg p-3 space-y-2 bg-muted/30"
+                                >
+                                  {/* User info */}
+                                  <div className="flex items-center gap-2">
+                                    <Avatar className="h-7 w-7 border border-border">
+                                      {rating.profileImageUrl && (
+                                        <AvatarImage
+                                          src={rating.profileImageUrl}
+                                          alt={rating.userName}
+                                        />
+                                      )}
+                                      <AvatarFallback className="bg-curry/25 text-curry text-xs">
+                                        {rating.userName?.charAt(0)?.toUpperCase() || "?"}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex-1">
+                                      <p className="text-sm font-medium text-foreground">
+                                        {rating.userName}
+                                      </p>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                      <Star className="h-4 w-4 fill-primary text-primary" />
+                                      <span className="text-sm font-bold text-primary">
+                                        {rating.overallScore}
+                                      </span>
+                                      <span className="text-xs text-muted-foreground">/25</span>
+                                    </div>
+                                  </div>
+
+                                  {/* Score breakdown */}
+                                  <div className="grid grid-cols-4 gap-1 text-xs">
+                                    <div className="flex items-center gap-1">
+                                      <span>🍛</span>
+                                      <span className="text-muted-foreground">{rating.food}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                      <span>👨‍🍳</span>
+                                      <span className="text-muted-foreground">{rating.service}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                      <span>🥘</span>
+                                      <span className="text-muted-foreground">{rating.extras}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                      <span>🪔</span>
+                                      <span className="text-muted-foreground">{rating.atmosphere}</span>
+                                    </div>
+                                  </div>
+
+                                  {/* Notes */}
+                                  {rating.notes && (
+                                    <div className="pt-2 border-t border-border/50">
+                                      <p className="text-xs text-muted-foreground italic">
+                                        "{rating.notes}"
+                                      </p>
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </CollapsibleContent>
+                      )}
+
+                      {/* Only allow setting price if not already set */}
+                      {!event.averagePriceRanking && (
+                        <>
+                          {isEditing ? (
+                            <div className="space-y-3 mt-3">
+                              <PriceSelector
+                                value={selectedPrice}
+                                onChange={setSelectedPrice}
+                              />
+                              <div className="flex gap-2">
+                                <Button
+                                  onClick={() => handleSavePrice(event._id)}
+                                  disabled={savingPrice}
+                                  size="sm"
+                                  className="flex-1"
+                                >
+                                  {savingPrice ? (
+                                    <>
+                                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                      Saving...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Check className="mr-2 h-4 w-4" />
+                                      Save Price
+                                    </>
+                                  )}
+                                </Button>
+                                <Button
+                                  onClick={handleCancelPriceEdit}
+                                  disabled={savingPrice}
+                                  size="sm"
+                                  variant="outline"
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <Button
+                              onClick={() => handleEditPrice(event._id, event.averagePriceRanking)}
+                              size="sm"
+                              variant="outline"
+                              className="w-full mt-2"
+                            >
+                              Set Price
+                            </Button>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </Collapsible>
                 );
               })}
             </div>
@@ -526,6 +669,28 @@ function StatCard({
       </div>
       <div className="text-2xl font-bold text-foreground">{value}</div>
       <div className="text-xs text-muted-foreground">{label}</div>
+    </div>
+  );
+}
+
+function CategoryRating({
+  label,
+  value,
+  emoji,
+}: {
+  label: string;
+  value?: number;
+  emoji: string;
+}) {
+  return (
+    <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50">
+      <span className="text-sm">{emoji}</span>
+      <div className="flex-1 min-w-0">
+        <p className="text-xs text-muted-foreground">{label}</p>
+        <p className="text-sm font-semibold text-foreground">
+          {value?.toFixed(1) || "N/A"}
+        </p>
+      </div>
     </div>
   );
 }

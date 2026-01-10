@@ -2104,7 +2104,74 @@ export const getMyBookedEvents = query({
         return bDateTime.getTime() - aDateTime.getTime();
       });
 
-    return groupEvents;
+    // Enrich with restaurant data and ratings
+    const enriched = await Promise.all(
+      groupEvents.map(async (event) => {
+        // Fetch restaurant details
+        const restaurant = await ctx.db.get(event.restaurantId);
+
+        // Fetch all ratings for this event
+        const ratings = await ctx.db
+          .query("ratings")
+          .filter((q) => q.eq(q.field("eventId"), event._id))
+          .collect();
+
+        // Enrich ratings with user information
+        const enrichedRatings = await Promise.all(
+          ratings.map(async (rating) => {
+            const user = await ctx.db.get(rating.userId);
+            if (!user) return null;
+
+            let profileImageUrl: string | null = null;
+            if (user.profileImageId) {
+              profileImageUrl = await ctx.storage.getUrl(user.profileImageId);
+            }
+
+            return {
+              _id: rating._id,
+              userId: user._id,
+              userName: user.nickname || user.name,
+              profileImageUrl,
+              food: rating.food,
+              service: rating.service,
+              extras: rating.extras,
+              atmosphere: rating.atmosphere,
+              overallScore: rating.food + rating.service + rating.extras + rating.atmosphere,
+              notes: rating.notes,
+              createdAt: rating._creationTime,
+              visitDate: rating.visitDate,
+              price: rating.price,
+              isSoloMission: rating.isSoloMission || false,
+            };
+          })
+        );
+
+        // Calculate average scores if there are ratings
+        const validRatings = enrichedRatings.filter((r) => r !== null);
+        let averageFood, averageService, averageExtras, averageAtmosphere, overallAverage;
+
+        if (validRatings.length > 0) {
+          averageFood = validRatings.reduce((sum, r) => sum + r.food, 0) / validRatings.length;
+          averageService = validRatings.reduce((sum, r) => sum + r.service, 0) / validRatings.length;
+          averageExtras = validRatings.reduce((sum, r) => sum + r.extras, 0) / validRatings.length;
+          averageAtmosphere = validRatings.reduce((sum, r) => sum + r.atmosphere, 0) / validRatings.length;
+          overallAverage = averageFood + averageService + averageExtras + averageAtmosphere;
+        }
+
+        return {
+          ...event,
+          ratings: validRatings,
+          averageFood,
+          averageService,
+          averageExtras,
+          averageAtmosphere,
+          overallAverage,
+          totalRatings: validRatings.length,
+        };
+      })
+    );
+
+    return enriched;
   },
 });
 
