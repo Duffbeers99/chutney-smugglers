@@ -9,19 +9,6 @@ const publicRoutes = [
   "/view/leaderboard",
 ];
 
-// Define routes that should always require authentication
-const authenticatedRoutes = [
-  "/dashboard",
-  "/restaurants",
-  "/leaderboards",
-  "/history",
-  "/profile",
-  "/add-rating",
-  "/onboarding",
-  "/events",
-  "/solo-missions",
-];
-
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -33,22 +20,9 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Check if the route requires authentication
-  const requiresAuth = authenticatedRoutes.some((route) => pathname.startsWith(route));
-
-  if (requiresAuth) {
-    // Check for Convex auth token (stored in cookies by Convex Auth)
-    const authToken = request.cookies.get("__convexAuthToken");
-
-    if (!authToken) {
-      // Redirect to login page if not authenticated
-      const url = request.nextUrl.clone();
-      url.pathname = "/";
-      return NextResponse.redirect(url);
-    }
-  }
-
-  // Allow the request to continue
+  // For all other routes, let them pass through
+  // Convex Auth will handle authentication checks on the server side
+  // This prevents redirect loops during authentication state transitions
   return NextResponse.next();
 }
 

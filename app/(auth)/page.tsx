@@ -18,17 +18,42 @@ export default function Home() {
   const user = useQuery(api.users.currentUser);
   const [isSigningIn, setIsSigningIn] = useState(false);
   const hasRedirectedRef = useRef(false);
+  const redirectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
+    // Clear any existing timeout
+    if (redirectTimeoutRef.current) {
+      clearTimeout(redirectTimeoutRef.current);
+    }
+
     // Only redirect if we have a definitive answer (not undefined, which means loading)
-    // And we haven't already redirected
-    if (user !== undefined && user !== null && !hasRedirectedRef.current) {
+    // And we haven't already redirected and we're in the signing in state
+    if (user !== undefined && user !== null && !hasRedirectedRef.current && isSigningIn) {
       hasRedirectedRef.current = true;
-      const nextPath = getNextOnboardingPath(user);
-      router.push(nextPath);
+      
+      // Add a small delay to ensure auth token cookie is fully set
+      redirectTimeoutRef.current = setTimeout(() => {
+        const nextPath = getNextOnboardingPath(user);
+        router.push(nextPath);
+      }, 100);
     } else if (user === null && isSigningIn) {
       // User is null but we're signing in - auth failed, stop loading
       setIsSigningIn(false);
+    }
+
+    return () => {
+      if (redirectTimeoutRef.current) {
+        clearTimeout(redirectTimeoutRef.current);
+      }
+    };
+  }, [user, router, isSigningIn]);
+
+  // If user is already authenticated (e.g., returning to login page), redirect immediately
+  useEffect(() => {
+    if (user !== undefined && user !== null && !isSigningIn && !hasRedirectedRef.current) {
+      hasRedirectedRef.current = true;
+      const nextPath = getNextOnboardingPath(user);
+      router.push(nextPath);
     }
   }, [user, router, isSigningIn]);
 
