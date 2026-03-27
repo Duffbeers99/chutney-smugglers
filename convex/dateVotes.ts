@@ -2,7 +2,7 @@ import { v } from "convex/values";
 import { mutation, query, internalAction, internalQuery } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { getUserActiveGroup } from "./groups";
-import { startOfMonth, addMonths, startOfDay, endOfMonth } from "date-fns";
+import { startOfMonth, addMonths, endOfMonth } from "date-fns";
 import { internal } from "./_generated/api";
 
 /**
@@ -184,8 +184,10 @@ export const toggleDateVote = mutation({
     const groupId = await getUserActiveGroup(ctx, userId);
     if (!groupId) throw new Error("No active group");
 
-    // Normalize date to start of day
-    const normalizedDate = startOfDay(new Date(args.date)).getTime();
+    // Normalize date to midnight UTC to ensure consistent storage
+    // regardless of client/server timezone differences
+    const d = new Date(args.date);
+    const normalizedDate = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
 
     // Check if vote already exists
     const existingVote = await ctx.db

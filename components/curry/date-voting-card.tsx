@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Calendar } from "@/components/ui/calendar"
 import { cn } from "@/lib/utils"
 import { CalendarDays } from "lucide-react"
-import { startOfMonth, addMonths, endOfMonth, startOfDay } from "date-fns"
+import { startOfMonth, addMonths, endOfMonth } from "date-fns"
 import { toast } from "sonner"
 
 interface DateVotingCardProps {
@@ -30,16 +30,21 @@ export function DateVotingCard({ className }: DateVotingCardProps) {
     return userVotes.map((timestamp) => new Date(timestamp))
   }, [userVotes])
 
+  // Normalize a date to midnight UTC to avoid local timezone drift
+  const toUTCMidnight = (date: Date): number => {
+    return Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
+  }
+
   const handleDateSelect = async (dates: Date[] | undefined) => {
     if (!dates) return
 
-    // Find which date was toggled
-    const newDateSet = new Set(dates.map((d) => startOfDay(d).getTime()))
+    // Find which date was toggled (use UTC midnight to match server storage)
+    const newDateSet = new Set(dates.map((d) => toUTCMidnight(d)))
     const oldDateSet = new Set(userVotes || [])
 
     // Find added date
     const addedDate = dates.find(
-      (d) => !oldDateSet.has(startOfDay(d).getTime())
+      (d) => !oldDateSet.has(toUTCMidnight(d))
     )
     // Find removed date
     const removedDate = (userVotes || []).find(
@@ -47,7 +52,7 @@ export function DateVotingCard({ className }: DateVotingCardProps) {
     )
 
     const dateToToggle = addedDate
-      ? startOfDay(addedDate).getTime()
+      ? toUTCMidnight(addedDate)
       : removedDate
 
     if (!dateToToggle) return
