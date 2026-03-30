@@ -2,7 +2,7 @@ import { v } from "convex/values";
 import { mutation, query, internalAction, internalQuery } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { getUserActiveGroup } from "./groups";
-import { startOfMonth, addMonths, endOfMonth } from "date-fns";
+import { addMonths } from "date-fns";
 import { internal } from "./_generated/api";
 
 /**
@@ -20,8 +20,10 @@ export const getNextMonthVotes = query({
     // Calculate date range for next month
     const now = new Date();
     const nextMonth = addMonths(now, 1);
-    const startOfNextMonth = startOfMonth(nextMonth).getTime();
-    const endOfNextMonth = endOfMonth(nextMonth).getTime();
+    const year = nextMonth.getUTCFullYear();
+    const month = nextMonth.getUTCMonth();
+    const startOfNextMonth = Date.UTC(year, month, 1);
+    const endOfNextMonth = Date.UTC(year, month + 1, 0, 23, 59, 59, 999);
 
     // Get all votes for next month in this group
     const votes = await ctx.db
@@ -72,8 +74,10 @@ export const getVoteSummary = query({
     // Calculate date range for next month
     const now = new Date();
     const nextMonth = addMonths(now, 1);
-    const startOfNextMonth = startOfMonth(nextMonth).getTime();
-    const endOfNextMonth = endOfMonth(nextMonth).getTime();
+    const year = nextMonth.getUTCFullYear();
+    const month = nextMonth.getUTCMonth();
+    const startOfNextMonth = Date.UTC(year, month, 1);
+    const endOfNextMonth = Date.UTC(year, month + 1, 0, 23, 59, 59, 999);
 
     // Get all votes for next month in this group
     const votes = await ctx.db
@@ -148,8 +152,10 @@ export const getUserVotes = query({
     // Calculate date range for next month
     const now = new Date();
     const nextMonth = addMonths(now, 1);
-    const startOfNextMonth = startOfMonth(nextMonth).getTime();
-    const endOfNextMonth = endOfMonth(nextMonth).getTime();
+    const year = nextMonth.getUTCFullYear();
+    const month = nextMonth.getUTCMonth();
+    const startOfNextMonth = Date.UTC(year, month, 1);
+    const endOfNextMonth = Date.UTC(year, month + 1, 0, 23, 59, 59, 999);
 
     // Get user's votes for next month
     const votes = await ctx.db
@@ -254,8 +260,10 @@ export const getUsersWithoutVotes = internalQuery({
     // Calculate date range for next month
     const now = new Date();
     const nextMonth = addMonths(now, 1);
-    const startOfNextMonth = startOfMonth(nextMonth).getTime();
-    const endOfNextMonth = endOfMonth(nextMonth).getTime();
+    const year = nextMonth.getUTCFullYear();
+    const month = nextMonth.getUTCMonth();
+    const startOfNextMonth = Date.UTC(year, month, 1);
+    const endOfNextMonth = Date.UTC(year, month + 1, 0, 23, 59, 59, 999);
 
     // Get all votes for next month in this group
     const votes = await ctx.db

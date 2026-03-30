@@ -578,3 +578,78 @@ export const convertFoodScaleTo10 = mutation({
     };
   },
 });
+
+/**
+ * One-time migration to normalize all dateVote timestamps to UTC midnight.
+ * Before the timezone fix (e81caf9, 2026-03-27), votes were stored using
+ * startOfDay() which produced local-midnight timestamps. The new code uses
+ * Date.UTC() for UTC midnight. Old votes can't be toggled off because the
+ * server normalizes to a different timestamp than what's stored.
+ *
+ * This migration:
+ * 1. Finds votes not at UTC midnight (date % 86400000 !== 0)
+ * 2. Re-normalizes them to UTC midnight
+ * 3. Deduplicates if normalization creates a clash (same user + group + date)
+ *
+ * Run from the Convex dashboard — no arguments needed.
+ */
+export const normalizeDateVoteTimestamps = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const allVotes = await ctx.db.query("dateVotes").collect();
+
+    let normalized = 0;
+    let duplicatesRemoved = 0;
+    let alreadyCorrect = 0;
+
+    const MS_PER_DAY = 86400000;
+
+    console.log(`🔄 Checking ${allVotes.length} date votes for timezone normalization...`);
+
+    for (const vote of allVotes) {
+      // Check if already at UTC midnight
+      if (vote.date % MS_PER_DAY === 0) {
+        alreadyCorrect++;
+        continue;
+      }
+
+      // Normalize to UTC midnight
+      const d = new Date(vote.date);
+      const normalizedDate = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+
+      // Check for duplicate: does another vote already exist for this user + group + normalized date?
+      const duplicate = await ctx.db
+        .query("dateVotes")
+        .withIndex("by_user_and_group", (q) =>
+          q.eq("userId", vote.userId).eq("groupId", vote.groupId)
+        )
+        .filter((q) => q.eq(q.field("date"), normalizedDate))
+        .first();
+
+      if (duplicate && duplicate._id !== vote._id) {
+        // A vote already exists at the normalized timestamp — delete this old one
+        await ctx.db.delete(vote._id);
+        duplicatesRemoved++;
+        console.log(`  🗑️  Removed duplicate vote: ${new Date(vote.date).toISOString()} → already exists at ${new Date(normalizedDate).toISOString()}`);
+      } else {
+        // Patch the vote to the correct UTC midnight timestamp
+        await ctx.db.patch(vote._id, { date: normalizedDate });
+        normalized++;
+        console.log(`  ✅ Normalized: ${new Date(vote.date).toISOString()} → ${new Date(normalizedDate).toISOString()}`);
+      }
+    }
+
+    console.log(`\n📊 Migration complete:`);
+    console.log(`   ✅ Already correct: ${alreadyCorrect}`);
+    console.log(`   🔄 Normalized: ${normalized}`);
+    console.log(`   🗑️  Duplicates removed: ${duplicatesRemoved}`);
+
+    return {
+      success: true,
+      totalVotes: allVotes.length,
+      alreadyCorrect,
+      normalized,
+      duplicatesRemoved,
+    };
+  },
+});

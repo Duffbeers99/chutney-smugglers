@@ -49,11 +49,15 @@ const getOrdinalSuffix = (day: number) => {
   }
 }
 
-// Format date as "Tuesday, 6th January"
-const formatDateWithOrdinal = (date: Date) => {
-  const dayOfWeek = format(date, "EEEE") // Tuesday
-  const day = date.getDate() // 6
-  const month = format(date, "MMMM") // January
+// Format a UTC midnight timestamp as "Tuesday, 6th January"
+// Creates a local Date from UTC parts so date-fns formats the correct calendar date
+// regardless of the client's timezone
+const formatDateWithOrdinal = (timestamp: number) => {
+  const d = new Date(timestamp)
+  const local = new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())
+  const dayOfWeek = format(local, "EEEE")
+  const day = local.getDate()
+  const month = format(local, "MMMM")
   return `${dayOfWeek}, ${day}${getOrdinalSuffix(day)} ${month}`
 }
 
@@ -136,7 +140,7 @@ export function DatePollResults({ className }: DatePollResultsProps) {
 
   // Helper function to render a date item
   const renderDateItem = (item: any, index: number, isInAccordion: boolean = false) => {
-    const dateStr = formatDateWithOrdinal(new Date(item.date))
+    const dateStr = formatDateWithOrdinal(item.date)
 
     // Get medal styling for top 3 (only if not in accordion)
     const medalStyle = !isInAccordion && index < 3 ? getMedalStyling(index) : getMedalStyling(-1)
