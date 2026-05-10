@@ -190,11 +190,15 @@ export default function DashboardPage() {
         {/* Active Curry Card (shows when event has started but not completed) */}
         {activeEvent && <ActiveCurryCard />}
 
-        {/* Upcoming Curry Card (shows when there's a future event) */}
-        <UpcomingCurryCard />
+        {/* Upcoming Curry Card — hide the "no upcoming" prompt while an active
+            curry is still awaiting ratings, so attention stays on rating that
+            one first. The future-event view still renders when a future event
+            exists. */}
+        {(nextEvent || !activeEvent) && <UpcomingCurryCard />}
 
-        {/* Date Voting Section - Only show when no events are scheduled/active */}
-        {!activeEvent && !nextEvent && activeEvent !== undefined && nextEvent !== undefined && (
+        {/* Date Voting — keep visible alongside upcoming events so the group
+            can plan the next-next curry while the current one is booked. */}
+        {activeEvent !== undefined && nextEvent !== undefined && (
           <section aria-labelledby="voting-heading" className="px-4 space-y-4">
             <h2 id="voting-heading" className="sr-only">
               Vote for next curry date

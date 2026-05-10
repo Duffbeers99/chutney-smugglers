@@ -222,21 +222,28 @@ export const toggleDateVote = mutation({
 });
 
 /**
- * Clear all votes for a specific group
- * Should be called when a curry event is created
- * This is an internal function meant to be called from other mutations
+ * Clear votes for a specific group, optionally only votes on or before a cutoff date.
+ * Should be called when a curry event is created. Passing `onOrBeforeDate` preserves
+ * later-month votes so the group can keep planning ahead.
  */
-export async function clearAllVotes(ctx: any, groupId: any) {
-  // Get all votes for this group
+export async function clearAllVotes(
+  ctx: any,
+  groupId: any,
+  onOrBeforeDate?: number
+) {
   const votes = await ctx.db
     .query("dateVotes")
     .withIndex("by_group", (q: any) => q.eq("groupId", groupId))
     .collect();
 
-  // Delete all votes
-  await Promise.all(votes.map((vote: any) => ctx.db.delete(vote._id)));
+  const toDelete =
+    typeof onOrBeforeDate === "number"
+      ? votes.filter((v: any) => v.date <= onOrBeforeDate)
+      : votes;
 
-  return { cleared: votes.length };
+  await Promise.all(toDelete.map((vote: any) => ctx.db.delete(vote._id)));
+
+  return { cleared: toDelete.length };
 }
 
 /**

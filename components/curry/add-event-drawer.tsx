@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useMutation } from "convex/react"
+import { useMutation, useQuery } from "convex/react"
 import { api } from "@/convex/_generated/api"
 import { Id } from "@/convex/_generated/dataModel"
 import {
@@ -16,9 +16,12 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Calendar } from "@/components/ui/calendar"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Switch } from "@/components/ui/switch"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { toast } from "sonner"
-import { Calendar as CalendarIcon, Loader2 } from "lucide-react"
+import { Calendar as CalendarIcon, Loader2, History } from "lucide-react"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 import { RestaurantAutocomplete, type PlaceResult } from "./restaurant-autocomplete"
@@ -35,10 +38,22 @@ interface AddEventDrawerProps {
     scheduledTime: string
     notes?: string
   }
+  // Admins can book on behalf of the rotated booker. When provided, the
+  // event's createdBy is attributed to this user so leaderboard credit lands
+  // with them rather than the admin.
+  proxyForBookerId?: Id<"users">
+  proxyForBookerName?: string
 }
 
-export function AddEventDrawer({ open, onOpenChange, existingEvent }: AddEventDrawerProps) {
+export function AddEventDrawer({
+  open,
+  onOpenChange,
+  existingEvent,
+  proxyForBookerId,
+  proxyForBookerName,
+}: AddEventDrawerProps) {
   const isEditing = !!existingEvent
+  const isProxyBooking = Boolean(proxyForBookerId && !isEditing)
 
   // Form state
   const [restaurantName, setRestaurantName] = React.useState(existingEvent?.restaurantName ?? "")
@@ -50,11 +65,17 @@ export function AddEventDrawer({ open, onOpenChange, existingEvent }: AddEventDr
   )
   const [time, setTime] = React.useState(existingEvent?.scheduledTime ?? "19:00")
   const [notes, setNotes] = React.useState(existingEvent?.notes ?? "")
+  const [isBackdated, setIsBackdated] = React.useState(false)
+  const [attendeeIds, setAttendeeIds] = React.useState<Id<"users">[]>([])
   const [loading, setLoading] = React.useState(false)
 
   const createEventMutation = useMutation(api.curryEvents.createEvent)
   const updateEventMutation = useMutation(api.curryEvents.updateEvent)
   const addRestaurant = useMutation(api.restaurants.add)
+  const groupMembers = useQuery(
+    api.users.getAllUsers,
+    !isEditing && isBackdated ? {} : "skip"
+  )
 
   // Handle place selection from autocomplete
   const handlePlaceSelect = React.useCallback((place: PlaceResult) => {
@@ -75,6 +96,8 @@ export function AddEventDrawer({ open, onOpenChange, existingEvent }: AddEventDr
         setDate(undefined)
         setTime("19:00")
         setNotes("")
+        setIsBackdated(false)
+        setAttendeeIds([])
       }, 300) // Wait for sheet animation to complete
     }
   }, [open, existingEvent])
@@ -98,9 +121,37 @@ export function AddEventDrawer({ open, onOpenChange, existingEvent }: AddEventDr
         setDate(undefined)
         setTime("19:00")
         setNotes("")
+        setIsBackdated(false)
+        setAttendeeIds([])
       }
     }
   }, [open, existingEvent])
+
+  // Clear date when toggling backdated mode so the disabled-state rules don't
+  // leave a now-invalid date selected.
+  React.useEffect(() => {
+    if (!isEditing) {
+      setDate(undefined)
+    }
+  }, [isBackdated, isEditing])
+
+  // When proxy-booking a backdated curry, the booker is by definition an
+  // attendee — pre-select them so the admin doesn't have to remember.
+  React.useEffect(() => {
+    if (isBackdated && proxyForBookerId) {
+      setAttendeeIds((prev) =>
+        prev.includes(proxyForBookerId) ? prev : [...prev, proxyForBookerId]
+      )
+    }
+  }, [isBackdated, proxyForBookerId])
+
+  const toggleAttendee = (userId: Id<"users">) => {
+    setAttendeeIds((prev) =>
+      prev.includes(userId)
+        ? prev.filter((id) => id !== userId)
+        : [...prev, userId]
+    )
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -122,6 +173,11 @@ export function AddEventDrawer({ open, onOpenChange, existingEvent }: AddEventDr
 
     if (!time) {
       toast.error("Please enter a time")
+      return
+    }
+
+    if (!isEditing && isBackdated && attendeeIds.length === 0) {
+      toast.error("Pick at least one attendee for the backdated curry")
       return
     }
 
@@ -162,9 +218,18 @@ export function AddEventDrawer({ open, onOpenChange, existingEvent }: AddEventDr
           notes: notes.trim() || undefined,
           googlePlaceId: googlePlaceId || undefined,
           location,
+          isBackdated: isBackdated || undefined,
+          attendees: isBackdated ? attendeeIds : undefined,
+          bookerId: isProxyBooking ? proxyForBookerId : undefined,
         })
 
-        toast.success("Curry event created!")
+        toast.success(
+          isBackdated
+            ? `Past curry logged for ${proxyForBookerName ?? "the booker"} — attendees can now rate it`
+            : isProxyBooking
+            ? `Curry booked on behalf of ${proxyForBookerName ?? "the booker"}!`
+            : "Curry event created!"
+        )
       }
 
       onOpenChange(false)
@@ -185,16 +250,59 @@ export function AddEventDrawer({ open, onOpenChange, existingEvent }: AddEventDr
         <div className="flex-shrink-0 px-6 pt-6 pb-4 border-b border-border">
           <SheetHeader>
             <SheetTitle className="text-xl">
-              {isEditing ? "Edit Curry Event" : "Add Next Curry Event"}
+              {isEditing
+                ? "Edit Curry Event"
+                : isBackdated
+                ? "Log a Past Curry"
+                : "Add Next Curry Event"}
             </SheetTitle>
             <SheetDescription>
-              Enter the details for the upcoming curry night
+              {isEditing
+                ? "Update the curry night details"
+                : isBackdated
+                ? "Record a curry that already happened so attendees can rate it"
+                : "Enter the details for the upcoming curry night"}
             </SheetDescription>
           </SheetHeader>
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 py-6">
           <form id="event-form" onSubmit={handleSubmit} className="space-y-5">
+            {/* Proxy booking banner — surfaces that this curry will be
+                attributed to the rotated booker, not the signed-in admin. */}
+            {isProxyBooking && proxyForBookerName && (
+              <div className="rounded-lg border border-curry/40 bg-curry/5 p-3 text-sm">
+                <p className="font-medium text-foreground">
+                  Booking on behalf of {proxyForBookerName}
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  The curry will be credited to {proxyForBookerName} on the
+                  leaderboard. They&apos;ll show as the booker.
+                </p>
+              </div>
+            )}
+
+            {/* Backdated curry toggle - only available when creating */}
+            {!isEditing && (
+              <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/40 p-3">
+                <History className="size-5 mt-0.5 text-curry-orange" aria-hidden="true" />
+                <div className="flex-1 space-y-1">
+                  <Label htmlFor="backdated-toggle" className="text-sm font-medium">
+                    This curry already happened
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Log a past curry so attendees can rate it retrospectively.
+                  </p>
+                </div>
+                <Switch
+                  id="backdated-toggle"
+                  checked={isBackdated}
+                  onCheckedChange={setIsBackdated}
+                  disabled={loading}
+                />
+              </div>
+            )}
+
             {/* Restaurant Name - Autocomplete */}
             {!isEditing && (
               <RestaurantAutocomplete
@@ -250,7 +358,10 @@ export function AddEventDrawer({ open, onOpenChange, existingEvent }: AddEventDr
                     mode="single"
                     selected={date}
                     onSelect={setDate}
-                    disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                    disabled={(d) => {
+                      const today = new Date(new Date().setHours(0, 0, 0, 0))
+                      return isBackdated ? d >= today : d < today
+                    }}
                     initialFocus
                   />
                 </PopoverContent>
@@ -269,6 +380,61 @@ export function AddEventDrawer({ open, onOpenChange, existingEvent }: AddEventDr
                 disabled={loading}
               />
             </div>
+
+            {/* Attendees (backdated only) */}
+            {!isEditing && isBackdated && (
+              <div className="space-y-2">
+                <Label>Who came along?</Label>
+                <p className="text-xs text-muted-foreground">
+                  Select everyone who attended. They&apos;ll be able to submit ratings.
+                </p>
+                <div className="rounded-md border border-border divide-y divide-border">
+                  {groupMembers === undefined && (
+                    <div className="p-3 text-sm text-muted-foreground flex items-center gap-2">
+                      <Loader2 className="size-4 animate-spin" />
+                      Loading members…
+                    </div>
+                  )}
+                  {groupMembers?.map((member) => {
+                    const checked = attendeeIds.includes(member._id)
+                    return (
+                      <label
+                        key={member._id}
+                        className="flex items-center gap-3 p-3 cursor-pointer hover:bg-muted/40"
+                      >
+                        <Checkbox
+                          checked={checked}
+                          onCheckedChange={() => toggleAttendee(member._id)}
+                          disabled={loading}
+                        />
+                        <Avatar className="size-7">
+                          {member.profileImageUrl && (
+                            <AvatarImage
+                              src={member.profileImageUrl}
+                              alt={member.nickname || "Member"}
+                            />
+                          )}
+                          <AvatarFallback className="bg-curry/20 text-curry text-xs">
+                            {(member.nickname || member.name || "?")
+                              .charAt(0)
+                              .toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm font-medium text-foreground">
+                          {member.nickname || member.name || "Unknown"}
+                        </span>
+                      </label>
+                    )
+                  })}
+                </div>
+                {attendeeIds.length > 0 && (
+                  <p className="text-xs text-curry-orange font-medium">
+                    {attendeeIds.length}{" "}
+                    {attendeeIds.length === 1 ? "attendee" : "attendees"} selected
+                  </p>
+                )}
+              </div>
+            )}
 
             {/* Notes (Optional) */}
             <div className="space-y-2">
@@ -310,10 +476,16 @@ export function AddEventDrawer({ open, onOpenChange, existingEvent }: AddEventDr
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {isEditing ? "Updating..." : "Creating..."}
+                  {isEditing
+                    ? "Updating..."
+                    : isBackdated
+                    ? "Logging..."
+                    : "Creating..."}
                 </>
               ) : isEditing ? (
                 "Update Event"
+              ) : isBackdated ? (
+                "Log Past Curry"
               ) : (
                 "Create Event"
               )}

@@ -63,6 +63,7 @@ function calculateTimeRemaining(scheduledDate: number, scheduledTime: string): T
 export function UpcomingCurryCard({ className }: UpcomingCurryCardProps) {
   const nextEvent = useQuery(api.curryEvents.getNextEvent)
   const canManage = useQuery(api.curryEvents.canManageEvents)
+  const isAdmin = useQuery(api.curryEvents.isAdmin)
   const currentUser = useQuery(api.users.currentUser)
   const currentBooker = useQuery(api.curryEvents.getCurrentBooker)
   const attendees = useQuery(
@@ -163,6 +164,13 @@ export function UpcomingCurryCard({ className }: UpcomingCurryCardProps) {
     const isCurrentBooker = currentBooker && currentUser && currentBooker.user?._id === currentUser._id
     const bookerName = currentBooker?.user?.nickname || currentBooker?.user?.name || "Someone"
     const bookerImageUrl = currentBooker?.user?.profileImageUrl || null
+    // Admins (canManage or hardcoded admin, but not their turn) can book on
+    // behalf of the rotated booker — useful when someone forgot to book and
+    // we need to catch up.
+    const canProxyBook = Boolean(
+      (canManage || isAdmin) && !isCurrentBooker && currentBooker?.user?._id
+    )
+    const proxyBookerId = canProxyBook ? currentBooker?.user?._id : undefined
 
     return (
       <>
@@ -264,15 +272,18 @@ export function UpcomingCurryCard({ className }: UpcomingCurryCardProps) {
                   <p className="text-sm text-muted-foreground max-w-md">
                     It is <span className="font-semibold text-foreground">{bookerName}&apos;s</span> turn to book the curry
                   </p>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    You&apos;ll be notified when it&apos;s your turn
-                  </p>
+                  {!canProxyBook && (
+                    <p className="text-xs text-muted-foreground mt-2">
+                      You&apos;ll be notified when it&apos;s your turn
+                    </p>
+                  )}
                 </>
               )}
             </div>
 
-            {/* Button - only show for current booker */}
-            {isCurrentBooker && (
+            {/* Booker can book directly; admins can proxy-book on the
+                rotated booker's behalf so attribution stays with them. */}
+            {isCurrentBooker ? (
               <Button
                 size="lg"
                 onClick={() => setIsAddDrawerOpen(true)}
@@ -281,13 +292,25 @@ export function UpcomingCurryCard({ className }: UpcomingCurryCardProps) {
                 <Plus className="size-5 mr-2" />
                 Book Next Curry
               </Button>
-            )}
+            ) : canProxyBook ? (
+              <Button
+                size="lg"
+                onClick={() => setIsAddDrawerOpen(true)}
+                variant="outline"
+                className="border-curry/40 text-foreground font-semibold"
+              >
+                <Plus className="size-5 mr-2" />
+                Book on behalf of {bookerName}
+              </Button>
+            ) : null}
           </CardContent>
         </Card>
 
         <AddEventDrawer
           open={isAddDrawerOpen}
           onOpenChange={setIsAddDrawerOpen}
+          proxyForBookerId={proxyBookerId}
+          proxyForBookerName={canProxyBook ? bookerName : undefined}
         />
       </>
     )

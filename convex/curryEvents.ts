@@ -263,14 +263,13 @@ export const canManageEvents = query({
 /**
  * Check if current user is the admin (can override rating reveals)
  */
+const ADMIN_USER_ID = "k573zewczry92fgnxw80ndz89d7w33he" as const;
+
 export const isAdmin = query({
   args: {},
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) return false;
-
-    // Only this specific user ID is the admin
-    const ADMIN_USER_ID = "k573zewczry92fgnxw80ndz89d7w33he" as const;
     return userId === ADMIN_USER_ID;
   },
 });
@@ -293,6 +292,15 @@ export const createEvent = mutation({
         lng: v.number(),
       })
     ),
+    // Backdated curries: a curry that already happened but was never recorded.
+    // The booker logs it after the fact and pre-fills attendees so the group
+    // can submit ratings retrospectively.
+    isBackdated: v.optional(v.boolean()),
+    attendees: v.optional(v.array(v.id("users"))),
+    // Proxy booking: an admin (canOverride) can book on behalf of the rotated
+    // booker. The event is attributed to bookerId so the booker leaderboard
+    // still credits them, not the admin.
+    bookerId: v.optional(v.id("users")),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -311,12 +319,26 @@ export const createEvent = mutation({
       .withIndex("by_group_and_user", (q) => q.eq("groupId", groupId).eq("userId", userId))
       .first();
 
-    if (!rotation) {
+    const isHardcodedAdmin = userId === ADMIN_USER_ID;
+    const hasAdminPowers = isHardcodedAdmin || rotation?.canOverride === true;
+
+    if (!rotation && !isHardcodedAdmin) {
       throw new Error("User is not in the booking rotation");
     }
 
-    if (!rotation.isCurrentBooker && !rotation.canOverride) {
+    if (!rotation?.isCurrentBooker && !hasAdminPowers) {
       throw new Error("It's not your turn to book. Contact an admin for override.");
+    }
+
+    // Proxy booking is admin-only. The proxied booker must be a real group
+    // member; we credit the event to them.
+    let attributedBookerId = userId;
+    if (args.bookerId && args.bookerId !== userId) {
+      if (!hasAdminPowers) {
+        throw new Error("Only admins can book on behalf of another smuggler");
+      }
+      await checkGroupAccess(ctx, args.bookerId, groupId);
+      attributedBookerId = args.bookerId;
     }
 
     // Verify the restaurant exists and belongs to the user's group
@@ -329,16 +351,32 @@ export const createEvent = mutation({
       throw new Error("Restaurant does not belong to your group");
     }
 
-    // Validate that the event is not in the past
+    // Validate date direction matches the kind of event being logged
     const [hours, minutes] = args.scheduledTime.split(":").map(Number);
     const eventDateTime = new Date(args.scheduledDate);
     eventDateTime.setHours(hours, minutes, 0, 0);
 
-    if (eventDateTime.getTime() <= Date.now()) {
+    if (!args.isBackdated && eventDateTime.getTime() <= Date.now()) {
       throw new Error("Cannot create an event in the past");
     }
 
-    // Create the event
+    if (args.isBackdated && eventDateTime.getTime() > Date.now()) {
+      throw new Error("Backdated events must be in the past");
+    }
+
+    if (args.isBackdated && (!args.attendees || args.attendees.length === 0)) {
+      throw new Error("Backdated events need at least one attendee");
+    }
+
+    // Verify any provided attendees belong to this group
+    if (args.attendees && args.attendees.length > 0) {
+      for (const attendeeId of args.attendees) {
+        await checkGroupAccess(ctx, attendeeId, groupId);
+      }
+    }
+
+    // Create the event — attribute to the rotated booker even when an admin
+    // proxied the booking, so the booker leaderboard stays accurate.
     const eventId = await ctx.db.insert("curryEvents", {
       restaurantId: args.restaurantId,
       restaurantName: args.restaurantName,
@@ -347,22 +385,28 @@ export const createEvent = mutation({
       location: args.location,
       scheduledDate: args.scheduledDate,
       scheduledTime: args.scheduledTime,
-      createdBy: userId,
+      createdBy: attributedBookerId,
       createdAt: Date.now(),
       status: "upcoming",
       notes: args.notes,
       groupId,
+      attendees: args.attendees,
+      hasVoted: args.attendees ? [] : undefined,
     });
 
-    // Clear all date votes now that curry is scheduled
-    await clearAllVotes(ctx, groupId);
+    // Clear votes on or before this event's date, so future-month votes
+    // (e.g. June votes when booking a May curry) keep planning ahead.
+    await clearAllVotes(ctx, groupId, args.scheduledDate);
 
-    // Schedule action to send booking confirmation emails (async, won't block event creation)
-    await ctx.scheduler.runAfter(0, internal.curryEvents.sendBookingConfirmationEmails, {
-      eventId,
-      groupId,
-      creatorId: userId,
-    });
+    // Backdated curries don't trigger booking confirmation emails — the event
+    // already happened.
+    if (!args.isBackdated) {
+      await ctx.scheduler.runAfter(0, internal.curryEvents.sendBookingConfirmationEmails, {
+        eventId,
+        groupId,
+        creatorId: attributedBookerId,
+      });
+    }
 
     return eventId;
   },

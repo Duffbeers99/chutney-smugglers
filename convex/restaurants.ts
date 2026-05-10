@@ -309,7 +309,9 @@ export const add = mutation({
     const groupId = await getUserActiveGroup(ctx, userId);
     if (!groupId) throw new Error("You must be in a group to add restaurants");
 
-    // Check if restaurant already exists in this group
+    // If a restaurant with this name already exists in the group, reuse it.
+    // Booking a curry at a previously-visited spot is the common case; failing
+    // here breaks the add-event flow when the autocomplete picks a known place.
     const existing = await ctx.db
       .query("restaurants")
       .withIndex("by_group", (q) => q.eq("groupId", groupId))
@@ -317,7 +319,24 @@ export const add = mutation({
       .first();
 
     if (existing) {
-      throw new Error("A restaurant with this name already exists in your group");
+      // Backfill any missing metadata the new submission provides (e.g. an
+      // address or Google Place ID for a restaurant created via the legacy
+      // backdated migration with placeholder data).
+      const patch: Record<string, unknown> = {};
+      if (existing.isIncomplete) patch.isIncomplete = false;
+      if (!existing.googlePlaceId && args.googlePlaceId) patch.googlePlaceId = args.googlePlaceId;
+      if (!existing.location && args.location) patch.location = args.location;
+      if (!existing.cuisine && args.cuisine) patch.cuisine = args.cuisine;
+      if (
+        args.address &&
+        (!existing.address || existing.address.endsWith("Address to be added"))
+      ) {
+        patch.address = args.address;
+      }
+      if (Object.keys(patch).length > 0) {
+        await ctx.db.patch(existing._id, patch);
+      }
+      return existing._id;
     }
 
     const restaurantId = await ctx.db.insert("restaurants", {
