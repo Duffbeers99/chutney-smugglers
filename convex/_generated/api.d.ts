@@ -26,6 +26,7 @@ import type * as groups from "../groups.js";
 import type * as http from "../http.js";
 import type * as migrations from "../migrations.js";
 import type * as migrations_setRotationOrder from "../migrations/setRotationOrder.js";
+import type * as migrations_swapTobyCaspar from "../migrations/swapTobyCaspar.js";
 import type * as publicCurryEvents from "../publicCurryEvents.js";
 import type * as publicRatings from "../publicRatings.js";
 import type * as publicRestaurants from "../publicRestaurants.js";
@@ -60,6 +61,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   migrations: typeof migrations;
   "migrations/setRotationOrder": typeof migrations_setRotationOrder;
+  "migrations/swapTobyCaspar": typeof migrations_swapTobyCaspar;
   publicCurryEvents: typeof publicCurryEvents;
   publicRatings: typeof publicRatings;
   publicRestaurants: typeof publicRestaurants;
