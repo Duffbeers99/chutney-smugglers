@@ -1,4 +1,5 @@
 import { query } from "./_generated/server";
+import { getEventStartTime } from "./lib/eventTime";
 
 // Helper to get the Chutney Smugglers group ID
 async function getChutneySmugglersGroupId(ctx: any) {
@@ -28,17 +29,11 @@ export const getAllEventsPublic = query({
       .collect();
 
     // Sort by scheduled date (most recent first)
-    return events.sort((a, b) => {
-      const [aHours, aMinutes] = a.scheduledTime.split(":").map(Number);
-      const aDateTime = new Date(a.scheduledDate);
-      aDateTime.setHours(aHours, aMinutes, 0, 0);
-
-      const [bHours, bMinutes] = b.scheduledTime.split(":").map(Number);
-      const bDateTime = new Date(b.scheduledDate);
-      bDateTime.setHours(bHours, bMinutes, 0, 0);
-
-      return bDateTime.getTime() - aDateTime.getTime();
-    });
+    return events.sort(
+      (a, b) =>
+        getEventStartTime(b.scheduledDate, b.scheduledTime) -
+        getEventStartTime(a.scheduledDate, a.scheduledTime),
+    );
   },
 });
 

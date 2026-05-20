@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { getUserActiveGroup, checkGroupAccess } from "./groups";
+import { getEventStartTime } from "./lib/eventTime";
 
 // List all restaurants with booker information
 export const list = query({
@@ -28,17 +29,11 @@ export const list = query({
           .collect();
 
         // Sort by date (most recent first)
-        const sortedEvents = events.sort((a, b) => {
-          const [aHours, aMinutes] = a.scheduledTime.split(":").map(Number);
-          const aDateTime = new Date(a.scheduledDate);
-          aDateTime.setHours(aHours, aMinutes, 0, 0);
-
-          const [bHours, bMinutes] = b.scheduledTime.split(":").map(Number);
-          const bDateTime = new Date(b.scheduledDate);
-          bDateTime.setHours(bHours, bMinutes, 0, 0);
-
-          return bDateTime.getTime() - aDateTime.getTime();
-        });
+        const sortedEvents = events.sort(
+          (a, b) =>
+            getEventStartTime(b.scheduledDate, b.scheduledTime) -
+            getEventStartTime(a.scheduledDate, a.scheduledTime),
+        );
 
         const mostRecentEvent = sortedEvents[0];
 
@@ -60,10 +55,10 @@ export const list = query({
           }
 
           // Calculate the full date/time for sorting
-          const [hours, minutes] = mostRecentEvent.scheduledTime.split(":").map(Number);
-          const visitDateTime = new Date(mostRecentEvent.scheduledDate);
-          visitDateTime.setHours(hours, minutes, 0, 0);
-          mostRecentVisitDate = visitDateTime.getTime();
+          mostRecentVisitDate = getEventStartTime(
+            mostRecentEvent.scheduledDate,
+            mostRecentEvent.scheduledTime,
+          );
         }
 
         // Fetch all ratings for this restaurant with user info

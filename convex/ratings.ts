@@ -4,6 +4,7 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { updateRestaurantAggregates } from "./restaurants";
 import { getUserActiveGroup, checkGroupAccess } from "./groups";
 import { internal } from "./_generated/api";
+import { getEventStartTime } from "./lib/eventTime";
 
 // Add a new rating (event-based)
 export const add = mutation({
@@ -27,12 +28,7 @@ export const add = mutation({
     }
 
     // Check if event has started
-    const [hours, minutes] = event.scheduledTime.split(":").map(Number);
-    const eventDateTime = new Date(event.scheduledDate);
-    eventDateTime.setHours(hours, minutes, 0, 0);
-    const now = Date.now();
-
-    if (eventDateTime.getTime() > now) {
+    if (getEventStartTime(event.scheduledDate, event.scheduledTime) > Date.now()) {
       throw new Error("Cannot rate an event that hasn't started yet");
     }
 

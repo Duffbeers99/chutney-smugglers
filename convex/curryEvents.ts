@@ -5,6 +5,7 @@ import { updateRestaurantAggregates } from "./restaurants";
 import { getUserActiveGroup, checkGroupAccess } from "./groups";
 import { internal } from "./_generated/api";
 import { clearAllVotes } from "./dateVotes";
+import { getEventStartTime, getEventDayStartUtc, getDayStartUtc } from "./lib/eventTime";
 
 /**
  * Get the next upcoming curry event
@@ -28,29 +29,12 @@ export const getNextEvent = query({
 
     // Filter to only future events (combining date + time) and sort by scheduled datetime
     const futureEvents = events
-      .filter((event) => {
-        // Parse the time (HH:mm format)
-        const [hours, minutes] = event.scheduledTime.split(":").map(Number);
-
-        // Create full datetime for the event
-        const eventDateTime = new Date(event.scheduledDate);
-        eventDateTime.setHours(hours, minutes, 0, 0);
-
-        // Only include if event datetime is in the future
-        return eventDateTime.getTime() > now;
-      })
-      .sort((a, b) => {
-        // Sort by combining date + time for accurate ordering
-        const [aHours, aMinutes] = a.scheduledTime.split(":").map(Number);
-        const aDateTime = new Date(a.scheduledDate);
-        aDateTime.setHours(aHours, aMinutes, 0, 0);
-
-        const [bHours, bMinutes] = b.scheduledTime.split(":").map(Number);
-        const bDateTime = new Date(b.scheduledDate);
-        bDateTime.setHours(bHours, bMinutes, 0, 0);
-
-        return aDateTime.getTime() - bDateTime.getTime();
-      });
+      .filter((event) => getEventStartTime(event.scheduledDate, event.scheduledTime) > now)
+      .sort(
+        (a, b) =>
+          getEventStartTime(a.scheduledDate, a.scheduledTime) -
+          getEventStartTime(b.scheduledDate, b.scheduledTime),
+      );
 
     return futureEvents[0] ?? null;
   },
@@ -77,29 +61,12 @@ export const getAllUpcomingEvents = query({
 
     // Filter to only future events (combining date + time) and sort by scheduled datetime
     return events
-      .filter((event) => {
-        // Parse the time (HH:mm format)
-        const [hours, minutes] = event.scheduledTime.split(":").map(Number);
-
-        // Create full datetime for the event
-        const eventDateTime = new Date(event.scheduledDate);
-        eventDateTime.setHours(hours, minutes, 0, 0);
-
-        // Only include if event datetime is in the future
-        return eventDateTime.getTime() > now;
-      })
-      .sort((a, b) => {
-        // Sort by combining date + time for accurate ordering
-        const [aHours, aMinutes] = a.scheduledTime.split(":").map(Number);
-        const aDateTime = new Date(a.scheduledDate);
-        aDateTime.setHours(aHours, aMinutes, 0, 0);
-
-        const [bHours, bMinutes] = b.scheduledTime.split(":").map(Number);
-        const bDateTime = new Date(b.scheduledDate);
-        bDateTime.setHours(bHours, bMinutes, 0, 0);
-
-        return aDateTime.getTime() - bDateTime.getTime();
-      });
+      .filter((event) => getEventStartTime(event.scheduledDate, event.scheduledTime) > now)
+      .sort(
+        (a, b) =>
+          getEventStartTime(a.scheduledDate, a.scheduledTime) -
+          getEventStartTime(b.scheduledDate, b.scheduledTime),
+      );
   },
 });
 
@@ -121,17 +88,11 @@ export const getAllEvents = query({
       .collect();
 
     // Sort by scheduled date (most recent first)
-    return events.sort((a, b) => {
-      const [aHours, aMinutes] = a.scheduledTime.split(":").map(Number);
-      const aDateTime = new Date(a.scheduledDate);
-      aDateTime.setHours(aHours, aMinutes, 0, 0);
-
-      const [bHours, bMinutes] = b.scheduledTime.split(":").map(Number);
-      const bDateTime = new Date(b.scheduledDate);
-      bDateTime.setHours(bHours, bMinutes, 0, 0);
-
-      return bDateTime.getTime() - aDateTime.getTime();
-    });
+    return events.sort(
+      (a, b) =>
+        getEventStartTime(b.scheduledDate, b.scheduledTime) -
+        getEventStartTime(a.scheduledDate, a.scheduledTime),
+    );
   },
 });
 
@@ -352,15 +313,13 @@ export const createEvent = mutation({
     }
 
     // Validate date direction matches the kind of event being logged
-    const [hours, minutes] = args.scheduledTime.split(":").map(Number);
-    const eventDateTime = new Date(args.scheduledDate);
-    eventDateTime.setHours(hours, minutes, 0, 0);
+    const eventStartTime = getEventStartTime(args.scheduledDate, args.scheduledTime);
 
-    if (!args.isBackdated && eventDateTime.getTime() <= Date.now()) {
+    if (!args.isBackdated && eventStartTime <= Date.now()) {
       throw new Error("Cannot create an event in the past");
     }
 
-    if (args.isBackdated && eventDateTime.getTime() > Date.now()) {
+    if (args.isBackdated && eventStartTime > Date.now()) {
       throw new Error("Backdated events must be in the past");
     }
 
@@ -473,11 +432,7 @@ export const updateEvent = mutation({
       const updatedDate = args.scheduledDate ?? event.scheduledDate;
       const updatedTime = args.scheduledTime ?? event.scheduledTime;
 
-      const [hours, minutes] = updatedTime.split(":").map(Number);
-      const eventDateTime = new Date(updatedDate);
-      eventDateTime.setHours(hours, minutes, 0, 0);
-
-      if (eventDateTime.getTime() <= Date.now()) {
+      if (getEventStartTime(updatedDate, updatedTime) <= Date.now()) {
         throw new Error("Cannot update event to a time in the past");
       }
     }
@@ -992,32 +947,16 @@ export const getActiveEvent = query({
 
     // Filter to events that have started but ratings not revealed yet
     const activeEvents = events
-      .filter((event) => {
-        // Parse the time (HH:mm format)
-        const [hours, minutes] = event.scheduledTime.split(":").map(Number);
-
-        // Create full datetime for the event
-        const eventDateTime = new Date(event.scheduledDate);
-        eventDateTime.setHours(hours, minutes, 0, 0);
-
-        // Event has started if datetime is in the past
-        const hasStarted = eventDateTime.getTime() <= now;
-
-        // Only include if event has started and ratings not completed
-        return hasStarted && !event.ratingsRevealed;
-      })
-      .sort((a, b) => {
-        // Sort by date (oldest first - the event that started first)
-        const [aHours, aMinutes] = a.scheduledTime.split(":").map(Number);
-        const aDateTime = new Date(a.scheduledDate);
-        aDateTime.setHours(aHours, aMinutes, 0, 0);
-
-        const [bHours, bMinutes] = b.scheduledTime.split(":").map(Number);
-        const bDateTime = new Date(b.scheduledDate);
-        bDateTime.setHours(bHours, bMinutes, 0, 0);
-
-        return aDateTime.getTime() - bDateTime.getTime();
-      });
+      .filter(
+        (event) =>
+          getEventStartTime(event.scheduledDate, event.scheduledTime) <= now &&
+          !event.ratingsRevealed,
+      )
+      .sort(
+        (a, b) =>
+          getEventStartTime(a.scheduledDate, a.scheduledTime) -
+          getEventStartTime(b.scheduledDate, b.scheduledTime),
+      );
 
     return activeEvents[0] ?? null;
   },
@@ -1046,17 +985,11 @@ export const getMostRecentCompletedCurry = query({
     // Filter to only events with revealed ratings and sort by date (most recent first)
     const recentEvents = completedEvents
       .filter((event) => event.ratingsRevealed === true)
-      .sort((a, b) => {
-        const [aHours, aMinutes] = a.scheduledTime.split(":").map(Number);
-        const aDateTime = new Date(a.scheduledDate);
-        aDateTime.setHours(aHours, aMinutes, 0, 0);
-
-        const [bHours, bMinutes] = b.scheduledTime.split(":").map(Number);
-        const bDateTime = new Date(b.scheduledDate);
-        bDateTime.setHours(bHours, bMinutes, 0, 0);
-
-        return bDateTime.getTime() - aDateTime.getTime();
-      });
+      .sort(
+        (a, b) =>
+          getEventStartTime(b.scheduledDate, b.scheduledTime) -
+          getEventStartTime(a.scheduledDate, a.scheduledTime),
+      );
 
     const mostRecentEvent = recentEvents[0];
     if (!mostRecentEvent) return null;
@@ -1514,11 +1447,8 @@ export const sendEventReminders = internalAction({
     let eventsProcessed = 0;
 
     for (const event of allEvents) {
-      // Parse the event datetime
-      const [hours, minutes] = event.scheduledTime.split(":").map(Number);
-      const eventDateTime = new Date(event.scheduledDate);
-      eventDateTime.setHours(hours, minutes, 0, 0);
-      const eventTime = eventDateTime.getTime();
+      const eventTime = getEventStartTime(event.scheduledDate, event.scheduledTime);
+      const eventDateTime = new Date(eventTime);
 
       // Only send reminders for events happening in the next 24-48 hours
       if (eventTime > twentyFourHoursFromNow && eventTime <= fortyEightHoursFromNow) {
@@ -1542,12 +1472,13 @@ export const sendEventReminders = internalAction({
           // Get attendee names for the email
           const attendeeNames = recipients.map(r => r.nickname || r.name || "Curry lover");
 
-          // Format the date for display
+          // Format the date for display in UK time (matches scheduledTime).
           const formattedDate = eventDateTime.toLocaleDateString("en-GB", {
             weekday: "long",
             year: "numeric",
             month: "long",
             day: "numeric",
+            timeZone: "Europe/London",
           });
 
           // Calculate hours until event
@@ -1987,17 +1918,13 @@ export const sendAttendanceReminders = internalAction({
 export const verifyTodaysEvent = internalQuery({
   args: {},
   handler: async (ctx) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const todayTimestamp = today.getTime();
+    const todayTimestamp = getDayStartUtc();
 
     const allEvents = await ctx.db.query("curryEvents").collect();
 
-    const todaysEvents = allEvents.filter((event) => {
-      const eventDate = new Date(event.scheduledDate);
-      eventDate.setHours(0, 0, 0, 0);
-      return eventDate.getTime() === todayTimestamp;
-    });
+    const todaysEvents = allEvents.filter(
+      (event) => getEventDayStartUtc(event.scheduledDate) === todayTimestamp,
+    );
 
     if (todaysEvents.length === 0) {
       return { error: "No events found for today" };
@@ -2022,19 +1949,15 @@ export const verifyTodaysEvent = internalQuery({
 export const revertTodaysOverride = internalMutation({
   args: {},
   handler: async (ctx) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const todayTimestamp = today.getTime();
+    const todayTimestamp = getDayStartUtc();
 
     // Find all events
     const allEvents = await ctx.db.query("curryEvents").collect();
 
     // Filter to today's events
-    const todaysEvents = allEvents.filter((event) => {
-      const eventDate = new Date(event.scheduledDate);
-      eventDate.setHours(0, 0, 0, 0);
-      return eventDate.getTime() === todayTimestamp;
-    });
+    const todaysEvents = allEvents.filter(
+      (event) => getEventDayStartUtc(event.scheduledDate) === todayTimestamp,
+    );
 
     if (todaysEvents.length === 0) {
       throw new Error("No events found for today");
@@ -2136,17 +2059,11 @@ export const getMyBookedEvents = query({
     // Filter to user's current group and sort by date (most recent first)
     const groupEvents = events
       .filter((event) => event.groupId === groupId)
-      .sort((a, b) => {
-        const [aHours, aMinutes] = a.scheduledTime.split(":").map(Number);
-        const aDateTime = new Date(a.scheduledDate);
-        aDateTime.setHours(aHours, aMinutes, 0, 0);
-
-        const [bHours, bMinutes] = b.scheduledTime.split(":").map(Number);
-        const bDateTime = new Date(b.scheduledDate);
-        bDateTime.setHours(bHours, bMinutes, 0, 0);
-
-        return bDateTime.getTime() - aDateTime.getTime();
-      });
+      .sort(
+        (a, b) =>
+          getEventStartTime(b.scheduledDate, b.scheduledTime) -
+          getEventStartTime(a.scheduledDate, a.scheduledTime),
+      );
 
     return groupEvents;
   },
