@@ -24,6 +24,7 @@ import type * as emails_votingReminder from "../emails/votingReminder.js";
 import type * as fixBackdatedCurries from "../fixBackdatedCurries.js";
 import type * as groups from "../groups.js";
 import type * as http from "../http.js";
+import type * as lib_eventTime from "../lib/eventTime.js";
 import type * as migrations from "../migrations.js";
 import type * as migrations_setRotationOrder from "../migrations/setRotationOrder.js";
 import type * as migrations_swapTobyCaspar from "../migrations/swapTobyCaspar.js";
@@ -59,6 +60,7 @@ declare const fullApi: ApiFromModules<{
   fixBackdatedCurries: typeof fixBackdatedCurries;
   groups: typeof groups;
   http: typeof http;
+  "lib/eventTime": typeof lib_eventTime;
   migrations: typeof migrations;
   "migrations/setRotationOrder": typeof migrations_setRotationOrder;
   "migrations/swapTobyCaspar": typeof migrations_swapTobyCaspar;
